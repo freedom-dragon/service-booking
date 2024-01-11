@@ -1,0 +1,4 @@
+user=node
+host=booksmart.cc
+root_dir=/home/node/workspace/github.com/beenotung/booksmart
+pm2_name="booksmart"
