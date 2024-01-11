@@ -21,6 +21,24 @@ let homePage = (
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
+      <div>
+        {mapArray(
+          [
+            'primary',
+            'secondary',
+            'tertiary',
+            'success',
+            'warning',
+            'danger',
+            'light',
+            'medium',
+            'dark',
+          ],
+          color => (
+            <ion-button color={color}>{color}</ion-button>
+          ),
+        )}
+      </div>
       <p>
         You can get started by replacing the contents of this page in{' '}
         <code class="inline-code">app-home.tsx</code>.
@@ -60,6 +78,8 @@ let homePage = (
       >
         Show Alert
       </ion-button>
+
+      {wsStatus.safeArea}
       {wsStatus.safeArea}
     </ion-content>
   </>
