@@ -22,6 +22,7 @@ method_id integer FK >- method.id
 url_id integer FK >- url.id
 user_agent_id integer NULL FK >- user_agent.id
 timestamp integer
+user_id integer NULL FK >0- user.id
 
 
 method
@@ -65,6 +66,33 @@ id integer PK
 last_request_log_id integer
 
 
+user
+----
+id integer PK
+username varchar(32) NULL unique
+password_hash char(60) NULL
+email varchar(320) NULL unique
+tel varchar(16) NULL unique
+avatar varchar(256) NULL
+
+
+verification_code
+-----------------
+id integer PK
+passcode char(6)
+email varchar(320)
+request_time integer
+revoke_time integer NULL
+
+
+verification_attempt
+--------------------
+id integer PK
+passcode char(6)
+email varchar(320)
+match_id integer NULL FK >0- verification_code.id
+
+
 # zoom: 1.000
 # view: (0, 0)
 # text-bg: #6495ed
@@ -80,3 +108,6 @@ last_request_log_id integer
 # ua_type (901, 232)
 # ua_bot (901, 385)
 # ua_stat (714, 62)
+# user (445, 621)
+# verification_code (53, 531)
+# verification_attempt (53, 337)

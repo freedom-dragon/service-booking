@@ -10,6 +10,12 @@ let env = {
   COOKIE_SECRET: ' ',
   EPOCH: 1, // to distinct initial run or restart in serve mode
   UPLOAD_DIR: 'uploads',
+  EMAIL_SERVICE: 'google',
+  EMAIL_HOST: 'smtp.gmail.com',
+  EMAIL_PORT: 587,
+  EMAIL_USER: '',
+  EMAIL_PASSWORD: '',
+  ORIGIN: '',
 }
 
 populateEnv(env, { mode: 'halt' })
@@ -35,18 +41,36 @@ function fixEpoch() {
 
 let epoch = fixEpoch()
 
+export enum LayoutType {
+  navbar = 'navbar',
+  sidebar = 'sidebar',
+  ionic = 'ionic',
+}
+
 export let config = {
   production,
   development,
   port: env.PORT,
+  origin: env.ORIGIN,
   cookie_secret: env.COOKIE_SECRET,
   site_name: 'ts-liveview Demo',
+  short_site_name: 'demo-site',
   site_description: 'Demo website of ts-liveview',
   setup_robots_txt: false,
   epoch,
   auto_open: !production && development && epoch === 1,
   upload_dir: env.UPLOAD_DIR,
   client_target: 'es2020',
+  layout_type: LayoutType.navbar,
+  email: {
+    service: env.EMAIL_SERVICE,
+    host: env.EMAIL_HOST,
+    port: env.EMAIL_PORT,
+    auth: {
+      user: env.EMAIL_USER,
+      pass: env.EMAIL_PASSWORD,
+    },
+  },
 }
 
 const titleSuffix = ' | ' + config.site_name

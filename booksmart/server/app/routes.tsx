@@ -6,8 +6,13 @@ import type { DynamicContext } from './context'
 import { o } from './jsx/jsx.js'
 import type { Node } from './jsx/types'
 import UserAgents from './pages/user-agents.js'
+import Home from './pages/home.js'
 import NotFoundPageRoute from './pages/not-found.js'
 import { then } from '@beenotung/tslib/result.js'
+import Login from './pages/login.js'
+import Register from './pages/register.js'
+import Profile from './pages/profile.js'
+import VerificationCode from './pages/verification-code.js'
 import type { MenuRoute } from './components/menu'
 import DemoToast from './pages/demo-toast.js'
 import appHome from './pages/app-home.js'
@@ -53,9 +58,13 @@ export type Routes = Record<string, PageRoute>
 
 // TODO direct support alternative urls instead of having to repeat the entry
 let routeDict: Routes = {
-  ...appHome.routes,
-  ...appCharacter.routes,
-  ...appAbout.routes,
+  '/': {
+    title: title('Home'),
+    description:
+      'Getting Started with ts-liveview - a server-side rendering realtime webapp framework with progressive enhancement',
+    menuText: 'Home',
+    node: Home,
+  },
   ...DemoToast.routes,
   '/user-agents': {
     title: title('User Agents of Visitors'),
@@ -63,6 +72,18 @@ let routeDict: Routes = {
     menuText: 'User Agents',
     node: UserAgents,
   },
+  ...Login.routes,
+  ...Register.routes,
+  ...Profile.routes,
+  ...VerificationCode.routes,
+}
+if (config.layout_type === LayoutType.ionic) {
+  routeDict = {
+    ...routeDict,
+    ...appHome.routes,
+    ...appCharacter.routes,
+    ...appAbout.routes,
+  }
 }
 
 export let redirectDict: Record<string, string> = {
@@ -77,6 +98,7 @@ Object.entries(routeDict).forEach(([url, route]) => {
   pageRouter.add(url, { url, ...route })
   if (route.menuText) {
     menuRoutes.push({
+      ...route,
       url,
       menuText: route.menuText,
       menuUrl: route.menuUrl || url,

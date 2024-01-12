@@ -6,12 +6,15 @@ import { Link } from './router.js'
 import { Style } from './style.js'
 import { Context, getContextUrl } from '../context.js'
 import { capitalize } from '@beenotung/tslib/string.js'
+import { getAuthUserId } from '../auth/user.js'
 
 export type MenuRoute = {
   url: string
   menuText: string
   menuUrl?: string // optional, default to be same as PageRoute.url
   menuMatchPrefix?: boolean
+  guestOnly?: boolean
+  userOnly?: boolean
 }
 
 export function isCurrentMenuRoute(
@@ -36,6 +39,7 @@ export function Menu(
   context: Context,
 ) {
   const currentUrl = getContextUrl(context)
+  const role = getAuthUserId(context) ? 'user' : 'guest'
   return (
     <>
       {Style(/* css */ `
@@ -50,7 +54,13 @@ export function Menu(
 `)}
       <div class="menu" {...attrs.attrs}>
         {mapArray(
-          attrs.routes,
+          attrs.routes.filter(
+            route =>
+              !(
+                (route.guestOnly && role !== 'guest') ||
+                (route.userOnly && role !== 'user')
+              ),
+          ),
           route => (
             <Link
               href={route.menuUrl || route.url}

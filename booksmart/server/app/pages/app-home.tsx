@@ -8,12 +8,14 @@ import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
 import { characters } from './app-character.js'
 
+let pageTitle = 'Home'
+
 let homePage = (
   <>
     <ion-header>
       <ion-toolbar color="primary">
         <ion-title role="heading" aria-level="1">
-          Home
+          {pageTitle}
         </ion-title>
         <ion-buttons slot="end">
           <Link tagName="ion-button" href="/about" color="light">
@@ -62,6 +64,15 @@ let homePage = (
       >
         Show Alert
       </ion-button>
+      <Link
+        tagName="ion-button"
+        href="/login"
+        fill="block"
+        color="primary"
+        class="ion-margin-top"
+      >
+        Login
+      </Link>
       {wsStatus.safeArea}
     </ion-content>
   </>
@@ -72,7 +83,7 @@ homePage = prerender(homePage)
 
 let routes: Routes = {
   '/': {
-    title: title('Home'),
+    title: title(pageTitle),
     description:
       'List of fictional characters commonly used as placeholders in discussion about cryptographic systems and protocols.',
     node: homePage,

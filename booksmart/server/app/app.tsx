@@ -15,7 +15,7 @@ import { dispatchUpdate } from './jsx/dispatch.js'
 import { EarlyTerminate } from './helpers.js'
 import { getWSSession } from './session.js'
 import { Flush } from './components/flush.js'
-import { config } from '../config.js'
+import { LayoutType, config } from '../config.js'
 import Stats from './stats.js'
 import { MuteConsole, Script } from './components/script.js'
 import {
@@ -27,12 +27,18 @@ import {
 import type { ClientMountMessage, ClientRouteMessage } from '../../client/types'
 import { then } from '@beenotung/tslib/result.js'
 import { appStyle } from './app-style.js'
-import { renderIonicTemplate as renderAppTemplate } from '../../template/ionic.js'
+import { renderWebTemplate } from '../../template/web.js'
+import { renderIonicTemplate } from '../../template/ionic.js'
 import { HTMLStream } from './jsx/stream.js'
+import { renewAuthCookieMiddleware } from './auth/user.js'
 import { getWsCookies } from './cookie.js'
 import { PickLanguage } from './components/ui-language.js'
+import Navbar from './components/navbar.js'
+import Sidebar from './components/sidebar.js'
+import Profile from './pages/profile.js'
 import { logRequest } from './log.js'
 import { WindowStub } from '../../client/internal.js'
+import verificationCode from './pages/verification-code.js'
 
 if (config.development) {
   scanTemplateDir('template')
@@ -86,7 +92,63 @@ let brand = (
 
 type Layout = (route: PageRouteMatch) => Element
 
-let App = IonicApp
+let layouts: Record<LayoutType, Layout> = {
+  [LayoutType.navbar]: NavbarApp,
+  [LayoutType.sidebar]: SidebarApp,
+  [LayoutType.ionic]: IonicApp,
+}
+
+let App = layouts[config.layout_type]
+
+let renderAppTemplate =
+  App == IonicApp ? renderIonicTemplate : renderWebTemplate
+
+function NavbarApp(route: PageRouteMatch): Element {
+  // you can write the AST direct for more compact wire-format
+  return [
+    'div.app',
+    {},
+    [
+      // or you can write in JSX for better developer-experience (if you're coming from React)
+      <>
+        {appStyle}
+        <Navbar brand={brand} menuRoutes={menuRoutes} />
+        <hr />
+        {scripts}
+        {route.node}
+        <Flush />
+        <Footer />
+      </>,
+    ],
+  ]
+}
+
+function SidebarApp(route: PageRouteMatch): Element {
+  // you can write the AST direct for more compact wire-format
+  return [
+    'div.app',
+    {},
+    [
+      // or you can write in JSX for better developer-experience (if you're coming from React)
+      <>
+        {appStyle}
+        {scripts}
+        {Sidebar.style}
+        <div class={Sidebar.containerClass}>
+          <Sidebar brand={brand} menuRoutes={menuRoutes} />
+          <div
+            class={Sidebar.mainContainerClass}
+            style="display: flex; flex-direction: column"
+          >
+            <div style="flex-grow: 1; padding: 0 1rem">{route.node}</div>
+            <Footer style="padding: 0.5rem;" />
+          </div>
+        </div>
+        <Flush />
+      </>,
+    ],
+  ]
+}
 
 function IonicApp(route: PageRouteMatch): Element {
   // you can write the AST direct for more compact wire-format
@@ -132,6 +194,8 @@ function Footer(attrs: { style?: string }) {
 // prefer flat router over nested router for less overhead
 export function attachRoutes(app: Router) {
   // ajax/middleware routes
+  app.use(renewAuthCookieMiddleware)
+  Profile.attachRoutes(app)
 
   // redirect routes
   Object.entries(redirectDict).forEach(([from, to]) =>

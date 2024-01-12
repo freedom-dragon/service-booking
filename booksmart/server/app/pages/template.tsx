@@ -5,7 +5,7 @@ import Style from '../components/style.js'
 import { Context } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { config } from '../../config.js'
+import { LayoutType, config } from '../../config.js'
 
 let pageTitle = '__title__'
 
@@ -18,23 +18,43 @@ let style = Style(/* css */ `
 let page = (
   <>
     {style}
-    <ion-header>
-      <ion-toolbar>
-        <IonBackButton href="/" backText="Home" />
-        <ion-title role="heading" aria-level="1">
-          {pageTitle}
-        </ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content id="__id__" class="ion-padding">
-      Items
+    <div id="__id__">
+      <h1>{pageTitle}</h1>
       <Main />
-    </ion-content>
+    </div>
   </>
 )
+if (config.layout_type === LayoutType.ionic) {
+  page = (
+    <>
+      {style}
+      <ion-header>
+        <ion-toolbar>
+          <IonBackButton href="/" backText="Home" />
+          <ion-title role="heading" aria-level="1">
+            {pageTitle}
+          </ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content id="__id__" class="ion-padding">
+        Items
+        <Main />
+      </ion-content>
+    </>
+  )
+}
 
 function Main(attrs: {}, context: Context) {
   let items = [1, 2, 3]
+  if (config.layout_type !== LayoutType.ionic) {
+    return (
+      <ul>
+        {mapArray(items, item => (
+          <li>item {item}</li>
+        ))}
+      </ul>
+    )
+  }
   return (
     <ion-list>
       {mapArray(items, item => (
