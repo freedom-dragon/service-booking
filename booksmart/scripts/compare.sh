@@ -3,4 +3,26 @@
 ## you may change the path according to your preference
 set -e
 set -o pipefail
-meld ~/workspace/github.com/beenotung/ts-liveview/$1 $1
+
+upstream_path="$HOME/workspace/github.com/beenotung/ts-liveview"
+
+if [ $# == 1 ]; then
+  compare_path="$1"
+else
+  read -p "directory/file to compare: " compare_path
+fi
+
+function clean_up {
+  rm -rf \
+    "$1/node_modules" \
+    "$1/pnpm-lock.yaml" \
+    "$1/db/node_modules" \
+    "$1/db/pnpm-lock.yaml" \
+    "$1/build" \
+    "$1/dist"
+}
+
+clean_up .
+clean_up "$upstream_path"
+
+meld "$upstream_path/$compare_path" "$compare_path"

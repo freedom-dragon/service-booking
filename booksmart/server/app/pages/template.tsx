@@ -21,7 +21,9 @@ let page = (
     <ion-header>
       <ion-toolbar>
         <IonBackButton href="/" backText="Home" />
-        <ion-title>{pageTitle}</ion-title>
+        <ion-title role="heading" aria-level="1">
+          {pageTitle}
+        </ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content id="__id__" class="ion-padding">

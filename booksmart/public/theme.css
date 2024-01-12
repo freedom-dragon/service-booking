@@ -1,4 +1,5 @@
 /* theme color */
+/* color generator: https://ionicframework.com/docs/theming/color-generator */
 :root {
   --ion-color-primary: #68a1e2;
   --ion-color-primary-rgb: 104, 161, 226;
