@@ -21,8 +21,9 @@ id integer PK
 method_id integer FK >- method.id
 url_id integer FK >- url.id
 user_agent_id integer NULL FK >- user_agent.id
-timestamp integer
+request_session_id integer NULL FK >0- request_session.id
 user_id integer NULL FK >0- user.id
+timestamp integer
 
 
 method
@@ -66,6 +67,14 @@ id integer PK
 last_request_log_id integer
 
 
+request_session
+---------------
+id integer PK
+language text NULL
+timezone text NULL
+timezone_offset integer NULL
+
+
 user
 ----
 id integer PK
@@ -83,6 +92,8 @@ passcode char(6)
 email varchar(320)
 request_time integer
 revoke_time integer NULL
+match_id integer NULL FK >0- verification_attempt.id
+user_id integer NULL FK >0- user.id
 
 
 verification_attempt
@@ -90,7 +101,6 @@ verification_attempt
 id integer PK
 passcode char(6)
 email varchar(320)
-match_id integer NULL FK >0- verification_code.id
 
 
 # zoom: 1.000
@@ -101,13 +111,14 @@ match_id integer NULL FK >0- verification_code.id
 # diagram-text: #000000
 # table-bg: #ffffff
 # table-text: #000000
-# request_log (74, 55)
-# method (448, 16)
-# url (450, 131)
-# user_agent (448, 243)
-# ua_type (901, 232)
-# ua_bot (901, 385)
-# ua_stat (714, 62)
-# user (445, 621)
-# verification_code (53, 531)
-# verification_attempt (53, 337)
+# request_log (50, 120)
+# method (450, 15)
+# url (450, 130)
+# user_agent (450, 245)
+# ua_type (845, 250)
+# ua_bot (845, 410)
+# ua_stat (715, 60)
+# request_session (450, 445)
+# user (450, 680)
+# verification_code (50, 550)
+# verification_attempt (50, 400)

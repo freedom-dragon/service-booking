@@ -8,17 +8,23 @@ else
   name="$@"
 fi
 
+# trim spaces
+# replace hyphen to space
 # e.g. user agents
-name="$(echo "$name" | sed -r 's/^ +//g' | sed -r 's/ +$//g')"
+name="$(echo "$name" | sed 's/-/ /g' | sed -r 's/^ +//g' | sed -r 's/ +$//g')"
 
+# capitalize
 # e.g. User Agents
-title="$(echo "$name" | sed -r 's/-/ /g' | sed -r 's/ (\w)/ \U\1/g' | sed -r 's/^(\w)/\U\1/')"
+title="$(node -p "'$name'.replace(/-/g,' ').replace(/(^| )\w/g,s=>s.toUpperCase())")"
 
+# remove spaces
 # e.g. UserAgents
 id="$(echo "$title" | sed -r 's/ //g')"
 
+# lowercase
+# replace spaces to hyphen
 # e.g. user-agents
-url="$(echo "$name" | sed -r 's/ /-/g' | sed -r 's/(\w)/\l\1/g')"
+url="$(echo "$name" | awk '{print tolower($0)}' | sed 's/ /-/g')"
 
 file="server/app/pages/$url.tsx"
 
@@ -31,9 +37,10 @@ if [ -f "$file" ]; then
   fi
 fi
 
-cat "server/app/pages/template.tsx" \
+cat "server/app/pages/route-template.tsx" \
   | sed "s/__id__/$id/" \
   | sed "s/__title__/$title/" \
+  | sed "s/__name__/$name/" \
   | sed "s/__url__/$url/" \
   > "$file"
 
@@ -44,5 +51,5 @@ file="server/app/routes.tsx"
 echo "import $id from './pages/$url.js'" > "$file.tmp"
 cat "$file" >> "$file.tmp"
 mv "$file.tmp" "$file"
-sed -i "s/let routeDict: Routes = {/let routeDict: Routes = {\n  ...$id.routes,/" "$file"
+sed -i '' "s/let routeDict: Routes = {/let routeDict: Routes = {\n  ...$id.routes,/" "$file"
 echo "updated $file"

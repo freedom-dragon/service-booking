@@ -5,7 +5,6 @@ import { o } from '../jsx/jsx.js'
 import { Node } from '../jsx/types.js'
 import { mapArray } from './fragment.js'
 import { MenuRoute, isCurrentMenuRoute } from './menu.js'
-import { Link } from './router.js'
 import Style from './style.js'
 import { getAuthUserId } from '../auth/user.js'
 
@@ -127,15 +126,16 @@ function Sidebar(
           {mapArray(attrs.menuRoutes, route =>
             (route.guestOnly && hasLogin) ||
             (route.userOnly && !hasLogin) ? null : (
-              <Link
+              <a
                 class={flagsToClassName({
                   'sidebar-menu-item': true,
                   'selected': isCurrentMenuRoute(currentUrl, route),
                 })}
                 href={route.menuUrl || route.url}
+                onclick={route.menuFullNavigate ? undefined : 'emitHref(event)'}
               >
                 {route.menuText}
-              </Link>
+              </a>
             ),
           )}
         </div>

@@ -17,13 +17,11 @@ export type UaType = {
   count: number
 }
 
-export type User = {
+export type RequestSession = {
   id?: null | number
-  username: null | string
-  password_hash: null | string // char(60)
-  email: null | string
-  tel: null | string
-  avatar: null | string
+  language: null | string
+  timezone: null | string
+  timezone_offset: null | number
 }
 
 export type UaBot = {
@@ -47,6 +45,15 @@ export type UaStat = {
   last_request_log_id: number
 }
 
+export type User = {
+  id?: null | number
+  username: null | string
+  password_hash: null | string // char(60)
+  email: null | string
+  tel: null | string
+  avatar: null | string
+}
+
 export type RequestLog = {
   id?: null | number
   method_id: number
@@ -55,9 +62,17 @@ export type RequestLog = {
   url?: Url
   user_agent_id: null | number
   user_agent?: UserAgent
-  timestamp: number
+  request_session_id: null | number
+  request_session?: RequestSession
   user_id: null | number
   user?: User
+  timestamp: number
+}
+
+export type VerificationAttempt = {
+  id?: null | number
+  passcode: string // char(6)
+  email: string
 }
 
 export type VerificationCode = {
@@ -66,27 +81,24 @@ export type VerificationCode = {
   email: string
   request_time: number
   revoke_time: null | number
-}
-
-export type VerificationAttempt = {
-  id?: null | number
-  passcode: string // char(6)
-  email: string
   match_id: null | number
-  match?: VerificationCode
+  match?: VerificationAttempt
+  user_id: null | number
+  user?: User
 }
 
 export type DBProxy = {
   method: Method[]
   url: Url[]
   ua_type: UaType[]
-  user: User[]
+  request_session: RequestSession[]
   ua_bot: UaBot[]
   user_agent: UserAgent[]
   ua_stat: UaStat[]
+  user: User[]
   request_log: RequestLog[]
-  verification_code: VerificationCode[]
   verification_attempt: VerificationAttempt[]
+  verification_code: VerificationCode[]
 }
 
 export let proxy = proxySchema<DBProxy>({
@@ -95,7 +107,7 @@ export let proxy = proxySchema<DBProxy>({
     method: [],
     url: [],
     ua_type: [],
-    user: [],
+    request_session: [],
     ua_bot: [],
     user_agent: [
       /* foreign references */
@@ -103,17 +115,20 @@ export let proxy = proxySchema<DBProxy>({
       ['ua_bot', { field: 'ua_bot_id', table: 'ua_bot' }],
     ],
     ua_stat: [],
+    user: [],
     request_log: [
       /* foreign references */
       ['method', { field: 'method_id', table: 'method' }],
       ['url', { field: 'url_id', table: 'url' }],
       ['user_agent', { field: 'user_agent_id', table: 'user_agent' }],
+      ['request_session', { field: 'request_session_id', table: 'request_session' }],
       ['user', { field: 'user_id', table: 'user' }],
     ],
-    verification_code: [],
-    verification_attempt: [
+    verification_attempt: [],
+    verification_code: [
       /* foreign references */
-      ['match', { field: 'match_id', table: 'verification_code' }],
+      ['match', { field: 'match_id', table: 'verification_attempt' }],
+      ['user', { field: 'user_id', table: 'user' }],
     ],
   },
 })

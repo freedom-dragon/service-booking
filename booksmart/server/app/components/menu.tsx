@@ -2,7 +2,6 @@ import { flagsToClassName } from '../jsx/html.js'
 import { o } from '../jsx/jsx.js'
 import type { attrs, Node } from '../jsx/types'
 import { mapArray } from './fragment.js'
-import { Link } from './router.js'
 import { Style } from './style.js'
 import { Context, getContextUrl } from '../context.js'
 import { capitalize } from '@beenotung/tslib/string.js'
@@ -13,6 +12,7 @@ export type MenuRoute = {
   menuText: string
   menuUrl?: string // optional, default to be same as PageRoute.url
   menuMatchPrefix?: boolean
+  menuFullNavigate?: boolean // default false to enable ws updates
   guestOnly?: boolean
   userOnly?: boolean
 }
@@ -62,14 +62,15 @@ export function Menu(
               ),
           ),
           route => (
-            <Link
+            <a
               href={route.menuUrl || route.url}
               class={flagsToClassName({
                 selected: isCurrentMenuRoute(currentUrl, route),
               })}
+              onclick={route.menuFullNavigate ? undefined : 'emitHref(event)'}
             >
               {route.menuText}
-            </Link>
+            </a>
           ),
           attrs.separator,
         )}

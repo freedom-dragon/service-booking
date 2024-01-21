@@ -14,6 +14,7 @@ import { UserMessageInGuestView } from './profile.js'
 import { getAuthUserId, writeUserIdToCookie } from '../auth/user.js'
 import Style from '../components/style.js'
 import { IonBackButton } from '../components/ion-back-button.js'
+import { wsStatus } from '../components/ws-status.js'
 
 let style = Style(/* css */ `
 #login .field {
@@ -33,6 +34,7 @@ let LoginPage = (
 if (config.layout_type === LayoutType.ionic) {
   LoginPage = (
     <>
+      {style}
       <ion-header>
         <ion-toolbar color="primary">
           <IonBackButton href="/" backText="Home" color="light" />
@@ -41,11 +43,11 @@ if (config.layout_type === LayoutType.ionic) {
       </ion-header>
       <ion-content class="ion-padding">
         <div id="login">
-          {style}
           <h1>Welcome back to {config.short_site_name}</h1>
           <p>{commonTemplatePageText}</p>
           <Main />
         </div>
+        {wsStatus.safeArea}
       </ion-content>
     </>
   )
@@ -56,14 +58,9 @@ function Main(_attrs: {}, context: Context) {
   return user_id ? <UserMessageInGuestView user_id={user_id} /> : guestView
 }
 
-let guestView = (
-  <>
-    <div>Login with:</div>
-    <form
-      method="POST"
-      action="/verify/email/submit"
-      // onsubmit="emitForm(event)"
-    >
+let emailFormBody =
+  config.layout_type !== LayoutType.ionic ? (
+    <>
       <div class="field">
         <label>
           Email
@@ -79,9 +76,40 @@ let guestView = (
         </label>
       </div>
       <input type="submit" value="Verify" />
-    </form>
-    <div class="or-line flex-center">or</div>
-    <form method="post" action="/login/with/password/submit">
+    </>
+  ) : (
+    <>
+      <ion-list>
+        <ion-item>
+          <ion-input
+            label="Email"
+            label-placement="floating"
+            type="email"
+            name="email"
+            autocomplete="email"
+          ></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-checkbox name="include_link" slot="start"></ion-checkbox>
+          <ion-label>Include magic link</ion-label>
+        </ion-item>
+        <ion-note color="dark">
+          <div class="ion-padding-horizontal">
+            (More convince but may be treated as spam)
+          </div>
+        </ion-note>
+      </ion-list>
+      <div class="ion-text-center ion-margin">
+        <ion-button type="submit" fill="block" color="tertiary">
+          Verify
+        </ion-button>
+      </div>
+    </>
+  )
+
+let passwordFormBody =
+  config.layout_type !== LayoutType.ionic ? (
+    <>
       <label>
         Username or email address
         <div class="input-container">
@@ -102,6 +130,50 @@ let guestView = (
         <input type="submit" value="Login" />
       </div>
       <Message />
+    </>
+  ) : (
+    <>
+      <ion-list>
+        <ion-item>
+          <ion-input
+            label="Username or email address"
+            label-placement="floating"
+            name="loginId"
+            autocomplete="username"
+          ></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-input
+            label="Password"
+            label-placement="floating"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+          ></ion-input>
+        </ion-item>
+      </ion-list>
+      <div class="ion-text-center ion-margin">
+        <ion-button type="submit" fill="block" color="primary">
+          Login
+        </ion-button>
+      </div>
+      <Message />
+    </>
+  )
+
+let guestView = (
+  <>
+    <div>Login with:</div>
+    <form
+      method="POST"
+      action="/verify/email/submit"
+      // onsubmit="emitForm(event)"
+    >
+      {emailFormBody}
+    </form>
+    <div class="or-line flex-center">or</div>
+    <form method="post" action="/login/submit">
+      {passwordFormBody}
     </form>
     <div>
       New to {config.short_site_name}?{' '}
@@ -109,76 +181,6 @@ let guestView = (
     </div>
   </>
 )
-if (config.layout_type === LayoutType.ionic) {
-  guestView = (
-    <>
-      <div>Login with:</div>
-      <form
-        method="POST"
-        action="/verify/email/submit"
-        // onsubmit="emitForm(event)"
-      >
-        <ion-list>
-          <ion-item>
-            <ion-input
-              label="Email"
-              label-placement="floating"
-              type="email"
-              name="email"
-              autocomplete="email"
-            ></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-checkbox name="include_link" slot="start"></ion-checkbox>
-            <ion-label>Include magic link</ion-label>
-          </ion-item>
-          <ion-note color="dark">
-            <div class="ion-padding-horizontal">
-              (More convince but may be treated as spam)
-            </div>
-          </ion-note>
-        </ion-list>
-        <div class="ion-text-center ion-margin">
-          <ion-button type="submit" fill="block" color="tertiary">
-            Verify
-          </ion-button>
-        </div>
-      </form>
-      <div class="or-line flex-center">or</div>
-      <form method="post" action="/login/with/password/submit">
-        <ion-list>
-          <ion-item>
-            <ion-input
-              label="Username or email address"
-              label-placement="floating"
-              name="loginId"
-              autocomplete="username"
-            ></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input
-              label="Password"
-              label-placement="floating"
-              name="password"
-              type="password"
-              autocomplete="current-password"
-            ></ion-input>
-          </ion-item>
-        </ion-list>
-        <div class="ion-text-center ion-margin">
-          <ion-button type="submit" fill="block" color="primary">
-            Login
-          </ion-button>
-        </div>
-        <Message />
-      </form>
-      <div>
-        New to {config.short_site_name}?{' '}
-        <Link href="/register">Create an account</Link>.
-      </div>
-    </>
-  )
-}
 
 let codes: Record<string, string> = {
   not_found: 'user not found',
