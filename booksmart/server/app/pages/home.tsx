@@ -11,22 +11,11 @@ import SourceCode from '../components/source-code.js'
 let content = (
   <div id="home">
     <h1>Home Page</h1>
-    <p>You can get started by replacing the contents in this page</p>
     <p>
-      When the browser load this url, the server responses complete html content
-      to the GET request. This allows the browser to perform meaningful paint as
-      soon as possible. And it's ideal for SEO.
+      A booking system for shops of all sizes. From one-man micro startups to
+      mid-size companies.
     </p>
-    <p>
-      Try some reactive demo:{' '}
-      <a href="https://liveviews.cc/thermostat" target="_blank">
-        Thermostat
-      </a>
-      ,{' '}
-      <a href="https://liveviews.cc/form" target="_blank">
-        Form Demo
-      </a>
-    </p>
+    <a href="/shop-home">Demo Shop</a>
     <SourceCode page="home.tsx" />
   </div>
 )

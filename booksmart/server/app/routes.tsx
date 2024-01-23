@@ -1,3 +1,4 @@
+import ShopHome from './pages/shop-home.js'
 import { capitalize } from '@beenotung/tslib/string.js'
 import { Router } from 'url-router.ts'
 import { LayoutType, config, title } from '../config.js'
@@ -69,11 +70,13 @@ export type Routes = Record<string, PageRoute>
 
 // TODO direct support alternative urls instead of having to repeat the entry
 let routeDict: Routes = {
+  ...ShopHome.routes,
   '/': {
     title: title('Home'),
     description:
       'Getting Started with ts-liveview - a server-side rendering realtime webapp framework with progressive enhancement',
     menuText: 'Home',
+    layout_type: LayoutType.navbar,
     node: Home,
   },
   ...DemoToast.routes,
@@ -81,6 +84,7 @@ let routeDict: Routes = {
     title: title('User Agents of Visitors'),
     description: "User agents of this site's visitors",
     menuText: 'User Agents',
+    layout_type: LayoutType.navbar,
     node: UserAgents,
   },
   ...Login.routes,

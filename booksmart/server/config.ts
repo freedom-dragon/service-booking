@@ -55,7 +55,7 @@ export let config = {
   port: env.PORT,
   origin: env.ORIGIN,
   cookie_secret: env.COOKIE_SECRET,
-  site_name: 'ts-liveview Demo',
+  site_name: 'BookSmart Demo',
   short_site_name: 'demo-site',
   site_description: 'Demo website of ts-liveview',
   setup_robots_txt: false,
@@ -63,7 +63,7 @@ export let config = {
   auto_open: !production && development && epoch === 1,
   upload_dir: env.UPLOAD_DIR,
   client_target: 'es2020',
-  layout_type: LayoutType.navbar,
+  layout_type: LayoutType.ionic,
   email: {
     service: env.EMAIL_SERVICE,
     host: env.EMAIL_HOST,
