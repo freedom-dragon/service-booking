@@ -11,6 +11,7 @@ import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
 import { TimezoneDate } from 'timezone-date.ts'
 import { DAY } from '@beenotung/tslib/time.js'
+import { commonTemplatePageText } from '../components/common-template.js'
 
 let pageTitle = 'Calendar'
 let addPageTitle = 'Add Calendar'
@@ -145,14 +146,13 @@ function Main(attrs: {}, context: Context) {
           ))}
         </tbody>
       </table>
-      <hr />
-      Items
+      <ion-list-header>Events</ion-list-header>
       <ion-list>
-        {mapArray(items, item => (
-          <ion-item>
-            {item.title} ({item.slug})
-          </ion-item>
-        ))}
+        <ion-item>No events yet.</ion-item>
+      </ion-list>
+      <ion-list-header>Available Timeslots</ion-list-header>
+      <ion-list>
+        <ion-item>9am - 12nn</ion-item>
       </ion-list>
       {user ? (
         <Link href="/calendar/add" tagName="ion-button">
@@ -160,7 +160,8 @@ function Main(attrs: {}, context: Context) {
         </Link>
       ) : (
         <p>
-          You can add calendar after <Link href="/register">register</Link>.
+          You can add event / available timeslot after{' '}
+          <Link href="/login">login</Link>.
         </p>
       )}
     </>
@@ -295,6 +296,7 @@ let routes: Routes = {
     title: title(pageTitle),
     description: 'TODO',
     menuText: pageTitle,
+    menuFullNavigate: true,
     node: page,
   },
   '/calendar/add': {
