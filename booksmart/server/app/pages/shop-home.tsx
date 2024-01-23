@@ -124,7 +124,7 @@ function Main(attrs: {}, context: Context) {
         </Link>
       ) : (
         <p>
-          You can add shop home after <Link href="/register">register</Link>.
+          <Link href="/login">登入</Link>後可新增{locale.service}
         </p>
       )}
     </>
