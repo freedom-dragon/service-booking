@@ -28,6 +28,13 @@ let style = Style(/* css */ `
 #ShopHome {
 
 }
+ion-card
+ion-thumbnail {
+  --size: 8rem;
+}
+.card-text-container {
+  margin-inline-start: 1rem;
+}
 `)
 
 let page = (
@@ -56,6 +63,8 @@ let items = [
     time: '有指定可以book時間',
     options: ['正方形25cmx25cm', '長方形20cmx50cm', '圓形30cm直徑'],
     quota: '6 ppl',
+    // cover_image: 'https://picsum.photos/seed/1/256/256',
+    cover_image: '/assets/shops/lab.on.the.balconi/1.webp',
   },
   {
     name: '舒壓花畫',
@@ -64,6 +73,8 @@ let items = [
     time: '有指定可以book時間',
     options: ['正方形25cmx25cm', '長方形20cmx50cm', '圓形30cm直徑'],
     quota: '6 ppl',
+    // cover_image: 'https://picsum.photos/seed/2/256/256',
+    cover_image: '/assets/shops/lab.on.the.balconi/2.webp',
   },
   {
     name: '情侶班',
@@ -72,6 +83,8 @@ let items = [
     time: '可任選時間',
     options: ['50x70cm'],
     quota: '2 pairs 情侶',
+    // cover_image: 'https://picsum.photos/seed/3/256/256',
+    cover_image: '/assets/shops/lab.on.the.balconi/3.webp',
   },
   {
     name: '超大畫班',
@@ -80,6 +93,8 @@ let items = [
     time: '可任選時間',
     options: ['📐 量身訂做'],
     quota: '1 ppl',
+    // cover_image: 'https://picsum.photos/seed/4/256/256',
+    cover_image: '/assets/shops/lab.on.the.balconi/4.webp',
   },
 ]
 
@@ -94,27 +109,18 @@ function Main(attrs: {}, context: Context) {
       <ion-list>
         {mapArray(items, item => (
           <ion-card>
-            <ion-card-header>
-              <ion-card-title>
-                {item.name} ({item.hours})
-              </ion-card-title>
-            </ion-card-header>
-            <ion-list>
-              <ion-item lines="none">
-                <ion-label>Price: {item.price}</ion-label>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-label>Quota: {item.quota}</ion-label>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-label>Options:</ion-label>
-              </ion-item>
-              <div class="ion-margin-start">
-                {mapArray(item.options, option => (
-                  <ion-item lines="none">{option}</ion-item>
-                ))}
+            <div class="d-flex">
+              <div>
+                <ion-thumbnail>
+                  <img src={item.cover_image} />
+                </ion-thumbnail>
               </div>
-            </ion-list>
+              <div class="card-text-container">
+                <h3>{item.name}</h3>
+                <p>{item.hours}</p>
+                <p>{item.price}</p>
+              </div>
+            </div>
           </ion-card>
         ))}
       </ion-list>
