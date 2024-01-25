@@ -2,7 +2,12 @@ import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
 import { apiEndpointTitle, title } from '../../config.js'
 import Style from '../components/style.js'
-import { Context, DynamicContext, getContextFormBody } from '../context.js'
+import {
+  Context,
+  DynamicContext,
+  WsContext,
+  getContextFormBody,
+} from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { config } from '../../config.js'
@@ -11,18 +16,13 @@ import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
 import { wsStatus } from '../components/ws-status.js'
+import { Shop, proxy } from '../../../db/proxy.js'
+import { filter, find } from 'better-sqlite3-proxy'
+import { getShopLocale } from '../shop-locale.js'
 
 let pageTitle = 'The Balconi ARTLAB 香港'
 
-let locale = {
-  tutor: '畫師',
-  service: '畫班',
-}
-let data = {
-  tutorName: 'Katy',
-}
-
-let addPageTitle = 'Add ' + locale.service
+let addPageTitle = 'Add more'
 
 let style = Style(/* css */ `
 #ShopHome {
@@ -37,102 +37,56 @@ ion-thumbnail {
 }
 `)
 
-let page = (
-  <>
-    {style}
-    <ion-header>
-      <ion-toolbar color="primary">
-        {/* <IonBackButton href="/" backText="Home" /> */}
-        <ion-title role="heading" aria-level="1">
-          {pageTitle}
-        </ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content id="ShopHome" class="ion-padding">
-      <Main />
-      {wsStatus.safeArea}
-    </ion-content>
-  </>
-)
-
-let items = [
-  {
-    name: '體驗班',
-    hours: '2 hours',
-    price: '$380/位',
-    time: '有指定可以book時間',
-    options: ['正方形25cmx25cm', '長方形20cmx50cm', '圓形30cm直徑'],
-    quota: '6 ppl',
-    // cover_image: 'https://picsum.photos/seed/1/256/256',
-    cover_image: '/assets/shops/lab.on.the.balconi/1.webp',
-  },
-  {
-    name: '舒壓花畫',
-    hours: '2.5 - 3 hours',
-    price: '$580/位',
-    time: '有指定可以book時間',
-    options: ['正方形25cmx25cm', '長方形20cmx50cm', '圓形30cm直徑'],
-    quota: '6 ppl',
-    // cover_image: 'https://picsum.photos/seed/2/256/256',
-    cover_image: '/assets/shops/lab.on.the.balconi/2.webp',
-  },
-  {
-    name: '情侶班',
-    hours: '3 - 3.5 hours',
-    price: '$980/2位',
-    time: '可任選時間',
-    options: ['50x70cm'],
-    quota: '2 pairs 情侶',
-    // cover_image: 'https://picsum.photos/seed/3/256/256',
-    cover_image: '/assets/shops/lab.on.the.balconi/3.webp',
-  },
-  {
-    name: '超大畫班',
-    hours: '4 - 5 hours',
-    price: '📐 量身訂做',
-    time: '可任選時間',
-    options: ['📐 量身訂做'],
-    quota: '1 ppl',
-    // cover_image: 'https://picsum.photos/seed/4/256/256',
-    cover_image: '/assets/shops/lab.on.the.balconi/4.webp',
-  },
-]
-
-function Main(attrs: {}, context: Context) {
+function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
+  let { shop } = attrs
+  let { name, slug, owner_name } = shop
   let user = getAuthUser(context)
-
+  let services = filter(proxy.service, { shop_id: shop.id! })
+  let locale = getShopLocale(shop.id!)
   return (
     <>
-      <h2>
-        {data.tutorName} {locale.service}
-      </h2>
-      <ion-list>
-        {mapArray(items, item => (
-          <ion-card>
-            <div class="d-flex">
-              <div>
-                <ion-thumbnail>
-                  <img src={item.cover_image} />
-                </ion-thumbnail>
+      {style}
+      <ion-header>
+        <ion-toolbar color="primary">
+          {/* <IonBackButton href="/" backText="Home" /> */}
+          <ion-title role="heading" aria-level="1">
+            {name}
+          </ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content id="ShopHome" class="ion-padding">
+        <h2>
+          {owner_name} {locale.service}
+        </h2>
+        <ion-list>
+          {mapArray(services, service => (
+            <Link tagName="ion-card" href={'/service-detail'}>
+              <div class="d-flex">
+                <div>
+                  <ion-thumbnail>
+                    <img src={`/assets/shops/${slug}/${service.id}.webp`} />
+                  </ion-thumbnail>
+                </div>
+                <div class="card-text-container">
+                  <h3>{service.name}</h3>
+                  <p>{service.hours}</p>
+                  <p>{service.price}</p>
+                </div>
               </div>
-              <div class="card-text-container">
-                <h3>{item.name}</h3>
-                <p>{item.hours}</p>
-                <p>{item.price}</p>
-              </div>
-            </div>
-          </ion-card>
-        ))}
-      </ion-list>
-      {user ? (
-        <Link href="/shop-home/add" tagName="ion-button">
-          {addPageTitle}
-        </Link>
-      ) : (
-        <p>
-          <Link href="/login">登入</Link>後可新增{locale.service}
-        </p>
-      )}
+            </Link>
+          ))}
+        </ion-list>
+        {user ? (
+          <Link href="/shop-home/add" tagName="ion-button">
+            {addPageTitle}
+          </Link>
+        ) : (
+          <p>
+            <Link href="/login">登入</Link>後可新增{locale.service}
+          </p>
+        )}
+        {wsStatus.safeArea}
+      </ion-content>
     </>
   )
 }
@@ -262,12 +216,24 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
 }
 
 let routes: Routes = {
-  '/shop-home': {
-    title: title(pageTitle),
-    description: 'TODO',
-    menuText: pageTitle,
-    menuFullNavigate: true,
-    node: page,
+  '/shop/:slug': {
+    resolve(context) {
+      let slug = context.routerMatch?.params.slug
+      let shop = find(proxy.shop, { slug })
+      if (!shop) {
+        return {
+          title: title('shop not found'),
+          description: 'The shop is not found by slug',
+          node: <Redirect href="/" />,
+        }
+      }
+      let shop_name = shop.name
+      return {
+        title: title(shop_name),
+        description: 'Booking page for ' + shop_name,
+        node: <ShopHome shop={shop} />,
+      }
+    },
   },
   '/shop-home/add': {
     title: title(addPageTitle),

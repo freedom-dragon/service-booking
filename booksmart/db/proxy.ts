@@ -87,6 +87,40 @@ export type VerificationCode = {
   user?: User
 }
 
+export type Shop = {
+  id?: null | number
+  slug: string
+  name: string
+  owner_name: string
+}
+
+export type ShopLocale = {
+  id?: null | number
+  shop_id: number
+  shop?: Shop
+  key: string
+  value: string
+}
+
+export type Service = {
+  id?: null | number
+  shop_id: number
+  shop?: Shop
+  name: string
+  hours: string
+  price: string
+  time: string
+  quota: string
+  book_duration_minute: number
+}
+
+export type ServiceOption = {
+  id?: null | number
+  service_id: number
+  service?: Service
+  name: string
+}
+
 export type DBProxy = {
   method: Method[]
   url: Url[]
@@ -99,6 +133,10 @@ export type DBProxy = {
   request_log: RequestLog[]
   verification_attempt: VerificationAttempt[]
   verification_code: VerificationCode[]
+  shop: Shop[]
+  shop_locale: ShopLocale[]
+  service: Service[]
+  service_option: ServiceOption[]
 }
 
 export let proxy = proxySchema<DBProxy>({
@@ -129,6 +167,19 @@ export let proxy = proxySchema<DBProxy>({
       /* foreign references */
       ['match', { field: 'match_id', table: 'verification_attempt' }],
       ['user', { field: 'user_id', table: 'user' }],
+    ],
+    shop: [],
+    shop_locale: [
+      /* foreign references */
+      ['shop', { field: 'shop_id', table: 'shop' }],
+    ],
+    service: [
+      /* foreign references */
+      ['shop', { field: 'shop_id', table: 'shop' }],
+    ],
+    service_option: [
+      /* foreign references */
+      ['service', { field: 'service_id', table: 'service' }],
     ],
   },
 })

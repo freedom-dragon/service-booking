@@ -103,6 +103,41 @@ passcode char(6)
 email varchar(320)
 
 
+shop
+----
+id integer PK
+slug text unique
+name text
+owner_name text
+
+
+shop_locale
+-----------
+id integer PK
+shop_id integer FK >0- shop.id
+key text
+value text
+
+
+service
+-------
+id integer PK
+shop_id integer FK >0- shop.id
+name text
+hours text
+price text
+time text
+quota text
+book_duration_minute integer
+
+
+service_option
+--------------
+id integer PK
+service_id integer FK >0- service.id
+name text
+
+
 # zoom: 1.000
 # view: (0, 0)
 # text-bg: #6495ed
@@ -122,3 +157,7 @@ email varchar(320)
 # user (450, 680)
 # verification_code (50, 550)
 # verification_attempt (50, 400)
+# shop (879, 708)
+# shop_locale (1290, 614)
+# service (884, 904)
+# service_option (1330, 907)

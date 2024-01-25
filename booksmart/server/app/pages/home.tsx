@@ -15,7 +15,7 @@ let content = (
       A booking system for shops of all sizes. From one-man micro startups to
       mid-size companies.
     </p>
-    <a href="/shop-home">Demo Shop</a>
+    <a href="/shop/lab.on.the.balconi">Demo Shop</a>
     <SourceCode page="home.tsx" />
   </div>
 )
