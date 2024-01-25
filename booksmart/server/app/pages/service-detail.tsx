@@ -2,93 +2,91 @@ import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
 import { apiEndpointTitle, title } from '../../config.js'
 import Style from '../components/style.js'
-import {
-  Context,
-  DynamicContext,
-  WsContext,
-  getContextFormBody,
-} from '../context.js'
+import { Context, DynamicContext, getContextFormBody } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { config } from '../../config.js'
 import { object, string } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
-import { wsStatus } from '../components/ws-status.js'
-import { Shop, proxy } from '../../../db/proxy.js'
-import { filter, find } from 'better-sqlite3-proxy'
-import { getServiceCoverImage, getShopLocale } from '../shop-store.js'
+import { Service, proxy } from '../../../db/proxy.js'
+import { find } from 'better-sqlite3-proxy'
+import { getServiceCoverImage } from '../shop-store.js'
+import { Swiper } from '../components/swiper.js'
 
-let pageTitle = 'The Balconi ARTLAB 香港'
-
-let addPageTitle = 'Add more'
+let pageTitle = 'Service Detail'
+let addPageTitle = 'Add Service Detail'
 
 let style = Style(/* css */ `
-#ShopHome {
+#ServiceDetail {
 
-}
-ion-card
-ion-thumbnail {
-  --size: 8rem;
-}
-.card-text-container {
-  margin-inline-start: 1rem;
 }
 `)
 
-function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
-  let { shop } = attrs
-  let { name, slug, owner_name } = shop
-  let user = getAuthUser(context)
-  let services = filter(proxy.service, { shop_id: shop.id! })
-  let locale = getShopLocale(shop.id!)
+function ServiceDetail(attrs: { service: Service }) {
+  let { service } = attrs
+  let shop_slug = service.shop!.slug
   return (
     <>
       {style}
       <ion-header>
         <ion-toolbar color="primary">
+          <IonBackButton
+            href={'/shop/' + shop_slug}
+            backText="其他畫班"
+            color="light"
+          />
           <ion-title role="heading" aria-level="1">
-            {name}
+            {service.name}
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content id="ShopHome" class="ion-padding">
-        <h2>
-          {owner_name} {locale.service}
-        </h2>
-        <ion-list>
-          {mapArray(services, service => (
-            <Link
-              tagName="ion-card"
-              href={`/shop/${shop.slug}/service/${service.id}`}
-            >
-              <div class="d-flex">
-                <div>
-                  <ion-thumbnail>
-                    <img src={getServiceCoverImage(slug, service.id!)} />
-                  </ion-thumbnail>
-                </div>
-                <div class="card-text-container">
-                  <h3>{service.name}</h3>
-                  <p>{service.hours}</p>
-                  <p>{service.price}</p>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </ion-list>
-        {user ? (
-          <Link href="/shop-home/add" tagName="ion-button">
-            {addPageTitle}
-          </Link>
-        ) : (
-          <p>
-            <Link href="/login">登入</Link>後可新增{locale.service}
-          </p>
-        )}
-        {wsStatus.safeArea}
+      <ion-content id="ServiceDetail">
+        <Swiper
+          id="ServiceImages"
+          images={[
+            <img src={getServiceCoverImage(shop_slug, service.id!)} />,
+            <img src="https://picsum.photos/seed/1/512/512" />,
+            <img src="https://picsum.photos/seed/2/512/512" />,
+            <img src="https://picsum.photos/seed/3/512/512" />,
+          ]}
+          showPagination
+        />
+        <div class="ion-padding">
+          Items
+          <Main />
+        </div>
       </ion-content>
+    </>
+  )
+}
+
+let items = [
+  { title: 'Android', slug: 'md' },
+  { title: 'iOS', slug: 'ios' },
+]
+
+function Main(attrs: {}, context: Context) {
+  let user = getAuthUser(context)
+  return (
+    <>
+      <ion-list>
+        {mapArray(items, item => (
+          <ion-item>
+            {item.title} ({item.slug})
+          </ion-item>
+        ))}
+      </ion-list>
+      {user ? (
+        <Link href="/service-detail/add" tagName="ion-button">
+          {addPageTitle}
+        </Link>
+      ) : (
+        <p>
+          You can add service detail after{' '}
+          <Link href="/register">register</Link>.
+        </p>
+      )}
     </>
   )
 }
@@ -96,23 +94,23 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
 let addPage = (
   <>
     {Style(/* css */ `
-#AddShopHome .hint {
+#AddServiceDetail .hint {
   margin-inline-start: 1rem;
   margin-block: 0.25rem;
 }
 `)}
     <ion-header>
       <ion-toolbar>
-        <IonBackButton href="/shop-home" backText={pageTitle} />
+        <IonBackButton href="/service-detail" backText={pageTitle} />
         <ion-title role="heading" aria-level="1">
           {addPageTitle}
         </ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content id="AddShopHome" class="ion-padding">
+    <ion-content id="AddServiceDetail" class="ion-padding">
       <form
         method="POST"
-        action="/shop-home/add/submit"
+        action="/service-detail/add/submit"
         onsubmit="emitForm(event)"
       >
         <ion-list>
@@ -170,17 +168,17 @@ function Submit(attrs: {}, context: DynamicContext) {
     if (!user) throw 'You must be logged in to submit ' + pageTitle
     let body = getContextFormBody(context)
     let input = submitParser.parse(body)
-    // let id = items.push({
-    //   title: input.title,
-    //   slug: input.slug,
-    // })
-    let id = 1 // TODO
-    return <Redirect href={`/shop-home/result?id=${id}`} />
+    let id = items.push({
+      title: input.title,
+      slug: input.slug,
+    })
+    return <Redirect href={`/service-detail/result?id=${id}`} />
   } catch (error) {
     return (
       <Redirect
         href={
-          '/shop-home/result?' + new URLSearchParams({ error: String(error) })
+          '/service-detail/result?' +
+          new URLSearchParams({ error: String(error) })
         }
       />
     )
@@ -195,19 +193,19 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
     <>
       <ion-header>
         <ion-toolbar>
-          <IonBackButton href="/shop-home/add" backText="Form" />
+          <IonBackButton href="/service-detail/add" backText="Form" />
           <ion-title role="heading" aria-level="1">
             Submitted {pageTitle}
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content id="AddShopHome" class="ion-padding">
+      <ion-content id="AddServiceDetail" class="ion-padding">
         {error ? (
           renderError(error, context)
         ) : (
           <>
             <p>Your submission is received (#{id}).</p>
-            <Link href="/shop-home" tagName="ion-button">
+            <Link href="/service-detail" tagName="ion-button">
               Back to {pageTitle}
             </Link>
           </>
@@ -218,38 +216,40 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
 }
 
 let routes: Routes = {
-  '/shop/:slug': {
+  '/shop/:slug/service/:id': {
     resolve(context) {
       let slug = context.routerMatch?.params.slug
       let shop = find(proxy.shop, { slug })
-      if (!shop) {
+      let id = context.routerMatch?.params.id
+      let service = proxy.service[id]
+      if (!service) {
         return {
-          title: title('shop not found'),
-          description: 'The shop is not found by slug',
-          node: <Redirect href="/" />,
+          title: title('service not found'),
+          description: 'The service is not found by id',
+          node: <Redirect href={`/shop/${slug}`} />,
         }
       }
-      let shop_name = shop.name
+      let service_name = service.name
       return {
-        title: title(shop_name),
-        description: 'Booking page for ' + shop_name,
-        node: <ShopHome shop={shop} />,
+        title: title(service_name + ' | ' + shop?.name),
+        description: 'Detail page for ' + service_name,
+        node: <ServiceDetail service={service} />,
       }
     },
   },
-  '/shop-home/add': {
+  '/service-detail/add': {
     title: title(addPageTitle),
     description: 'TODO',
     node: <AddPage />,
     streaming: false,
   },
-  '/shop-home/add/submit': {
+  '/service-detail/add/submit': {
     title: apiEndpointTitle,
     description: 'TODO',
     node: <Submit />,
     streaming: false,
   },
-  '/shop-home/result': {
+  '/service-detail/result': {
     title: apiEndpointTitle,
     description: 'TODO',
     node: <SubmitResult />,

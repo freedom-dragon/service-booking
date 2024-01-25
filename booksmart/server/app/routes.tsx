@@ -1,3 +1,4 @@
+import ServiceDetail from './pages/service-detail.js'
 import Calendar from './pages/calendar.js'
 import ShopHome from './pages/shop-home.js'
 import { capitalize } from '@beenotung/tslib/string.js'
@@ -71,6 +72,7 @@ export type Routes = Record<string, PageRoute>
 
 // TODO direct support alternative urls instead of having to repeat the entry
 let routeDict: Routes = {
+  ...ServiceDetail.routes,
   ...Calendar.routes,
   ...ShopHome.routes,
   '/': {

@@ -12,3 +12,7 @@ export function getShopLocale(shop_id: number) {
     service: string
   }
 }
+
+export function getServiceCoverImage(shop_slug: string, service_id: number) {
+  return `/assets/shops/${shop_slug}/${service_id}.webp`
+}
