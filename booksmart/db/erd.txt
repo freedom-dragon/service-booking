@@ -135,6 +135,7 @@ time text
 quota text
 address text NULL
 address_remark text NULL
+max_option integer NULL
 
 
 service_option

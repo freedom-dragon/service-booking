@@ -118,6 +118,7 @@ export type Service = {
   quota: string
   address: null | string
   address_remark: null | string
+  max_option: null | number
 }
 
 export type ServiceOption = {

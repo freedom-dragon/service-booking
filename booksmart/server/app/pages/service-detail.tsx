@@ -10,7 +10,7 @@ import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
 import { Service, proxy } from '../../../db/proxy.js'
-import { find } from 'better-sqlite3-proxy'
+import { filter, find } from 'better-sqlite3-proxy'
 import { getServiceCoverImage, getServiceImages } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
 
@@ -27,9 +27,10 @@ function ServiceDetail(attrs: { service: Service }) {
   let { service } = attrs
   let shop = service.shop!
   let shop_slug = shop!.slug
-  let service_slug = service.slug
+  let { slug: service_slug, max_option } = service
   let address = service.address || shop.address
   let address_remark = service.address_remark || shop.address_remark
+  let options = filter(proxy.service_option, { service_id: service.id! })
   return (
     <>
       {style}
@@ -122,6 +123,28 @@ function ServiceDetail(attrs: { service: Service }) {
               </div>
               <ion-label>{address}</ion-label>
             </ion-item>
+          )}
+          <ion-item lines="none">
+            <div slot="start">
+              <ion-icon name="options-outline"></ion-icon> 款式
+            </div>
+          </ion-item>
+          {max_option == 1 ? (
+            <ion-radio-group value={options[0]?.id}>
+              {mapArray(options, option => (
+                <ion-item>
+                  <ion-radio value={option.id}>{option.name}</ion-radio>
+                </ion-item>
+              ))}
+            </ion-radio-group>
+          ) : (
+            <ion-list class="ion-margin-horizontal">
+              {mapArray(options, option => (
+                <ion-item>
+                  <ion-checkbox value={option.id}>{option.name}</ion-checkbox>
+                </ion-item>
+              ))}
+            </ion-list>
           )}
         </ion-list>
 
