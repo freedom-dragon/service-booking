@@ -13,6 +13,9 @@ ${ErrorStyle}
 ${UpdateMessageStyle}
 ${CommonStyle}
 ${FormStyle}
+.brand a {
+  text-decoration: none;
+}
 `
 
 export let webAppStyle = Style(appStyle + '\n' + WebStyle)

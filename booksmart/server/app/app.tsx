@@ -40,6 +40,7 @@ import { logRequest } from './log.js'
 import { WindowStub } from '../../client/internal.js'
 import { updateRequestSession } from '../../db/store.js'
 import verificationCode from './pages/verification-code.js'
+import { Link } from './components/router.js'
 
 if (config.development) {
   scanTemplateDir('template')
@@ -85,13 +86,13 @@ let scripts = config.development ? (
 )
 
 let brand = (
-  <div style="color: darkblue; font-weight: bold">
-    <span style="font-size: 1.7rem" class="text-no-wrap">
-      ts-liveview
-    </span>{' '}
+  <div style="color: darkblue; font-weight: bold" class="brand">
+    <Link style="font-size: 1.7rem" class="text-no-wrap" href="/">
+      BookSmart
+    </Link>{' '}
     <div class="text-no-wrap">
-      <a href="https://news.ycombinator.com/item?id=22830472">HN</a>{' '}
-      <a href="https://github.com/beenotung/ts-liveview">git</a>
+      <a href="https://www.playsmarthk.com/">PlaySmart</a> x{' '}
+      <a href="https://freedomdragon.ltd/">Freedom Dragon</a>
     </div>
   </div>
 )
