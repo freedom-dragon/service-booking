@@ -108,6 +108,7 @@ shop
 id integer PK
 slug text unique
 name text
+bio text NULL
 owner_name text
 address text NULL
 address_remark text NULL

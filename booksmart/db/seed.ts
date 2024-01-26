@@ -8,6 +8,7 @@ import { Service, proxy } from './proxy'
 proxy.shop[1] = {
   name: 'The Balconi ARTLAB 香港',
   slug: 'lab.on.the.balconi',
+  bio: 'Affordable art for all 🛋️ 𝐌𝐨𝐝𝐞𝐫𝐧 𝐃𝐞𝐜𝐨𝐫 𝐏𝐚𝐢𝐧𝐭𝐢𝐧𝐠 | 𝙁𝙚𝙖𝙩𝙪𝙧𝙚 𝙬𝙖𝙡𝙡 ⚜️Vintage • Stardust • Zen',
   owner_name: 'Katy',
   address: '大角咀必發道128號宏創方20樓',
   address_remark: `

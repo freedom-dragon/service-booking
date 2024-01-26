@@ -91,6 +91,7 @@ export type Shop = {
   id?: null | number
   slug: string
   name: string
+  bio: null | string
   owner_name: string
   address: null | string
   address_remark: null | string

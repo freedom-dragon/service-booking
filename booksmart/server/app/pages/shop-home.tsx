@@ -18,7 +18,11 @@ import { getAuthUser } from '../auth/user.js'
 import { wsStatus } from '../components/ws-status.js'
 import { Shop, proxy } from '../../../db/proxy.js'
 import { filter, find } from 'better-sqlite3-proxy'
-import { getServiceCoverImage, getShopLocale } from '../shop-store.js'
+import {
+  getServiceCoverImage,
+  getShopCoverImage,
+  getShopLocale,
+} from '../shop-store.js'
 
 let pageTitle = 'The Balconi ARTLAB 香港'
 
@@ -39,7 +43,7 @@ ion-thumbnail {
 
 function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   let { shop } = attrs
-  let { name, slug, owner_name } = shop
+  let { name, slug: shop_slug, owner_name } = shop
   let user = getAuthUser(context)
   let services = filter(proxy.service, { shop_id: shop.id! })
   let locale = getShopLocale(shop.id!)
@@ -54,6 +58,10 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="ShopHome" class="ion-padding">
+        <div className="d-flex" style="gap:0.5rem">
+          <img src={getShopCoverImage(shop_slug)} />
+          <p>{shop.bio}</p>
+        </div>
         <h2>
           {owner_name} {locale.service}
         </h2>
@@ -66,7 +74,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
               <div class="d-flex">
                 <div>
                   <ion-thumbnail>
-                    <img src={getServiceCoverImage(slug, service.slug)} />
+                    <img src={getServiceCoverImage(shop_slug, service.slug)} />
                   </ion-thumbnail>
                 </div>
                 <div class="card-text-container">
