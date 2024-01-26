@@ -9,6 +9,12 @@ proxy.shop[1] = {
   name: 'The Balconi ARTLAB 香港',
   slug: 'lab.on.the.balconi',
   owner_name: 'Katy',
+  address: '大角咀必發道128號宏創方20樓',
+  address_remark: `
+- 自然採光，私人班、情侶/ 親子班之打卡首選✨
+- 泊車方便，亦可乘搭巴士2E/18/44/E21/914等，
+  或太子/南昌/奧運站步行15分鐘
+`.trim(),
 }
 
 proxy.shop_locale[1] = {
@@ -46,8 +52,8 @@ seedService({
   time: '有指定可以book時間',
   options: ['正方形25cmx25cm', '長方形20cmx50cm', '圓形30cm直徑'],
   quota: '6 ppl',
-  // cover_image: 'https://picsum.photos/seed/1/256/256',
-  // cover_image: '/assets/shops/lab.on.the.balconi/1.webp',
+  address: null,
+  address_remark: null,
 })
 
 seedService({
@@ -61,8 +67,8 @@ seedService({
   time: '有指定可以book時間',
   options: ['正方形25cmx25cm', '長方形20cmx50cm', '圓形30cm直徑'],
   quota: '6 ppl',
-  // cover_image: 'https://picsum.photos/seed/2/256/256',
-  // cover_image: '/assets/shops/lab.on.the.balconi/2.webp',
+  address: null,
+  address_remark: null,
 })
 
 seedService({
@@ -76,8 +82,8 @@ seedService({
   time: '可任選時間',
   options: ['50x70cm'],
   quota: '2 pairs 情侶',
-  // cover_image: 'https://picsum.photos/seed/3/256/256',
-  // cover_image: '/assets/shops/lab.on.the.balconi/3.webp',
+  address: null,
+  address_remark: null,
 })
 
 seedService({
@@ -91,6 +97,6 @@ seedService({
   time: '可任選時間',
   options: ['📐 量身訂做'],
   quota: '1 ppl',
-  // cover_image: 'https://picsum.photos/seed/4/256/256',
-  // cover_image: '/assets/shops/lab.on.the.balconi/4.webp',
+  address: null,
+  address_remark: null,
 })

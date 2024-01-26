@@ -109,6 +109,8 @@ id integer PK
 slug text unique
 name text
 owner_name text
+address text NULL
+address_remark text NULL
 
 
 shop_locale
@@ -126,10 +128,12 @@ shop_id integer FK >0- shop.id
 slug text
 name text
 hours text
+book_duration_minute integer
 price text
 time text
 quota text
-book_duration_minute integer
+address text NULL
+address_remark text NULL
 
 
 service_option

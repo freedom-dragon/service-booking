@@ -92,6 +92,8 @@ export type Shop = {
   slug: string
   name: string
   owner_name: string
+  address: null | string
+  address_remark: null | string
 }
 
 export type ShopLocale = {
@@ -109,10 +111,12 @@ export type Service = {
   slug: string
   name: string
   hours: string
+  book_duration_minute: number
   price: string
   time: string
   quota: string
-  book_duration_minute: number
+  address: null | string
+  address_remark: null | string
 }
 
 export type ServiceOption = {
