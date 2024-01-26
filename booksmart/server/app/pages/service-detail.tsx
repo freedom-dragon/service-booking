@@ -217,17 +217,26 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
 }
 
 let routes: Routes = {
-  '/shop/:slug/service/:id': {
+  '/shop/:shop_slug/service/:service_slug': {
     resolve(context) {
-      let slug = context.routerMatch?.params.slug
-      let shop = find(proxy.shop, { slug })
-      let id = context.routerMatch?.params.id
-      let service = proxy.service[id]
+      let { shop_slug, service_slug } = context.routerMatch?.params
+      let shop = find(proxy.shop, { slug: shop_slug })
+      if (!shop) {
+        return {
+          title: title('shop not found'),
+          description: 'The shop is not found by slug',
+          node: <Redirect href={`/`} />,
+        }
+      }
+      let service = find(proxy.service, {
+        shop_id: shop.id!,
+        slug: service_slug,
+      })
       if (!service) {
         return {
           title: title('service not found'),
-          description: 'The service is not found by id',
-          node: <Redirect href={`/shop/${slug}`} />,
+          description: 'The service is not found by slug',
+          node: <Redirect href={`/shop/${shop_slug}`} />,
         }
       }
       let service_name = service.name

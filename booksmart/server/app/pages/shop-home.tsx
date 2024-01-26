@@ -61,7 +61,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           {mapArray(services, service => (
             <Link
               tagName="ion-card"
-              href={`/shop/${shop.slug}/service/${service.id}`}
+              href={`/shop/${shop.slug}/service/${service.slug}`}
             >
               <div class="d-flex">
                 <div>
