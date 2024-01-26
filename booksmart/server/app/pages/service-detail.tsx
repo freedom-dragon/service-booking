@@ -25,8 +25,11 @@ let style = Style(/* css */ `
 
 function ServiceDetail(attrs: { service: Service }) {
   let { service } = attrs
-  let shop_slug = service.shop!.slug
+  let shop = service.shop!
+  let shop_slug = shop!.slug
   let service_slug = service.slug
+  let address = service.address || shop.address
+  let address_remark = service.address_remark || shop.address_remark
   return (
     <>
       {style}
@@ -53,6 +56,75 @@ function ServiceDetail(attrs: { service: Service }) {
           ]}
           showPagination
         />
+        <h2 class="ion-margin">{service.name}</h2>
+        <ion-list>
+          <ion-item lines="none">
+            <div slot="start">
+              <ion-icon name="hourglass-outline"></ion-icon> 時長
+            </div>
+            <ion-label>{service.hours}</ion-label>
+          </ion-item>
+          <ion-item lines="none">
+            <div slot="start">
+              <ion-icon name="people-outline"></ion-icon> 人數
+            </div>
+            <ion-label>{service.quota}</ion-label>
+          </ion-item>
+          <ion-item lines="none">
+            <div slot="start">
+              <ion-icon name="time-outline"></ion-icon> 時間
+            </div>
+            <ion-label>{service.time}</ion-label>
+          </ion-item>
+          <ion-item lines="none">
+            <div slot="start">
+              <ion-icon name="cash-outline"></ion-icon> 費用
+            </div>
+            <ion-label>{service.price}</ion-label>
+          </ion-item>
+          {!address ? null : address_remark ? (
+            <ion-accordion-group>
+              <ion-accordion value="address">
+                <ion-item slot="header">
+                  <div slot="start">
+                    <ion-icon name="map-outline"></ion-icon> 地址
+                  </div>
+                  <ion-label>{address}</ion-label>
+                </ion-item>
+                <div class="ion-padding" slot="content">
+                  <p style="white-space: pre-wrap">{address_remark}</p>
+                  <ion-button
+                    fill="block"
+                    color="primary"
+                    href={
+                      'https://www.google.com/maps/search/' +
+                      encodeURIComponent(address)
+                    }
+                    target="_blank"
+                  >
+                    <ion-icon name="map-outline" slot="start"></ion-icon>
+                    View on Map
+                  </ion-button>
+                </div>
+              </ion-accordion>
+            </ion-accordion-group>
+          ) : (
+            <ion-item
+              lines="none"
+              href={
+                'https://www.google.com/maps/search/' +
+                encodeURIComponent(address)
+              }
+              target="_blank"
+            >
+              <div slot="start">
+                <ion-icon name="map-outline"></ion-icon> 地址
+              </div>
+              <ion-label>{address}</ion-label>
+            </ion-item>
+          )}
+        </ion-list>
+
         <div class="ion-padding">
           Items
           <Main />
