@@ -66,7 +66,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
               <div class="d-flex">
                 <div>
                   <ion-thumbnail>
-                    <img src={getServiceCoverImage(slug, service.id!)} />
+                    <img src={getServiceCoverImage(slug, service.slug)} />
                   </ion-thumbnail>
                 </div>
                 <div class="card-text-container">

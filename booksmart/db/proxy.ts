@@ -106,7 +106,7 @@ export type Service = {
   id?: null | number
   shop_id: number
   shop?: Shop
-  slug: null | string
+  slug: string
   name: string
   hours: string
   price: string

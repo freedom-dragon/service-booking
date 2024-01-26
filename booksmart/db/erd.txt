@@ -123,6 +123,7 @@ service
 -------
 id integer PK
 shop_id integer FK >0- shop.id
+slug text
 name text
 hours text
 price text

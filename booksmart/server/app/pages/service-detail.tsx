@@ -11,7 +11,7 @@ import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
 import { Service, proxy } from '../../../db/proxy.js'
 import { find } from 'better-sqlite3-proxy'
-import { getServiceCoverImage } from '../shop-store.js'
+import { getServiceCoverImage, getServiceImages } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
 
 let pageTitle = 'Service Detail'
@@ -26,6 +26,7 @@ let style = Style(/* css */ `
 function ServiceDetail(attrs: { service: Service }) {
   let { service } = attrs
   let shop_slug = service.shop!.slug
+  let service_slug = service.slug
   return (
     <>
       {style}
@@ -45,10 +46,10 @@ function ServiceDetail(attrs: { service: Service }) {
         <Swiper
           id="ServiceImages"
           images={[
-            <img src={getServiceCoverImage(shop_slug, service.id!)} />,
-            <img src="https://picsum.photos/seed/1/512/512" />,
-            <img src="https://picsum.photos/seed/2/512/512" />,
-            <img src="https://picsum.photos/seed/3/512/512" />,
+            <img src={getServiceCoverImage(shop_slug, service_slug)} />,
+            ...getServiceImages(shop_slug, service_slug).map(url => (
+              <img src={url} />
+            )),
           ]}
           showPagination
         />
