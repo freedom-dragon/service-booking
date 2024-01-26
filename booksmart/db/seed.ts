@@ -38,6 +38,7 @@ function seedService(data: Service & { options: string[] }) {
 seedService({
   id: 1,
   shop_id: 1,
+  slug: 'exp',
   name: '體驗班',
   hours: '2 hours',
   book_duration_minute: 60 * 2,
@@ -52,6 +53,7 @@ seedService({
 seedService({
   id: 2,
   shop_id: 1,
+  slug: 'flower',
   name: '舒壓花畫',
   hours: '2.5 - 3 hours',
   book_duration_minute: 60 * 3,
@@ -66,6 +68,7 @@ seedService({
 seedService({
   id: 3,
   shop_id: 1,
+  slug: 'couple',
   name: '情侶班',
   hours: '3 - 3.5 hours',
   book_duration_minute: 3.5 * 60,
@@ -80,6 +83,7 @@ seedService({
 seedService({
   id: 4,
   shop_id: 1,
+  slug: 'giant',
   name: '超大畫班',
   hours: '4 - 5 hours',
   book_duration_minute: 5 * 60,
