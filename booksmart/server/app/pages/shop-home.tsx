@@ -39,6 +39,21 @@ ion-thumbnail {
 .card-text-container {
   margin-inline-start: 1rem;
 }
+h2 {
+  color: var(--ion-color-primary)
+}
+.img-icon {
+  max-width: 2.5rem;
+  max-height: 2.5rem;
+}
+.img-icon--text {
+  margin-inline-start: 1rem;
+}
+.social-media-buttons {
+  flex-direction: column;
+  align-items: start;
+  gap: 0.75rem;
+}
 `)
 
 function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
@@ -57,12 +72,13 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content id="ShopHome" class="ion-padding">
-        <div className="d-flex" style="gap:0.5rem">
-          <img src={getShopCoverImage(shop_slug)} />
-          <p>{shop.bio}</p>
+      <ion-content id="ShopHome">
+        <img src={getShopCoverImage(shop_slug)} />
+        <div class="ion-margin">
+          <b>{shop.bio}</b>
+          <p>{shop.desc}</p>
         </div>
-        <h2>
+        <h2 class="ion-margin">
           {owner_name} {locale.service}
         </h2>
         <ion-list>
@@ -86,6 +102,100 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
             </Link>
           ))}
         </ion-list>
+        <hr class="ion-margin" />
+        <h2 class="ion-margin">聯絡方法</h2>
+        <ion-buttons class="social-media-buttons ion-margin">
+          {mapArray(
+            [
+              {
+                label: 'phone number',
+                icon: 'phone.webp',
+                prefix: 'tel:',
+                slug: shop.tel,
+                credit: 'Kreasi Kanvas on iconscout.com',
+              },
+              {
+                label: 'email address',
+                icon: 'gmail.webp',
+                prefix: 'mailto:',
+                slug: shop.email,
+                credit: 'মুহম্মদ রাগিব হাসিন on wikipedia.org',
+              },
+              {
+                label: 'street address',
+                icon: 'google_map.webp',
+                prefix: 'https://www.google.com/maps/search/',
+                slug: shop.address,
+                credit: 'Abdul Abid on iconscout.com',
+              },
+              {
+                label: 'facebook contact',
+                icon: 'Facebook_icon.svg',
+                prefix: 'https://www.facebook.com/',
+                slug: shop.facebook,
+                credit: 'Tkgd2007 on wikipedia.org',
+              },
+              {
+                label: 'messenger contact',
+                icon: 'facebook_messenger.svg',
+                prefix: 'https://m.me/',
+                slug: shop.messenger,
+                credit: 'Totie on wikipedia.org',
+              },
+              {
+                label: 'instagram contact',
+                icon: 'instagram.svg',
+                prefix: 'https://www.instagram.com/',
+                slug: shop.instagram,
+                credit: 'diej4cob on wikipedia.org',
+              },
+              {
+                label: 'youtube channel',
+                icon: 'youtube.webp',
+                prefix: 'https://www.youtube.com/@',
+                slug: shop.youtube,
+                credit: 'Pixel Icons on iconscout.com',
+              },
+              {
+                label: 'whatsapp contact',
+                icon: 'whatsapp.webp',
+                prefix:
+                  'https://wa.me/' + (shop.whatsapp?.length === 8 ? '852' : ''),
+                slug: shop.whatsapp,
+                credit: 'Icon Mafia on iconscout.com',
+              },
+              {
+                label: 'telegram contact',
+                icon: 'telegram.webp',
+                prefix: 'https://t.me/',
+                slug: shop.telegram,
+                credit: 'Javitomad on wikipedia.org',
+              },
+              {
+                label: 'twitter contact',
+                icon: 'twitter.svg',
+                prefix: 'https://twitter.com/',
+                slug: shop.twitter,
+                credit: 'Smasongarrison on wikipedia.org',
+              },
+            ],
+            item =>
+              item.slug ? (
+                <ion-button href={item.prefix + item.slug} target="_blank">
+                  <img
+                    class="img-icon"
+                    slot="icon-only"
+                    src={'/assets/contact-methods/' + item.icon}
+                    alt={'credit to ' + item.credit}
+                    aria-hidden="true"
+                  />
+                  <span class="img-icon--text" title={item.label}>
+                    {item.slug}
+                  </span>
+                </ion-button>
+              ) : null,
+          )}
+        </ion-buttons>
         {user ? (
           <Link href="/shop-home/add" tagName="ion-button">
             {addPageTitle}

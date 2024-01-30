@@ -109,9 +109,19 @@ id integer PK
 slug text unique
 name text
 bio text NULL
+desc text NULL
 owner_name text
 address text NULL
 address_remark text NULL
+tel text NULL
+email text NULL
+facebook text NULL
+messenger text NULL
+instagram text NULL
+youtube text NULL
+whatsapp text NULL
+telegram text NULL
+twitter text NULL
 
 
 shop_locale

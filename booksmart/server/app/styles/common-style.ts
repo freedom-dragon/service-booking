@@ -45,4 +45,9 @@ code.inline-code {
   border-radius: 0.25rem;
   font-family: monospace;
 }
+
+hr {
+  height: 1px solid;
+  background-color: var(--ion-color-dark);
+}
 `

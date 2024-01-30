@@ -8,7 +8,8 @@ import { Service, proxy } from './proxy'
 proxy.shop[1] = {
   name: 'The Balconi ARTLAB 香港',
   slug: 'lab.on.the.balconi',
-  bio: 'Affordable art for all 🛋️ 𝐌𝐨𝐝𝐞𝐫𝐧 𝐃𝐞𝐜𝐨𝐫 𝐏𝐚𝐢𝐧𝐭𝐢𝐧𝐠 | 𝙁𝙚𝙖𝙩𝙪𝙧𝙚 𝙬𝙖𝙡𝙡 ⚜️Vintage • Stardust • Zen',
+  bio: 'Affordable art for all',
+  desc: 'The Balconi ARTLAB 是一家由藝術系畢業生主理的私人畫室，主打《現代掛畫工作坊》，致力推廣高質素的裝飾掛畫，將精緻繪畫帶入可觸及的日常，讓每家每戶都能擁有畫廊級的藝術品收藏，並享受個人專屬的美感體驗——親手製作，品味生活。',
   owner_name: 'Katy',
   address: '大角咀必發道128號宏創方20樓',
   address_remark: `
@@ -16,6 +17,15 @@ proxy.shop[1] = {
 - 泊車方便，亦可乘搭巴士2E/18/44/E21/914等，
   或太子/南昌/奧運站步行15分鐘
 `.trim(),
+  tel: '98765432',
+  email: 'lab.on.the.balconi@gmail.com',
+  facebook: 'beenotung',
+  messenger: 'beenotung',
+  instagram: 'lab.on.the.balconi',
+  youtube: 'luoluopipa',
+  whatsapp: '98765432',
+  telegram: 'beenotung',
+  twitter: 'beenotung',
 }
 
 proxy.shop_locale[1] = {

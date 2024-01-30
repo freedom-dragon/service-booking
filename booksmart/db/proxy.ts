@@ -92,9 +92,19 @@ export type Shop = {
   slug: string
   name: string
   bio: null | string
+  desc: null | string
   owner_name: string
   address: null | string
   address_remark: null | string
+  tel: null | string
+  email: null | string
+  facebook: null | string
+  messenger: null | string
+  instagram: null | string
+  youtube: null | string
+  whatsapp: null | string
+  telegram: null | string
+  twitter: null | string
 }
 
 export type ShopLocale = {

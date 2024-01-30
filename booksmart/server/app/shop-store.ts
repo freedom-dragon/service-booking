@@ -14,6 +14,10 @@ export function getShopLocale(shop_id: number) {
   }
 }
 
+export function getShopLogoImage(shop_slug: string) {
+  return `/assets/shops/${shop_slug}/logo.webp`
+}
+
 export function getShopCoverImage(shop_slug: string) {
   return `/assets/shops/${shop_slug}/cover.webp`
 }
