@@ -70,6 +70,21 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           <ion-title role="heading" aria-level="1">
             {name}
           </ion-title>
+          <ion-buttons slot="end">
+            {user ? (
+              <Link tagName="ion-button" href="/shop-home/add">
+                <ion-icon slot="icon-only" name="add"></ion-icon>
+              </Link>
+            ) : (
+              <Link
+                tagName="ion-button"
+                title={'登入後可新增' + locale.service}
+                href="/login"
+              >
+                <ion-icon slot="icon-only" name="person"></ion-icon>
+              </Link>
+            )}
+          </ion-buttons>
         </ion-toolbar>
       </ion-header>
       <ion-content id="ShopHome">
@@ -196,15 +211,6 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
               ) : null,
           )}
         </ion-buttons>
-        {user ? (
-          <Link href="/shop-home/add" tagName="ion-button">
-            {addPageTitle}
-          </Link>
-        ) : (
-          <p>
-            <Link href="/login">登入</Link>後可新增{locale.service}
-          </p>
-        )}
         {wsStatus.safeArea}
       </ion-content>
     </>
