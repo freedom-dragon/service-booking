@@ -130,13 +130,15 @@ function ServiceDetail(attrs: { service: Service }) {
             </div>
           </ion-item>
           {max_option == 1 ? (
-            <ion-radio-group value={options[0]?.id}>
-              {mapArray(options, option => (
-                <ion-item>
-                  <ion-radio value={option.id}>{option.name}</ion-radio>
-                </ion-item>
-              ))}
-            </ion-radio-group>
+            <div class="ion-margin-horizontal">
+              <ion-radio-group value={options[0]?.id}>
+                {mapArray(options, option => (
+                  <ion-item>
+                    <ion-radio value={option.id}>{option.name}</ion-radio>
+                  </ion-item>
+                ))}
+              </ion-radio-group>
+            </div>
           ) : (
             <ion-list class="ion-margin-horizontal">
               {mapArray(options, option => (
