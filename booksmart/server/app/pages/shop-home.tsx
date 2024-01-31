@@ -23,6 +23,7 @@ import {
   getShopCoverImage,
   getShopLocale,
 } from '../shop-store.js'
+import { Script } from '../components/script.js'
 
 let pageTitle = 'The Balconi ARTLAB 香港'
 
@@ -213,6 +214,24 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         </ion-buttons>
         {wsStatus.safeArea}
       </ion-content>
+      <ion-footer id="shopHomeFooter">
+        <div>before</div>
+        <ion-tabs>
+          <ion-tab>123</ion-tab>
+        </ion-tabs>
+        <div>after</div>
+      </ion-footer>
+      {Script(/* javascript */ `
+function fitIonContent(ionContent) {
+  let rect = ionContent.getBoundingClientRect();
+  let ionHeader = ionContent.previousElementSibling
+  let ionFooter = ionContent.nextElementSibling
+  let height = '100%'
+  console.log({ionHeader: ionHeader.tagName, ionFooter})
+  ionContent.style.height = 'calc(' + height + ')'
+}
+fitIonContent(ShopHome)
+`)}
     </>
   )
 }
