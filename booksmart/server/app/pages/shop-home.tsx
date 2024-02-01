@@ -55,6 +55,10 @@ h2 {
   align-items: start;
   gap: 0.75rem;
 }
+.social-media-buttons ion-button.md {
+  width: auto !important;
+  --border-radius: unset !important;
+}
 `)
 
 function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
