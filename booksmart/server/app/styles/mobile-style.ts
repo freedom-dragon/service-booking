@@ -1,4 +1,9 @@
 import { readFileSync } from 'fs'
+import { Script } from '../components/script.js'
+import debug from 'debug'
+
+let log = debug('mobile-style.ts')
+log.enabled = true
 
 export let MobileStyle = /* css */ `
 /* animation */
@@ -48,3 +53,51 @@ ion-button[fill][color="${name}"] {
   color: var(--ion-color-${name}-contrast);
 }`
 })
+
+export let ionicAppScript = Script(/* javascript */ `
+function fitIonContent(ionContent) {
+  let retry = () => setTimeout(() => fitIonContent(ionContent), 33)
+  let rect = ionContent.getBoundingClientRect();
+  if (rect.height == 0) return retry()
+  let ionHeader = ionContent.previousElementSibling
+  let ionFooter = ionContent.nextElementSibling
+  let height = '100%'
+  if (ionHeader?.matches('ion-header')) {
+    let rect = ionHeader.getBoundingClientRect();
+    if (rect.height == 0) return retry()
+    height += ' - ' + rect.height + 'px'
+  }
+  if (ionFooter?.matches('ion-footer')) {
+    let rect = ionFooter.getBoundingClientRect();
+    if (rect.height == 0) return retry()
+    height += ' - ' + rect.height + 'px'
+    if (ws_status) {
+      let style = document.createElement('style')
+      style.innerHTML = '#ws_status{margin-bottom:calc('+rect.height+'px - 0.5rem)}'
+      ionContent.appendChild(style)
+    }
+  }
+  ionContent.style.height = 'calc(' + height + ')'
+}
+`)
+
+export function fitIonContent(ionContentId: string) {
+  let idStr = JSON.stringify(ionContentId)
+  if (idStr != `"${ionContentId}"`) {
+    log('avoid having special character in id')
+    ionContentId = `document.getElementById(${idStr})`
+  }
+  return [
+    'raw',
+    /* html */
+    `<script>fitIonContent(${ionContentId})</script>`,
+  ]
+}
+
+export function selectIonTab(tabName: string) {
+  return [
+    'raw',
+    /* html */
+    `<script>document.querySelector('ion-tab-bar ion-tab-button[tab="${tabName}"]')?.classList.add('tab-selected')</script>`,
+  ]
+}

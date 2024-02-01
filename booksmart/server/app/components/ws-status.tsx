@@ -7,6 +7,6 @@ let hide = Style(/* css */ `
 }
 `)
 
-let safeArea = <div style="height: 5rem"></div>
+let safeArea = <div style="margin-top: 3rem"></div>
 
 export const wsStatus = { hide, safeArea }

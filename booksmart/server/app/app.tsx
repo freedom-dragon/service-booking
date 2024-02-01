@@ -41,6 +41,7 @@ import { WindowStub } from '../../client/internal.js'
 import { updateRequestSession } from '../../db/store.js'
 import verificationCode from './pages/verification-code.js'
 import { Link } from './components/router.js'
+import { ionicAppScript } from './styles/mobile-style.js'
 
 if (config.development) {
   scanTemplateDir('template')
@@ -162,6 +163,7 @@ function IonicApp(route: PageRouteMatch): Element {
       <>
         {ionicAppStyle}
         {scripts}
+        {ionicAppScript}
         <Flush />
         <ion-app>
           <div class="page">{route.node}</div>
