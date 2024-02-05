@@ -31,7 +31,7 @@ let page = (
   <>
     {style}
     <ion-header>
-      <ion-toolbar>
+      <ion-toolbar color="primary">
         <ion-title role="heading" aria-level="1">
           {pageTitle}
         </ion-title>
