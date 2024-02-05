@@ -6,28 +6,34 @@ export let appIonTabBar = (
   <IonTabBar
     tabs={[
       {
-        icon: 'home',
-        label: 'Home',
+        tab: 'home',
+        icon: 'planet',
+        label: '探索',
         // href: '/app/home',
         href: '/shop/' + config.shop_slug,
       },
       {
-        tab: 'chat',
-        ios: 'chatbubble',
-        md: 'chatbox',
-        label: 'Chat',
-        href: '/app/chat',
+        tab: 'calendar',
+        icon: 'calendar',
+        label: '預約',
+        href: '/calendar',
+      },
+      {
+        tab: 'shopping',
+        icon: 'cart',
+        label: '套票',
+        href: '/shop/' + config.shop_slug,
       },
       {
         tab: 'notice',
         icon: 'notifications',
-        label: 'Notice',
+        label: '通知',
         href: '/app/notice',
       },
       {
         tab: 'more',
         icon: 'ellipsis-horizontal',
-        label: 'More',
+        label: '更多',
         href: '/app/more',
       },
     ]}

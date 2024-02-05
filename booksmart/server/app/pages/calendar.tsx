@@ -12,6 +12,8 @@ import { getAuthUser } from '../auth/user.js'
 import { TimezoneDate } from 'timezone-date.ts'
 import { DAY } from '@beenotung/tslib/time.js'
 import { commonTemplatePageText } from '../components/common-template.js'
+import { appIonTabBar } from '../components/app-tab-bar.js'
+import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 
 let pageTitle = 'Calendar'
 let addPageTitle = 'Add Calendar'
@@ -30,7 +32,6 @@ let page = (
     {style}
     <ion-header>
       <ion-toolbar>
-        <IonBackButton href="/" backText="Home" />
         <ion-title role="heading" aria-level="1">
           {pageTitle}
         </ion-title>
@@ -39,6 +40,11 @@ let page = (
     <ion-content id="Calendar" class="ion-padding">
       <Main />
     </ion-content>
+    <ion-footer>
+      {appIonTabBar}
+      {selectIonTab('calendar')}
+    </ion-footer>
+    {fitIonFooter}
   </>
 )
 
