@@ -11,7 +11,6 @@ import { renderError } from '../components/error.js'
 import { appIonTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { readFileSync } from 'fs'
-import appContacts from './app-contacts.js'
 
 let pageTitle = 'More'
 
@@ -53,10 +52,6 @@ let page = (
         <Link tagName="ion-item" href="/login" disabled>
           <ion-icon slot="start" name="log-in" />
           <ion-label>Login / Sign up</ion-label>
-        </Link>
-        <Link tagName="ion-item" href="/app/contacts">
-          <ion-icon slot="start" name="happy-outline" />
-          <ion-label>{appContacts.pageTitle}</ion-label>
         </Link>
         <Link tagName="ion-item" href="/app/about">
           <ion-icon slot="start" name="information" />
