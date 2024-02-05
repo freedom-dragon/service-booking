@@ -22,6 +22,7 @@ import {
   getServiceCoverImage,
   getShopCoverImage,
   getShopLocale,
+  getShopLogoImage,
 } from '../shop-store.js'
 import { Script } from '../components/script.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
@@ -42,6 +43,10 @@ ion-thumbnail {
 }
 .card-text-container {
   margin-inline-start: 1rem;
+}
+.card--field {
+  display: flex;
+  align-items: center;
 }
 h2 {
   color: var(--ion-color-primary)
@@ -73,7 +78,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   return (
     <>
       {style}
-      <ion-header>
+      <ion-header hidden>
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
             {name}
@@ -96,13 +101,41 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="ShopHome">
-        <img src={getShopCoverImage(shop_slug)} />
+        <h1
+          class="ion-margin"
+          style="
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+          "
+        >
+          <img
+            style="
+            max-width: 1.5em;
+            max-height: 1.5em;
+            border-radius: 0.2em;
+          "
+            src={getShopLogoImage(shop_slug)}
+          />
+          {name}
+        </h1>
+        <img
+          class="ion-margin"
+          style="
+            border-radius: 1rem;
+            width: calc(100% - 2rem);
+          "
+          src={getShopCoverImage(shop_slug)}
+        />
         <div class="ion-margin">
           <b>{shop.bio}</b>
           <p>{shop.desc}</p>
         </div>
         <h2 class="ion-margin">
-          {owner_name} {locale.service}
+          {/* {owner_name} {locale.service} */}
+          Booking
         </h2>
         <ion-list>
           {mapArray(services, service => (
@@ -118,14 +151,19 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                 </div>
                 <div class="card-text-container">
                   <h3>{service.name}</h3>
-                  <p>{service.hours}</p>
-                  <p>{service.price}</p>
+                  <p class="card--field">
+                    <ion-icon name="hourglass-outline" />
+                    &nbsp;時長: {service.hours}
+                  </p>
+                  <p class="card--field">
+                    <ion-icon name="cash-outline" />
+                    &nbsp;費用: {service.price}
+                  </p>
                 </div>
               </div>
             </Link>
           ))}
         </ion-list>
-        <hr class="ion-margin" />
         <h2 class="ion-margin">聯絡方法</h2>
         <ion-buttons class="social-media-buttons ion-margin">
           {mapArray(
