@@ -37,7 +37,11 @@ if (config.layout_type === LayoutType.ionic) {
       {style}
       <ion-header>
         <ion-toolbar color="primary">
-          <IonBackButton href="/" backText="Home" color="light" />
+          <IonBackButton
+            href={'/shop/' + config.shop_slug}
+            backText="Home"
+            color="light"
+          />
           <ion-title>Login</ion-title>
         </ion-toolbar>
       </ion-header>

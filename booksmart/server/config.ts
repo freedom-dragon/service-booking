@@ -73,6 +73,7 @@ export let config = {
       pass: env.EMAIL_PASSWORD,
     },
   },
+  shop_slug: 'lab.on.the.balconi',
 }
 
 const titleSuffix = ' | ' + config.site_name

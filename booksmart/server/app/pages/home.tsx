@@ -1,6 +1,7 @@
 import { o } from '../jsx/jsx.js'
 import { prerender } from '../jsx/html.js'
 import SourceCode from '../components/source-code.js'
+import { config } from '../../config.js'
 
 // Calling <Component/> will transform the JSX into AST for each rendering.
 // You can reuse a pre-compute AST like `let component = <Component/>`.
@@ -15,7 +16,7 @@ let content = (
       A booking system for shops of all sizes. From one-man micro startups to
       mid-size companies.
     </p>
-    <a href="/shop/lab.on.the.balconi">Demo Shop</a>
+    <a href={'/shop/' + config.shop_slug}>Demo Shop</a>
     <SourceCode page="home.tsx" />
   </div>
 )

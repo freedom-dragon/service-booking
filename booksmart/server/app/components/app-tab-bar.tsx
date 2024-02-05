@@ -1,3 +1,4 @@
+import { config } from '../../config.js'
 import { o } from '../jsx/jsx.js'
 import { IonTabBar } from './ion-tab-bar.js'
 
@@ -7,7 +8,8 @@ export let appIonTabBar = (
       {
         icon: 'home',
         label: 'Home',
-        href: '/app/home',
+        // href: '/app/home',
+        href: '/shop/' + config.shop_slug,
       },
       {
         tab: 'chat',
