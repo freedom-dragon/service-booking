@@ -11,6 +11,7 @@ import { renderError } from '../components/error.js'
 import { appIonTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { readFileSync } from 'fs'
+import appContacts from './app-contacts.js'
 
 let pageTitle = 'More'
 
@@ -46,16 +47,20 @@ let page = (
           text-align:center;
         "
       >
-        {config.site_name}
+        BookSmart
       </h2>
       <ion-list>
         <Link tagName="ion-item" href="/login" disabled>
           <ion-icon slot="start" name="log-in" />
           <ion-label>Login / Sign up</ion-label>
         </Link>
-        <Link tagName="ion-item" href="/app/about?from=more">
+        <Link tagName="ion-item" href="/app/contacts">
+          <ion-icon slot="start" name="happy-outline" />
+          <ion-label>{appContacts.pageTitle}</ion-label>
+        </Link>
+        <Link tagName="ion-item" href="/app/about">
           <ion-icon slot="start" name="information" />
-          <ion-label>About Us</ion-label>
+          <ion-label>關於我們</ion-label>
         </Link>
         <Link tagName="ion-item" href="/settings">
           <ion-icon slot="start" ios="cog" md="settings" />

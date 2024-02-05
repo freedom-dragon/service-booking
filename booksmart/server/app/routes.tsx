@@ -24,6 +24,7 @@ import type { MenuRoute } from './components/menu'
 import DemoToast from './pages/demo-toast.js'
 import appHome from './pages/app-home.js'
 import appAbout from './pages/app-about.js'
+import appContacts from './pages/app-contacts.js'
 import appCharacter from './pages/app-character.js'
 import type { renderWebTemplate } from '../../template/web.js'
 import type { renderIonicTemplate } from '../../template/ionic.js'
@@ -106,6 +107,7 @@ let routeDict: Routes = {
   ...appHome.routes,
   ...appCharacter.routes,
   ...appAbout.routes,
+  ...appContacts.routes,
 }
 
 export let redirectDict: Record<string, string> = {

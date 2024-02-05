@@ -55,9 +55,10 @@ export let config = {
   port: env.PORT,
   origin: env.ORIGIN,
   cookie_secret: env.COOKIE_SECRET,
-  site_name: 'BookSmart Demo',
-  short_site_name: 'demo-site',
-  site_description: 'Demo website of ts-liveview',
+  site_name: 'BookSmart Service Booking WebApp',
+  short_site_name: 'BookSmart',
+  site_description:
+    '方便易用的服務預訂平台。預約水管工、電工、髮型師等各種專業服務。瀏覽各種服務供應商，比較價格和評論，輕鬆預訂所需服務。立即使用可靠的服務預訂網站，節省時間和精力。',
   setup_robots_txt: false,
   epoch,
   auto_open: !production && development && epoch === 1,

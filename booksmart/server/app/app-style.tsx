@@ -16,6 +16,9 @@ ${FormStyle}
 .brand a {
   text-decoration: none;
 }
+h2 {
+  color: var(--ion-color-primary)
+}
 `
 
 export let webAppStyle = Style(appStyle + '\n' + WebStyle)
