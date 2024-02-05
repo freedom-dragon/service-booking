@@ -14,6 +14,7 @@ import { filter, find } from 'better-sqlite3-proxy'
 import { getServiceCoverImage, getServiceImages } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
 import { wsStatus } from '../components/ws-status.js'
+import { Script } from '../components/script.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -22,13 +23,16 @@ let style = Style(/* css */ `
 #ServiceDetail {
 
 }
+.service-options ion-button {
+  --ripple-color: transparent;
+}
 `)
 
 function ServiceDetail(attrs: { service: Service }) {
   let { service } = attrs
   let shop = service.shop!
   let shop_slug = shop!.slug
-  let { slug: service_slug, max_option } = service
+  let { slug: service_slug } = service
   let address = service.address || shop.address
   let address_remark = service.address_remark || shop.address_remark
   let options = filter(proxy.service_option, { service_id: service.id! })
@@ -58,8 +62,41 @@ function ServiceDetail(attrs: { service: Service }) {
           ]}
           showPagination
         />
-        <h2 class="ion-margin">{service.name}</h2>
+        <h2 class="ion-margin" hidden>
+          {service.name}
+        </h2>
         <ion-list>
+          <ion-item lines="none">
+            <div slot="start">
+              <ion-icon name="options-outline"></ion-icon> 款式
+            </div>
+          </ion-item>
+          <div
+            class="service-options ion-margin-horizontal flex-wrap"
+            style="gap: 0.25rem"
+          >
+            {mapArray(options, (option, index) => (
+              <ion-button
+                size="small"
+                fill={options.length == 1 ? 'solid' : 'outline'}
+                onclick="selectOption(this)"
+                data-id={option.id}
+                data-index={index + 1}
+              >
+                {option.name}
+              </ion-button>
+            ))}
+          </div>
+          {Script(/* javascript */ `
+function selectOption(button){
+  swiperSlide(ServiceImages, button.dataset.index);
+  if (button.fill == 'solid') return
+  let buttons = button.parentElement.children
+  for (let each of buttons) {
+    each.fill = each == button ? 'solid' : 'outline';
+  }
+}
+`)}
           <ion-item lines="none">
             <div slot="start">
               <ion-icon name="hourglass-outline"></ion-icon> 時長
@@ -130,25 +167,6 @@ function ServiceDetail(attrs: { service: Service }) {
               <ion-icon name="options-outline"></ion-icon> 款式
             </div>
           </ion-item>
-          {max_option == 1 ? (
-            <div class="ion-margin-horizontal">
-              <ion-radio-group value={options[0]?.id}>
-                {mapArray(options, option => (
-                  <ion-item>
-                    <ion-radio value={option.id}>{option.name}</ion-radio>
-                  </ion-item>
-                ))}
-              </ion-radio-group>
-            </div>
-          ) : (
-            <ion-list class="ion-margin-horizontal">
-              {mapArray(options, option => (
-                <ion-item>
-                  <ion-checkbox value={option.id}>{option.name}</ion-checkbox>
-                </ion-item>
-              ))}
-            </ion-list>
-          )}
         </ion-list>
 
         <div class="ion-padding">
