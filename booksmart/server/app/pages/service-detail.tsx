@@ -99,15 +99,21 @@ function selectOption(button){
 `)}
           <ion-item lines="none">
             <div slot="start">
-              <ion-icon name="hourglass-outline"></ion-icon> 時長
+              <ion-icon name="people-outline"></ion-icon> 人數
             </div>
-            <ion-label>{service.hours}</ion-label>
+            <ion-input
+              placeholder="1"
+              type="number"
+              min="1"
+              max={service.quota}
+            />
+            <ion-label slot="end"> / {service.quota}</ion-label>
           </ion-item>
           <ion-item lines="none">
             <div slot="start">
-              <ion-icon name="people-outline"></ion-icon> 人數
+              <ion-icon name="hourglass-outline"></ion-icon> 時長
             </div>
-            <ion-label>{service.quota}</ion-label>
+            <ion-label>{service.hours}</ion-label>
           </ion-item>
           <ion-item lines="none">
             <div slot="start">
