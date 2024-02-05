@@ -27,6 +27,7 @@ import {
 import type { ClientMountMessage, ClientRouteMessage } from '../../client/types'
 import { then } from '@beenotung/tslib/result.js'
 import { webAppStyle, ionicAppStyle } from './app-style.js'
+import { preIonicAppScript, postIonicAppScript } from './styles/mobile-style.js'
 import { renderWebTemplate } from '../../template/web.js'
 import { renderIonicTemplate } from '../../template/ionic.js'
 import { HTMLStream } from './jsx/stream.js'
@@ -38,10 +39,9 @@ import Sidebar from './components/sidebar.js'
 import Profile from './pages/profile.js'
 import { logRequest } from './log.js'
 import { WindowStub } from '../../client/internal.js'
-import { updateRequestSession } from '../../db/store.js'
+import { updateRequestSession } from '../../db/request-log.js'
 import verificationCode from './pages/verification-code.js'
 import { Link } from './components/router.js'
-import { ionicAppScript } from './styles/mobile-style.js'
 
 if (config.development) {
   scanTemplateDir('template')
@@ -115,6 +115,7 @@ function NavbarApp(route: PageRouteMatch): Element {
       // or you can write in JSX for better developer-experience (if you're coming from React)
       <>
         {webAppStyle}
+        <Flush />
         <Navbar brand={brand} menuRoutes={menuRoutes} />
         <hr />
         {scripts}
@@ -137,6 +138,7 @@ function SidebarApp(route: PageRouteMatch): Element {
         {webAppStyle}
         {scripts}
         {Sidebar.style}
+        <Flush />
         <div class={Sidebar.containerClass}>
           <Sidebar brand={brand} menuRoutes={menuRoutes} />
           <div
@@ -163,18 +165,10 @@ function IonicApp(route: PageRouteMatch): Element {
       <>
         {ionicAppStyle}
         {scripts}
-        {ionicAppScript}
+        {preIonicAppScript}
         <Flush />
-        <ion-app>
-          <div class="page">{route.node}</div>
-        </ion-app>
-        {Script(/* javascript */ `
-document.querySelector('.page')?.classList.add('hide')
-setTimeout(()=>{
-  document.querySelector('.page')?.classList.remove('hide')
-  document.body.classList.remove('back')
-}, 33)
-`)}
+        <ion-app>{route.node}</ion-app>
+        {postIonicAppScript}
         <Flush />
       </>,
     ],

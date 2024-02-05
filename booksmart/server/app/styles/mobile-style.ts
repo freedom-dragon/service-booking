@@ -7,32 +7,38 @@ log.enabled = true
 
 export let MobileStyle = /* css */ `
 /* animation */
-.page {
+ion-app {
   min-height: 100%;
   transition: all 0.3s ease;
   opacity: 1;
 }
-.page.hide {
+ion-app.hide {
   opacity: 0;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .page {
+  ion-app {
     transform: translate(0,0);
   }
-  .ios .page.hide {
+  .ios ion-app.hide {
     transform: translate(100%,0);
   }
-  .ios .back .page.hide {
+  .ios .back ion-app.hide {
     transform: translate(-100%,0);
   }
-  .md .page.hide {
+  .md ion-app.hide {
     transform: translate(0,100%);
   }
-  .md .back .page.hide {
+  .md .back ion-app.hide {
     transform: translate(0,-100%);
   }
 }
-
+.no-animation ion-app {
+  transition: none;
+  transform: none;
+}
+#ws_status {
+  transition: all 0.3s ease;
+}
 `
 
 let themeStyle = readFileSync('public/theme.css').toString()
@@ -54,50 +60,67 @@ ion-button[fill][color="${name}"] {
 }`
 })
 
-export let ionicAppScript = Script(/* javascript */ `
-function fitIonContent(ionContent) {
-  let retry = () => setTimeout(() => fitIonContent(ionContent), 33)
-  let rect = ionContent.getBoundingClientRect();
-  if (rect.height == 0) return retry()
-  let ionHeader = ionContent.previousElementSibling
-  let ionFooter = ionContent.nextElementSibling
-  let height = '100%'
-  if (ionHeader?.matches('ion-header')) {
-    let rect = ionHeader.getBoundingClientRect();
-    if (rect.height == 0) return retry()
-    height += ' - ' + rect.height + 'px'
-  }
-  if (ionFooter?.matches('ion-footer')) {
+export let preIonicAppScript = Script(/* javascript */ `
+async function fitIonFooter() {
+  let ionFooter = document.querySelector('ion-footer')
+  if (!ionFooter) return
+  let sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+  await sleep(1)
+  while (true) {
+    if (!ionFooter.closest('body')) return
     let rect = ionFooter.getBoundingClientRect();
-    if (rect.height == 0) return retry()
-    height += ' - ' + rect.height + 'px'
+    if (rect.height == 0) {
+      await sleep(10)
+      continue
+    }
     if (ws_status) {
       let style = document.createElement('style')
-      style.innerHTML = '#ws_status{margin-bottom:calc('+rect.height+'px - 0.5rem)}'
-      ionContent.appendChild(style)
+      style.innerHTML =
+        '#ws_status{margin-bottom:calc('+rect.height+'px - 0.5rem)}'
+      + '.ws_status--safe-area{margin-top: 2.5rem;}'
+      ionFooter.appendChild(style)
     }
+    break
   }
-  ionContent.style.height = 'calc(' + height + ')'
+}
+function selectIonTab(tab) {
+  let ionTab = document.querySelector('ion-tab-bar ion-tab-button[tab="'+tab+'"]')
+  let ionIcon = ionTab.querySelector('ion-icon')
+  ionTab.classList.add('tab-selected')
+  if (ionIcon.name) ionIcon.name = ionIcon.name.replace('-outline', '')
+  if (ionIcon.ios) ionIcon.ios = ionIcon.ios.replace('-outline', '')
+  if (ionIcon.md) ionIcon.md = ionIcon.md.replace('-outline', '')
+}
+function afterNavigation() {
+  let body = document.body
+  if (body.classList.contains('no-animation')) {
+    body.classList.remove('no-animation')
+    body.classList.remove('back')
+    return
+  }
+  let app = body.querySelector('ion-app')
+  app.classList.add('hide')
+  setTimeout(()=>{
+    app.classList.remove('hide')
+    body.classList.remove('back')
+  },1)
 }
 `)
 
-export function fitIonContent(ionContentId: string) {
-  let idStr = JSON.stringify(ionContentId)
-  if (idStr != `"${ionContentId}"`) {
-    log('avoid having special character in id')
-    ionContentId = `document.getElementById(${idStr})`
-  }
-  return [
-    'raw',
-    /* html */
-    `<script>fitIonContent(${ionContentId})</script>`,
-  ]
-}
+export let postIonicAppScript = Script(/* javascript */ `
+afterNavigation()
+`)
+
+export let fitIonFooter = [
+  'raw',
+  /* html */
+  `<script>fitIonFooter()</script>`,
+]
 
 export function selectIonTab(tabName: string) {
   return [
     'raw',
     /* html */
-    `<script>document.querySelector('ion-tab-bar ion-tab-button[tab="${tabName}"]')?.classList.add('tab-selected')</script>`,
+    `<script>selectIonTab("${tabName}")</script>`,
   ]
 }

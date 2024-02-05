@@ -1,5 +1,6 @@
 import { loadClientPlugin } from '../../client-plugin.js'
 import { LayoutType, title } from '../../config.js'
+import { appIonTabBar } from '../components/app-tab-bar.js'
 import { mapArray } from '../components/fragment.js'
 import { Link } from '../components/router.js'
 import { Script } from '../components/script.js'
@@ -7,6 +8,7 @@ import { wsStatus } from '../components/ws-status.js'
 import { prerender } from '../jsx/html.js'
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
+import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { characters } from './app-character.js'
 
 let pageTitle = 'Home'
@@ -76,6 +78,11 @@ let homePage = (
       </Link>
       {wsStatus.safeArea}
     </ion-content>
+    <ion-footer>
+      {appIonTabBar}
+      {selectIonTab('home')}
+    </ion-footer>
+    {fitIonFooter}
   </>
 )
 
