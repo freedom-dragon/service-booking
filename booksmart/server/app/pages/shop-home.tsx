@@ -24,7 +24,7 @@ import {
   getShopLocale,
 } from '../shop-store.js'
 import { Script } from '../components/script.js'
-import { fitIonContent, selectIonTab } from '../styles/mobile-style.js'
+import {  selectIonTab } from '../styles/mobile-style.js'
 import { IonTabBar } from '../components/ion-tab-bar.js'
 import { appIonTabBar } from '../components/app-tab-bar.js'
 
@@ -225,7 +225,6 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         {appIonTabBar}
         {selectIonTab('home')}
       </ion-footer>
-      {fitIonContent('ShopHome')}
     </>
   )
 }

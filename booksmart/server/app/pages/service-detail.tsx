@@ -13,7 +13,6 @@ import { Service, proxy } from '../../../db/proxy.js'
 import { filter, find } from 'better-sqlite3-proxy'
 import { getServiceCoverImage, getServiceImages } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
-import { fitIonContent } from '../styles/mobile-style.js'
 import { wsStatus } from '../components/ws-status.js'
 
 let pageTitle = 'Service Detail'
@@ -158,7 +157,6 @@ function ServiceDetail(attrs: { service: Service }) {
         </div>
         {wsStatus.safeArea}
       </ion-content>
-      {fitIonContent('ServiceDetail')}
     </>
   )
 }
