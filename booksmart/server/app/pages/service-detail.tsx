@@ -23,6 +23,12 @@ let style = Style(/* css */ `
 #ServiceDetail {
 
 }
+#ServiceImages .swiper-slide img {
+  width: 100vw;
+  height: 100vw;
+  object-fit: contain;
+  object-fit: cover;
+}
 .service-options ion-button {
   --ripple-color: transparent;
 }
