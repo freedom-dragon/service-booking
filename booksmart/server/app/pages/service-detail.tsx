@@ -82,22 +82,24 @@ function ServiceDetail(attrs: { service: Service }) {
               <ion-icon name="options-outline"></ion-icon> 款式
             </div>
           </ion-item>
-          <div
-            class="service-options ion-margin-horizontal flex-wrap"
-            style="gap: 0.25rem"
-          >
-            {mapArray(options, (option, index) => (
-              <ion-button
-                size="small"
-                fill={options.length == 1 ? 'solid' : 'outline'}
-                onclick="selectOption(this)"
-                data-id={option.id}
-                data-index={index + 1}
-              >
-                {option.name}
-              </ion-button>
-            ))}
-          </div>
+          <ion-item>
+            <div
+              class="service-options ion-margin-horizontal flex-wrap"
+              style="gap: 0.25rem; margin-bottom: 8px"
+            >
+              {mapArray(options, (option, index) => (
+                <ion-button
+                  size="small"
+                  fill={options.length == 1 ? 'solid' : 'outline'}
+                  onclick="selectOption(this)"
+                  data-id={option.id}
+                  data-index={index + 1}
+                >
+                  {option.name}
+                </ion-button>
+              ))}
+            </div>
+          </ion-item>
           {Script(/* javascript */ `
 function selectOption(button){
   swiperSlide(ServiceImages, button.dataset.index);
@@ -108,6 +110,12 @@ function selectOption(button){
   }
 }
 `)}
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="cash-outline"></ion-icon> 費用
+            </div>
+            <ion-label>{service.price}</ion-label>
+          </ion-item>
           <ion-item>
             <div slot="start">
               <ion-icon name="people-outline"></ion-icon> 人數
@@ -128,16 +136,66 @@ function selectOption(button){
           </ion-item>
           <ion-item>
             <div slot="start">
-              <ion-icon name="time-outline"></ion-icon> 時間
+              <ion-icon name="time-outline"></ion-icon> 日期
             </div>
-            <ion-label>{service.time}</ion-label>
+            <ion-datetime-button datetime="datePicker"></ion-datetime-button>
+            <ion-modal>
+              <ion-datetime
+                id="datePicker"
+                presentation="date"
+                show-default-buttons="true"
+              >
+                <span slot="title">預約日期</span>
+              </ion-datetime>
+            </ion-modal>
           </ion-item>
-          <ion-item>
-            <div slot="start">
-              <ion-icon name="cash-outline"></ion-icon> 費用
-            </div>
-            <ion-label>{service.price}</ion-label>
-          </ion-item>
+          {Script(/* javascript */ `
+    datePicker.isDateEnabled = isDateEnabled
+    function isDateEnabled(dateString) {
+      let date = new Date(dateString)
+      let day = date.getDay()
+      if (day == 0 || day == 6) return true
+      return false
+    }
+    `)}
+          <ion-accordion-group>
+            <ion-accordion value="address">
+              <ion-item slot="header">
+                <div slot="start">
+                  <ion-icon name="time-outline"></ion-icon> 時間
+                  <ion-button
+                    id="selectedTimeButton"
+                    color="light"
+                    class="ion-padding-horizontal"
+                  >
+                    未選擇
+                  </ion-button>
+                </div>
+              </ion-item>
+              <div class="ion-padding-horizontal" slot="content">
+                <ion-radio-group
+                  id="timeRadioGroup"
+                  allow-empty-selection="true"
+                  onionChange="console.log(event)"
+                >
+                  <ion-item>
+                    <ion-radio value="9:00">9:00 - 11:00</ion-radio>
+                  </ion-item>
+                  <ion-item>
+                    <ion-radio value="9:30">9:30 - 11:30</ion-radio>
+                  </ion-item>
+                  <ion-item>
+                    <ion-radio value="10:00">10:00 - 12:00</ion-radio>
+                  </ion-item>
+                </ion-radio-group>
+              </div>
+            </ion-accordion>
+          </ion-accordion-group>
+          {Script(/* javascript */ `
+timeRadioGroup.addEventListener('ionChange', event => {
+  selectedTimeButton.textContent = event.detail.value || '未選擇'
+})
+`)}
           <ion-item-divider style="min-height:2px"></ion-item-divider>
           {!address ? null : address_remark ? (
             <ion-accordion-group>
