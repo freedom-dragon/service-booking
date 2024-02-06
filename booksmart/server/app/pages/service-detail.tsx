@@ -62,7 +62,7 @@ function ServiceDetail(attrs: { service: Service }) {
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content id="ServiceDetail">
+      <ion-content id="ServiceDetail" color="light">
         <Swiper
           id="ServiceImages"
           images={[
@@ -76,7 +76,7 @@ function ServiceDetail(attrs: { service: Service }) {
         <h2 class="ion-margin" hidden>
           {service.name}
         </h2>
-        <ion-list>
+        <ion-list lines="full" inset="true">
           <ion-item lines="none">
             <div slot="start">
               <ion-icon name="options-outline"></ion-icon> 款式
@@ -108,7 +108,7 @@ function selectOption(button){
   }
 }
 `)}
-          <ion-item lines="none">
+          <ion-item>
             <div slot="start">
               <ion-icon name="people-outline"></ion-icon> 人數
             </div>
@@ -120,24 +120,25 @@ function selectOption(button){
             />
             <ion-label slot="end"> / {service.quota}</ion-label>
           </ion-item>
-          <ion-item lines="none">
+          <ion-item>
             <div slot="start">
               <ion-icon name="hourglass-outline"></ion-icon> 時長
             </div>
             <ion-label>{service.hours}</ion-label>
           </ion-item>
-          <ion-item lines="none">
+          <ion-item>
             <div slot="start">
               <ion-icon name="time-outline"></ion-icon> 時間
             </div>
             <ion-label>{service.time}</ion-label>
           </ion-item>
-          <ion-item lines="none">
+          <ion-item>
             <div slot="start">
               <ion-icon name="cash-outline"></ion-icon> 費用
             </div>
             <ion-label>{service.price}</ion-label>
           </ion-item>
+          <ion-item-divider style="min-height:2px"></ion-item-divider>
           {!address ? null : address_remark ? (
             <ion-accordion-group>
               <ion-accordion value="address">
@@ -166,7 +167,6 @@ function selectOption(button){
             </ion-accordion-group>
           ) : (
             <ion-item
-              lines="none"
               href={
                 'https://www.google.com/maps/search/' +
                 encodeURIComponent(address)
