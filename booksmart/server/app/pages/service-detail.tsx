@@ -32,6 +32,11 @@ let style = Style(/* css */ `
 .service-options ion-button {
   --ripple-color: transparent;
 }
+ion-item [slot="start"] {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
 `)
 
 function ServiceDetail(attrs: { service: Service }) {
