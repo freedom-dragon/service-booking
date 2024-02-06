@@ -179,11 +179,6 @@ function selectOption(button){
               <ion-label>{address}</ion-label>
             </ion-item>
           )}
-          <ion-item lines="none">
-            <div slot="start">
-              <ion-icon name="options-outline"></ion-icon> 款式
-            </div>
-          </ion-item>
         </ion-list>
 
         <div class="ion-padding">
