@@ -6,11 +6,12 @@ import {
   Context,
   DynamicContext,
   ExpressContext,
+  WsContext,
   getContextFormBody,
 } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { id, object, optional, string, values } from 'cast.ts'
+import { id, literal, object, optional, string, values } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
@@ -32,6 +33,7 @@ import { HttpError } from '../../http-error.js'
 import { join } from 'path'
 import { Formidable } from 'formidable'
 import { renameSync } from 'fs'
+import { EarlyTerminate, MessageException } from '../helpers.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -286,55 +288,11 @@ let ManageServiceStyle = Style(/* css */ `
   margin-bottom: 0.25rem;
 }
 `)
-function ManageService(attrs: { service: Service }, context: DynamicContext) {
-  let { service } = attrs
-  let shop = service.shop!
-  let shop_slug = shop!.slug
-  let { slug: service_slug } = service
-  let address = service.address || shop.address
-  let address_remark = service.address_remark || shop.address_remark
-  let options = filter(proxy.service_option, { service_id: service.id! })
-  let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
-  return (
-    <>
-      {ServiceDetailStyle}
-      {ManageServiceStyle}
-      <ion-header>
-        <ion-toolbar color="primary">
-          <IonBackButton href={serviceUrl} color="light" />
-          <ion-title role="heading" aria-level="1">
-            {concat_words('管理', service.name)}
-          </ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content id="ManageService" color="light">
-        <h2 class="ion-margin d-flex">
-          封面相
-          <ion-buttons style="display: inline-flex">
-            <ion-button onclick="editCoverImage()">
-              <ion-icon name="create" slot="icon-only" />
-            </ion-button>
-          </ion-buttons>
-        </h2>
-        <img
-          src={getServiceCoverImage(shop_slug, service_slug)}
-          id="coverImage"
-          class="preview-image"
-        />
-        <div class="text-center">
-          <ion-button
-            hidden
-            id="uploadCoverImageButton"
-            onclick="uploadImage(this)"
-            data-url={serviceUrl + '/image?name=cover'}
-          >
-            <ion-icon name="cloud-upload" slot="start"></ion-icon>
-            Upload
-          </ion-button>
-        </div>
-        {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
-        {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
-        {Script(/* javascript */ `
+let ManageServiceScripts = (
+  <>
+    {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
+    {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
+    {Script(/* javascript */ `
 async function editCoverImage() {
   let image = await selectServiceImage()
   if (!image) return
@@ -386,7 +344,63 @@ async function uploadImage(button, file) {
   button.color = 'success'
   button.disabled = true
 }
+function saveOptionName(button) {
+  let item = button.closest('ion-item')
+  let input = item.querySelector('ion-input')
+  let url = button.dataset.url
+  let id = button.dataset.id
+  let value = input.value
+  emit(url,id,value)
+}
 `)}
+  </>
+)
+function ManageService(attrs: { service: Service }, context: DynamicContext) {
+  let { service } = attrs
+  let shop = service.shop!
+  let shop_slug = shop!.slug
+  let { slug: service_slug } = service
+  let address = service.address || shop.address
+  let address_remark = service.address_remark || shop.address_remark
+  let options = filter(proxy.service_option, { service_id: service.id! })
+  let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
+  return (
+    <>
+      {ServiceDetailStyle}
+      {ManageServiceStyle}
+      <ion-header>
+        <ion-toolbar color="primary">
+          <IonBackButton href={serviceUrl} color="light" />
+          <ion-title role="heading" aria-level="1">
+            {concat_words('管理', service.name)}
+          </ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content id="ManageService" color="light">
+        <h2 class="ion-margin d-flex">
+          封面相
+          <ion-buttons style="display: inline-flex">
+            <ion-button onclick="editCoverImage()">
+              <ion-icon name="create" slot="icon-only" />
+            </ion-button>
+          </ion-buttons>
+        </h2>
+        <img
+          src={getServiceCoverImage(shop_slug, service_slug)}
+          id="coverImage"
+          class="preview-image"
+        />
+        <div class="text-center">
+          <ion-button
+            hidden
+            id="uploadCoverImageButton"
+            onclick="uploadImage(this)"
+            data-url={serviceUrl + '/image?name=cover'}
+          >
+            <ion-icon name="cloud-upload" slot="start"></ion-icon>
+            Upload
+          </ion-button>
+        </div>
         <h2 class="ion-margin">款式</h2>
         <ion-list>
           {mapArray(options, (option, i) => (
@@ -395,7 +409,12 @@ async function uploadImage(button, file) {
               <ion-item>
                 <ion-input label={'款式' + (i + 1)} value={option.name} />
                 <ion-buttons slot="end">
-                  <ion-button color="success">
+                  <ion-button
+                    color="success"
+                    onclick="saveOptionName(this)"
+                    data-url={serviceUrl + '/option/name'}
+                    data-id={option.id}
+                  >
                     <ion-icon name="save" />
                   </ion-button>
                   <ion-button color="danger">
@@ -441,53 +460,7 @@ async function uploadImage(button, file) {
           </div>
         </ion-list>
         <h2 class="ion-margin">Others</h2>
-        <Swiper
-          id="ServiceImages"
-          images={[
-            <img src={getServiceCoverImage(shop_slug, service_slug)} />,
-            ...getServiceImages(shop_slug, service_slug).map(url => (
-              <img src={url} />
-            )),
-          ]}
-          showPagination
-        />
-        <h2 class="ion-margin" hidden>
-          {service.name}
-        </h2>
         <ion-list lines="full" inset="true">
-          <ion-item lines="none">
-            <div slot="start">
-              <ion-icon name="options-outline"></ion-icon> 款式
-            </div>
-          </ion-item>
-          <ion-item>
-            <div
-              class="service-options ion-margin-horizontal flex-wrap"
-              style="gap: 0.25rem; margin-bottom: 8px"
-            >
-              {mapArray(options, (option, index) => (
-                <ion-button
-                  size="small"
-                  fill={options.length == 1 ? 'solid' : 'outline'}
-                  onclick="selectOption(this)"
-                  data-id={option.id}
-                  data-index={index + 1}
-                >
-                  {option.name}
-                </ion-button>
-              ))}
-            </div>
-          </ion-item>
-          {Script(/* javascript */ `
-function selectOption(button){
-  swiperSlide(ServiceImages, button.dataset.index);
-  if (button.fill == 'solid') return
-  let buttons = button.parentElement.children
-  for (let each of buttons) {
-    each.fill = each == button ? 'solid' : 'outline';
-  }
-}
-`)}
           <ion-item>
             <div slot="start">
               <ion-icon name="cash-outline"></ion-icon> 費用
@@ -618,6 +591,7 @@ timeRadioGroup.addEventListener('ionChange', event => {
         </ion-list>
         {wsStatus.safeArea}
       </ion-content>
+      {ManageServiceScripts}
     </>
   )
 }
@@ -798,7 +772,7 @@ function attachRoutes(app: Router) {
 let routes: Routes = {
   '/shop/:shop_slug/service/:service_slug': {
     resolve(context) {
-      return resolveServiceRoute(context, (service, shop) => {
+      return resolveServiceRoute(context, ({ service, shop }) => {
         let service_name = service.name
         let action = '了解和預約'
         return {
@@ -811,7 +785,7 @@ let routes: Routes = {
   },
   '/shop/:shop_slug/service/:service_slug/admin': {
     resolve(context) {
-      return resolveServiceRoute(context, (service, shop) => {
+      return resolveServiceRoute(context, ({ service, shop }) => {
         let service_name = service.name
         let action = '管理'
         return {
@@ -820,6 +794,50 @@ let routes: Routes = {
           node: <ManageService service={service} />,
         }
       })
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/option/name': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: title('method not supported'),
+          description: 'update service option name',
+          node: <p>This api is only available in over ws</p>,
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          let {
+            args: { '0': option_id, 1: option_name },
+          } = object({
+            type: literal('ws'),
+            args: object({ 0: id(), 1: string({ nonEmpty: true }) }),
+          }).parse(context)
+          let option = find(proxy.service_option, {
+            id: +option_id!,
+            service_id: service.id!,
+          })
+          if (!option) {
+            return {
+              title: title('option not found'),
+              description: 'The option is not found by id',
+              node: (
+                <Redirect
+                  href={`/shop/${shop_slug}/service/${service_slug}/admin`}
+                />
+              ),
+            }
+          }
+          // TODO check if the user is shop owner
+          option.name = option_name
+
+          throw new MessageException([
+            'eval',
+            `showToast('updated option name','success')`,
+          ])
+        },
+      )
     },
   },
   '/service-detail/add': {

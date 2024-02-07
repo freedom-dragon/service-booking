@@ -8,7 +8,12 @@ import { o } from './jsx/jsx.js'
 
 export function resolveServiceRoute(
   context: DynamicContext,
-  callback: (service: Service, shop: Shop) => ResolvedPageRoue,
+  callback: (args: {
+    service: Service
+    shop: Shop
+    shop_slug: string
+    service_slug: string
+  }) => ResolvedPageRoue,
 ): ResolvedPageRoue {
   let { shop_slug, service_slug } = context.routerMatch?.params
   let shop = find(proxy.shop, { slug: shop_slug })
@@ -30,5 +35,5 @@ export function resolveServiceRoute(
       node: <Redirect href={`/shop/${shop_slug}`} />,
     }
   }
-  return callback(service, shop)
+  return callback({ service, shop, shop_slug, service_slug })
 }
