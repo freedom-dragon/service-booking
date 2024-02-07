@@ -42,6 +42,7 @@ import { WindowStub } from '../../client/internal.js'
 import { updateRequestSession } from '../../db/request-log.js'
 import verificationCode from './pages/verification-code.js'
 import { Link } from './components/router.js'
+import ServiceDetail from './pages/service-detail.js'
 
 if (config.development) {
   scanTemplateDir('template')
@@ -194,6 +195,7 @@ export function attachRoutes(app: Router) {
   // ajax/upload/middleware routes
   app.use(renewAuthCookieMiddleware)
   Profile.attachRoutes(app)
+  ServiceDetail.attachRoutes(app)
 
   // redirect routes
   Object.entries(redirectDict).forEach(([from, to]) =>

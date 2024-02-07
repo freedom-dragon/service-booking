@@ -1,4 +1,4 @@
-import { apiEndpointTitle, title } from '../../config.js'
+import { apiEndpointTitle, config, title } from '../../config.js'
 import { commonTemplatePageText } from '../components/common-template.js'
 import { Link, Redirect } from '../components/router.js'
 import { DynamicContext, ExpressContext } from '../context.js'
@@ -153,7 +153,7 @@ function attachRoutes(app: Router) {
 
       let form = createUploadForm({
         mimeTypeRegex: /^image\/.+/,
-        maxFileSize: 300 * 1024,
+        maxFileSize: config.max_image_size,
       })
       let [fields, files] = await form.parse(req)
 
