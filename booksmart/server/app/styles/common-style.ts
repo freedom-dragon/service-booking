@@ -39,6 +39,10 @@ img {
   max-height: 100%;
 }
 
+.w-100 {
+  width: 100%;
+}
+
 code.inline-code {
   background: rgba(175, 184, 193, 0.2);
   padding: 0.25rem 0.5rem;

@@ -26,6 +26,14 @@ export function getServiceCoverImage(shop_slug: string, service_slug: string) {
   return `/assets/shops/${shop_slug}/${service_slug}/cover.webp`
 }
 
+export function getServiceOptionImage(
+  shop_slug: string,
+  service_slug: string,
+  option_id: number,
+) {
+  return `/assets/shops/${shop_slug}/${service_slug}/option-${option_id}.webp`
+}
+
 export function getServiceImages(shop_slug: string, service_slug: string) {
   let dir = `assets/shops/${shop_slug}/${service_slug}`
   let filenames = readdirSync(`public/${dir}`)

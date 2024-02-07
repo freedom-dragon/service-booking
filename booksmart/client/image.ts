@@ -23,7 +23,7 @@ function compressPhotos(files: FileList | File[]) {
   )
 }
 
-async function selectCoverImage() {
+async function selectServiceImage() {
   let [file] = await selectImage({
     accept: 'image/*',
     multiple: false,
@@ -40,5 +40,5 @@ async function selectCoverImage() {
 Object.assign(window, {
   compressPhotos,
   format_byte,
-  selectCoverImage,
+  selectServiceImage,
 })
