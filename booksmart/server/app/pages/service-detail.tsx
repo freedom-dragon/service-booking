@@ -41,7 +41,9 @@ let style = Style(/* css */ `
 #ServiceImages .swiper-slide img {
   width: 100vw;
   height: 100vw;
-  object-fit: contain;
+  object-fit: cover;
+}
+.swiper-pagination-images img {
   object-fit: cover;
 }
 .service-options ion-button {
