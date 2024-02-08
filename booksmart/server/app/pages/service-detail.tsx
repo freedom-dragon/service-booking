@@ -275,6 +275,11 @@ timeRadioGroup.addEventListener('ionChange', event => {
             </ion-item>
           )}
         </ion-list>
+        <div class="ion-margin">
+          <ion-button fill="block" color="primary" class="ion-margin">
+            Submit
+          </ion-button>
+        </div>
         {wsStatus.safeArea}
       </ion-content>
     </>
