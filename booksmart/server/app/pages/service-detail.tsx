@@ -409,6 +409,12 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           src={getServiceCoverImage(shop_slug, service_slug)}
           id="coverImage"
           class="preview-image"
+          style="
+            margin: 0 1rem;
+            border-radius: 0.5rem;
+            width: calc(100vw - 2rem);
+            height: calc(100vw - 2rem);
+          "
         />
         <div class="text-center">
           <ion-button
