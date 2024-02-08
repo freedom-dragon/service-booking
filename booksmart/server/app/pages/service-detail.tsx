@@ -300,6 +300,7 @@ let ManageServiceStyle = Style(/* css */ `
 }
 #ManageService .service-option img {
   margin: 0 1rem 0.5rem;
+  margin-bottom: 0;
   width: calc(100vw - 64px);
   height: calc(100vw - 64px);
   border-radius: 0.25rem;
