@@ -287,6 +287,17 @@ let ManageServiceStyle = Style(/* css */ `
   margin-top: 0.5rem;
   margin-bottom: 0.25rem;
 }
+#ManageService .service-option img {
+  margin: 0 1rem 0.5rem;
+  width: calc(100vw - 64px);
+  height: calc(100vw - 64px);
+  border-radius: 0.25rem;
+}
+#ManageService .service-option-list ion-item-divider {
+  margin: 0 1rem;
+  width: calc(100% - 2rem);
+  min-height: 8px;
+}
 `)
 let ManageServiceScripts = (
   <>
@@ -402,7 +413,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           </ion-button>
         </div>
         <h2 class="ion-margin">款式</h2>
-        <ion-list>
+        <ion-list inset="true" class="service-option-list">
           {mapArray(options, (option, i) => (
             <div class="service-option">
               {i > 0 ? <ion-item-divider></ion-item-divider> : null}
@@ -422,7 +433,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                   </ion-button>
                 </ion-buttons>
               </ion-item>
-              <h3 class="ion-margin d-flex">
+              <h3 class="ion-margin-horizontal d-flex">
                 款式相
                 <ion-buttons style="display: inline-flex">
                   <ion-button onclick="editOptionImage(this)" color="primary">
@@ -447,10 +458,19 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               </div>
             </div>
           ))}
-          <ion-item-divider>
-            {options.length > 0 ? (
-              <p class="ion-text-center w-100">共 {options.length} 款</p>
-            ) : null}
+          <ion-item-divider
+            style="
+              padding: 0.5rem 0;
+              margin-top: 0.5rem;
+              margin-bottom: 0.5rem;
+            "
+          >
+            <p
+              class="ion-text-center w-100"
+              style="color: var(--ion-color-dark);"
+            >
+              {options.length > 0 ? `共 ${options.length} 款` : `未有任何款式`}
+            </p>
           </ion-item-divider>
           <div class="text-center">
             <ion-button onclick="addOption()">
