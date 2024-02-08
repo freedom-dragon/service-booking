@@ -305,10 +305,20 @@ let ManageServiceStyle = Style(/* css */ `
   height: calc(100vw - 64px);
   border-radius: 0.25rem;
 }
-#ManageService .service-option-list ion-item-divider {
+#ManageService ion-item-divider {
   margin: 0 1rem;
   width: calc(100% - 2rem);
   min-height: 8px;
+}
+#ManageService ion-item-divider.list-description {
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+#ManageService ion-item-divider.list-description p {
+  width: 100%;
+  text-align: center;
+  color: var(--ion-color-dark);
 }
 `)
 let ManageServiceScripts = (
@@ -402,6 +412,68 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
       </ion-header>
       <ion-content id="ManageService" color="light">
         <h2 class="ion-margin">{locale.service}資料</h2>
+        <ion-list lines="full" inset="true" style="margin-bottom: 0.5rem">
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="people-outline"></ion-icon> 標題
+            </div>
+            <ion-input placeholder="輸入一個簡短的標題" value={service.name} />
+          </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="cash-outline"></ion-icon> 費用
+            </div>
+            <ion-input
+              value={service.price}
+              placeholder="如: $100/人 、 $150/對情侶"
+            />
+          </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="people-outline"></ion-icon> 人數
+            </div>
+            <ion-input value={service.quota} placeholder="如: 6人 / 2對情侶" />
+          </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="hourglass-outline"></ion-icon> 時長
+            </div>
+            <ion-input value={service.hours} placeholder="如: 2.5 - 3 小時" />
+          </ion-item>
+        </ion-list>
+        <div class="ion-text-center">
+          <ion-button color="primary">
+            <ion-icon name="save" slot="start" />
+            <span class="button-text">Save</span>
+          </ion-button>
+        </div>
+
+        <h2 class="ion-margin">可預約時段</h2>
+        <ion-list lines="full" inset="true" style="margin-bottom: 0.5rem">
+          <ion-item>xx</ion-item>
+          <ion-item>xx</ion-item>
+          <ion-item>xx</ion-item>
+          <ion-item-divider class="list-description" color="light">
+            <p>
+              {options.length > 0
+                ? `共 ${options.length} 組時段`
+                : `未有任何時段`}
+            </p>
+          </ion-item-divider>
+          <div class="text-center">
+            <ion-button onclick="addOption()">
+              <ion-icon name="cloud-upload" slot="start"></ion-icon>
+              加時段
+            </ion-button>
+          </div>
+        </ion-list>
+        <div class="ion-text-center">
+          <ion-button color="primary">
+            <ion-icon name="save" slot="start" />
+            <span class="button-text">Save</span>
+          </ion-button>
+        </div>
+
         <h2 class="ion-margin d-flex">
           封面相
           <ion-buttons style="display: inline-flex">
@@ -432,6 +504,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             <span class="button-text">Upload</span>
           </ion-button>
         </div>
+
         <h2 class="ion-margin">款式</h2>
         <ion-list inset="true" class="service-option-list">
           {mapArray(options, (option, i) => (
@@ -478,17 +551,8 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               </div>
             </div>
           ))}
-          <ion-item-divider
-            style="
-              padding: 0.5rem 0;
-              margin-top: 0.5rem;
-              margin-bottom: 0.5rem;
-            "
-          >
-            <p
-              class="ion-text-center w-100"
-              style="color: var(--ion-color-dark);"
-            >
+          <ion-item-divider class="list-description" color="light">
+            <p>
               {options.length > 0 ? `共 ${options.length} 款` : `未有任何款式`}
             </p>
           </ion-item-divider>
@@ -499,32 +563,9 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             </ion-button>
           </div>
         </ion-list>
+
         <h2 class="ion-margin">Others</h2>
         <ion-list lines="full" inset="true">
-          <ion-item>
-            <div slot="start">
-              <ion-icon name="cash-outline"></ion-icon> 費用
-            </div>
-            <ion-label>{service.price}</ion-label>
-          </ion-item>
-          <ion-item>
-            <div slot="start">
-              <ion-icon name="people-outline"></ion-icon> 人數
-            </div>
-            <ion-input
-              placeholder="1"
-              type="number"
-              min="1"
-              max={service.quota}
-            />
-            <ion-label slot="end"> / {service.quota}</ion-label>
-          </ion-item>
-          <ion-item>
-            <div slot="start">
-              <ion-icon name="hourglass-outline"></ion-icon> 時長
-            </div>
-            <ion-label>{service.hours}</ion-label>
-          </ion-item>
           <ion-item>
             <div slot="start">
               <ion-icon name="calendar-outline"></ion-icon> 日期
