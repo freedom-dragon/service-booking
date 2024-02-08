@@ -21,6 +21,7 @@ import {
   getServiceCoverImage,
   getServiceImages,
   getServiceOptionImage,
+  getShopLocale,
 } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
 import { wsStatus } from '../components/ws-status.js'
@@ -73,6 +74,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let address = service.address || shop.address
   let address_remark = service.address_remark || shop.address_remark
   let options = filter(proxy.service_option, { service_id: service.id! })
+  let locale = getShopLocale(shop.id!)
   return (
     <>
       {ServiceDetailStyle}
@@ -80,7 +82,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
         <ion-toolbar color="primary">
           <IonBackButton
             href={'/shop/' + shop_slug}
-            backText="其他畫班"
+            backText={'其他' + locale.service}
             color="light"
           />
           <ion-title role="heading" aria-level="1">
@@ -89,7 +91,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
           <ion-buttons slot="end">
             <Link
               tagName="ion-button"
-              title="管理"
+              title={'管理' + locale.service}
               href={context.url + '/admin'}
             >
               <ion-icon slot="icon-only" name="create"></ion-icon>
@@ -383,6 +385,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
   let address = service.address || shop.address
   let address_remark = service.address_remark || shop.address_remark
   let options = filter(proxy.service_option, { service_id: service.id! })
+  let locale = getShopLocale(shop.id!)
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   return (
     <>
@@ -397,6 +400,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="ManageService" color="light">
+        <h2 class="ion-margin">{locale.service}資料</h2>
         <h2 class="ion-margin d-flex">
           封面相
           <ion-buttons style="display: inline-flex">
