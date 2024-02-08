@@ -319,7 +319,7 @@ async function editCoverImage() {
   coverImage.src = image.dataUrl
   coverImage.file = image.file
   uploadCoverImageButton.hidden = false
-  uploadCoverImageButton.textContent = 'Upload'
+  uploadCoverImageButton.querySelector('.button-text').textContent = 'Upload'
   uploadCoverImageButton.color = 'dark'
   uploadCoverImageButton.disabled = false
 }
@@ -332,7 +332,7 @@ async function editOptionImage(editButton) {
   previewImage.src = image.dataUrl
   previewImage.file = image.file
   uploadButton.hidden = false
-  uploadButton.textContent = 'Upload'
+  uploadButton.querySelector('.button-text').textContent = 'Upload'
   uploadButton.color = 'dark'
   uploadButton.disabled = false
 }
@@ -360,7 +360,7 @@ async function uploadImage(button, file) {
     showAlert(json.error, 'error')
     return
   }
-  button.textContent = 'Uploaded'
+  button.querySelector('.button-text').textContent = 'Uploaded'
   button.color = 'success'
   button.disabled = true
 }
@@ -420,11 +420,11 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           <ion-button
             hidden
             id="uploadCoverImageButton"
-            onclick="uploadImage(this)"
+            onclick="uploadCoverImage(this)"
             data-url={serviceUrl + '/image?name=cover'}
           >
             <ion-icon name="cloud-upload" slot="start"></ion-icon>
-            Upload
+            <span class="button-text">Upload</span>
           </ion-button>
         </div>
         <h2 class="ion-margin">款式</h2>
@@ -468,7 +468,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                   class="upload-button"
                 >
                   <ion-icon name="cloud-upload" slot="start"></ion-icon>
-                  Upload
+                  <span class="button-text">Upload</span>
                 </ion-button>
               </div>
             </div>
