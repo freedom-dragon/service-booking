@@ -59,6 +59,10 @@ ion-item [slot="start"] {
   align-items: center;
   gap: 0.25rem;
 }
+ion-item [slot="start"] ion-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
 `)
 
 function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
@@ -169,7 +173,7 @@ function selectOption(button){
           </ion-item>
           <ion-item>
             <div slot="start">
-              <ion-icon name="time-outline"></ion-icon> 日期
+              <ion-icon name="calendar-outline"></ion-icon> 日期
             </div>
             <ion-datetime-button datetime="datePicker"></ion-datetime-button>
             <ion-modal>
@@ -507,7 +511,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           </ion-item>
           <ion-item>
             <div slot="start">
-              <ion-icon name="time-outline"></ion-icon> 日期
+              <ion-icon name="calendar-outline"></ion-icon> 日期
             </div>
             <ion-datetime-button datetime="datePicker"></ion-datetime-button>
             <ion-modal>
