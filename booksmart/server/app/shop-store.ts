@@ -4,14 +4,17 @@ import { readdirSync } from 'fs'
 
 export function getShopLocale(shop_id: number) {
   let rows = filter(proxy.shop_locale, { shop_id })
-  let locale: Record<string, string> = {}
+  let dict: Record<string, string> = {}
   for (let row of rows) {
-    locale[row.key] = row.value
+    dict[row.key] = row.value
   }
-  return locale as {
+  let locale = dict as {
     tutor: string
     service: string
   }
+  locale.tutor ||= '導師'
+  locale.service ||= '服務'
+  return locale
 }
 
 export function getShopLogoImage(shop_slug: string) {
