@@ -23,6 +23,7 @@ export let CommonStyle = /* css */ `
   align-items: center;
 }
 .flex-column {
+  display: flex;
   flex-direction: column;
 }
 

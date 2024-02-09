@@ -320,6 +320,14 @@ let ManageServiceStyle = Style(/* css */ `
   text-align: center;
   color: var(--ion-color-dark);
 }
+#ManageService .weekday--list {
+  justify-content: space-around;
+  margin-top: 0;
+}
+#ManageService .weekday--item {
+  align-items: center;
+  gap: 0.5rem;
+}
 `)
 let ManageServiceScripts = (
   <>
@@ -398,6 +406,8 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
   let options = filter(proxy.service_option, { service_id: service.id! })
   let locale = getShopLocale(shop.id!)
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
+  let dateRange = getDateRange()
+  let timeRanges = [1, 2, 3, 4, 5]
   return (
     <>
       {ServiceDetailStyle}
@@ -450,13 +460,73 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
 
         <h2 class="ion-margin">可預約時段</h2>
         <ion-list lines="full" inset="true" style="margin-bottom: 0.5rem">
-          <ion-item>xx</ion-item>
-          <ion-item>xx</ion-item>
-          <ion-item>xx</ion-item>
+          {mapArray(timeRanges, (timeRange, i) => (
+            <div class="available-timeslot">
+              {i > 0 ? <ion-item-divider></ion-item-divider> : null}
+              <ion-item>
+                <ion-label>可預約時段 {i + 1}</ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label>開始日期</ion-label>
+                <ion-datetime-button datetime={'startDatePicker' + (i + 1)} />
+                <ion-modal>
+                  <ion-datetime
+                    id={'startDatePicker' + (i + 1)}
+                    presentation="date"
+                    show-default-buttons="true"
+                    min={dateRange.min}
+                    max={dateRange.max}
+                  />
+                </ion-modal>
+              </ion-item>
+              <ion-item>
+                <ion-label>結束日期</ion-label>
+                <ion-datetime-button datetime={'endDatePicker' + (i + 1)} />
+                <ion-modal>
+                  <ion-datetime
+                    id={'endDatePicker' + (i + 1)}
+                    presentation="date"
+                    show-default-buttons="true"
+                    min={dateRange.min}
+                    max={dateRange.max}
+                  />
+                </ion-modal>
+              </ion-item>
+              <ion-item lines="none">
+                <ion-label>可選擇星期</ion-label>
+              </ion-item>
+              <ion-item lines="none">
+                <div slot="start" style="color: var(--ion-color-medium)">
+                  快捷選項
+                </div>
+                <div slot="end">
+                  <ion-button onclick="chooseWeekdays(this,[1,2,3,4,5])">
+                    星期一至五
+                  </ion-button>
+                  <ion-button onclick="chooseWeekdays(this,[0,6])">
+                    星期六日
+                  </ion-button>
+                </div>
+              </ion-item>
+              <ion-item lines="none">
+                <div slot="start" style="color: var(--ion-color-medium)">
+                  自選組合
+                </div>
+              </ion-item>
+              <div class="ion-margin d-flex weekday--list">
+                {mapArray('日一二三四五六'.split(''), (s, i) => (
+                  <div class="flex-column weekday--item">
+                    <ion-label>{s}</ion-label>
+                    <ion-checkbox></ion-checkbox>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
           <ion-item-divider class="list-description" color="light">
             <p>
-              {options.length > 0
-                ? `共 ${options.length} 組時段`
+              {timeRanges.length > 0
+                ? `共 ${timeRanges.length} 組時段`
                 : `未有任何時段`}
             </p>
           </ion-item-divider>
@@ -473,6 +543,16 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             <span class="button-text">Save</span>
           </ion-button>
         </div>
+        {Script(/* javascript */ `
+function chooseWeekdays(button, weekdays) {
+  let item = button.closest('.available-timeslot')
+  let list = item.querySelector('.weekday--list')
+  for (let i of weekdays) {
+    let checkbox = list.children[i].querySelector('ion-checkbox')
+    checkbox.checked = !checkbox.checked
+  }
+}
+`)}
 
         <h2 class="ion-margin d-flex">
           封面相
@@ -511,7 +591,10 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             <div class="service-option">
               {i > 0 ? <ion-item-divider></ion-item-divider> : null}
               <ion-item>
-                <ion-input label={'款式' + (i + 1)} value={option.name} />
+                <ion-input
+                  label={'款式 ' + (i + 1) + ' 標題'}
+                  value={option.name}
+                />
                 <ion-buttons slot="end">
                   <ion-button
                     color="success"
@@ -527,7 +610,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                 </ion-buttons>
               </ion-item>
               <h3 class="ion-margin-horizontal d-flex">
-                款式相
+                款式 {i + 1} 相片
                 <ion-buttons style="display: inline-flex">
                   <ion-button onclick="editOptionImage(this)" color="primary">
                     <ion-icon name="create" slot="icon-only" />
@@ -675,6 +758,14 @@ timeRadioGroup.addEventListener('ionChange', event => {
       {ManageServiceScripts}
     </>
   )
+}
+
+function getDateRange() {
+  let date = new Date()
+  let min = date.toISOString()
+  date.setFullYear(date.getFullYear() + 1)
+  let max = date.toISOString()
+  return { min, max }
 }
 
 let addPage = (
