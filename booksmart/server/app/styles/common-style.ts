@@ -54,9 +54,4 @@ code.inline-code {
 .ws_status--safe-area {
   margin-top: 3rem;
 }
-
-hr {
-  height: 1px solid;
-  background-color: var(--ion-color-dark);
-}
 `
