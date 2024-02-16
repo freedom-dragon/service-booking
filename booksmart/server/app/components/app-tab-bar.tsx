@@ -18,12 +18,12 @@ export let appIonTabBar = (
         label: '預約',
         href: '/calendar',
       },
-      {
-        tab: 'shopping',
-        icon: 'cart',
-        label: '套票',
-        href: '/shop/' + config.shop_slug,
-      },
+      // {
+      //   tab: 'shopping',
+      //   icon: 'cart',
+      //   label: '套票',
+      //   href: '/shop/' + config.shop_slug,
+      // },
       {
         tab: 'notice',
         icon: 'notifications',
