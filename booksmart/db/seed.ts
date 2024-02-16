@@ -67,6 +67,21 @@ seedService({
   address_remark: null,
 })
 
+proxy.service_timeslot[1] = {
+  service_id: 1,
+  start_date: '2024-02-11',
+  end_date: '2024-02-17',
+  weekdays: '日二四六',
+  hours: '09:00-12:00,14:00-16:30,20:00-22:00',
+}
+proxy.service_timeslot[2] = {
+  service_id: 1,
+  start_date: '2024-02-18',
+  end_date: '2024-02-24',
+  weekdays: '一三五',
+  hours: '14:00-16:30',
+}
+
 seedService({
   id: 2,
   shop_id: 1,

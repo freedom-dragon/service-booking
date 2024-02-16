@@ -22,6 +22,8 @@ import {
   getServiceImages,
   getServiceOptionImage,
   getShopLocale,
+  parseServiceTimeslotHours,
+  serializeServiceTimeslotHours,
 } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
 import { wsStatus } from '../components/ws-status.js'
@@ -328,6 +330,13 @@ let ManageServiceStyle = Style(/* css */ `
   align-items: center;
   gap: 0.5rem;
 }
+#ManageService .available-timeslot {
+}
+#ManageService .time-picker--container {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
 `)
 let ManageServiceScripts = (
   <>
@@ -407,7 +416,9 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
   let locale = getShopLocale(shop.id!)
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let dateRange = getDateRange()
-  let timeRanges = [1, 2, 3, 4, 5]
+  let service_timeslot_rows = filter(proxy.service_timeslot, {
+    service_id: service.id!,
+  })
   return (
     <>
       {ServiceDetailStyle}
@@ -460,79 +471,158 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
 
         <h2 class="ion-margin">可預約時段</h2>
         <ion-list lines="full" inset="true" style="margin-bottom: 0.5rem">
-          {mapArray(timeRanges, (timeRange, i) => (
-            <div class="available-timeslot">
-              {i > 0 ? <ion-item-divider></ion-item-divider> : null}
-              <ion-item>
-                <ion-label>可預約時段 {i + 1}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>開始日期</ion-label>
-                <ion-datetime-button datetime={'startDatePicker' + (i + 1)} />
-                <ion-modal>
-                  <ion-datetime
-                    id={'startDatePicker' + (i + 1)}
-                    presentation="date"
-                    show-default-buttons="true"
-                    min={dateRange.min}
-                    max={dateRange.max}
-                  />
-                </ion-modal>
-              </ion-item>
-              <ion-item>
-                <ion-label>結束日期</ion-label>
-                <ion-datetime-button datetime={'endDatePicker' + (i + 1)} />
-                <ion-modal>
-                  <ion-datetime
-                    id={'endDatePicker' + (i + 1)}
-                    presentation="date"
-                    show-default-buttons="true"
-                    min={dateRange.min}
-                    max={dateRange.max}
-                  />
-                </ion-modal>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-label>可選擇星期</ion-label>
-              </ion-item>
-              <ion-item lines="none">
-                <div slot="start" style="color: var(--ion-color-medium)">
-                  快捷選項
-                </div>
-                <div slot="end">
-                  <ion-button onclick="chooseWeekdays(this,[1,2,3,4,5])">
-                    星期一至五
-                  </ion-button>
-                  <ion-button onclick="chooseWeekdays(this,[0,6])">
-                    星期六日
-                  </ion-button>
-                </div>
-              </ion-item>
-              <ion-item lines="none">
-                <div slot="start" style="color: var(--ion-color-medium)">
-                  自選組合
-                </div>
-              </ion-item>
-              <div class="ion-margin d-flex weekday--list">
-                {mapArray('日一二三四五六'.split(''), (s, i) => (
-                  <div class="flex-column weekday--item">
-                    <ion-label>{s}</ion-label>
-                    <ion-checkbox></ion-checkbox>
+          {mapArray(
+            service_timeslot_rows,
+            (service_timeslot, timeslot_index) => {
+              let { id: timeslot_id, weekdays } = service_timeslot
+
+              let hours = parseServiceTimeslotHours(service_timeslot.hours)
+
+              return (
+                <div class="available-timeslot">
+                  {timeslot_index > 0 ? (
+                    <ion-item-divider></ion-item-divider>
+                  ) : null}
+                  <ion-item>
+                    <ion-label>可預約時段 {timeslot_index + 1}</ion-label>
+                  </ion-item>
+                  <ion-item>
+                    <ion-label>開始日期</ion-label>
+                    <ion-datetime-button
+                      datetime={'startDatePicker_' + timeslot_id}
+                    />
+                    <ion-modal>
+                      <ion-datetime
+                        id={'startDatePicker_' + timeslot_id}
+                        value={service_timeslot.start_date}
+                        presentation="date"
+                        show-default-buttons="true"
+                        min={dateRange.min}
+                        max={dateRange.max}
+                      />
+                    </ion-modal>
+                  </ion-item>
+                  <ion-item>
+                    <ion-label>結束日期</ion-label>
+                    <ion-datetime-button
+                      datetime={'endDatePicker_' + timeslot_id}
+                    />
+                    <ion-modal>
+                      <ion-datetime
+                        id={'endDatePicker_' + timeslot_id}
+                        value={service_timeslot.end_date}
+                        presentation="date"
+                        show-default-buttons="true"
+                        min={dateRange.min}
+                        max={dateRange.max}
+                      />
+                    </ion-modal>
+                  </ion-item>
+                  <ion-item lines="none">
+                    <ion-label>可選擇星期</ion-label>
+                  </ion-item>
+                  <ion-item lines="none">
+                    <div slot="start" style="color: var(--ion-color-medium)">
+                      快捷選項
+                    </div>
+                    <div slot="end">
+                      <ion-button onclick="chooseWeekdays(this,[1,2,3,4,5])">
+                        星期一至五
+                      </ion-button>
+                      <ion-button onclick="chooseWeekdays(this,[0,6])">
+                        星期六日
+                      </ion-button>
+                    </div>
+                  </ion-item>
+                  <ion-item lines="none">
+                    <div slot="start" style="color: var(--ion-color-medium)">
+                      自選組合
+                    </div>
+                  </ion-item>
+                  <div class="ion-margin d-flex weekday--list">
+                    {mapArray('日一二三四五六'.split(''), weekday => (
+                      <div class="flex-column weekday--item">
+                        <ion-label>{weekday}</ion-label>
+                        <ion-checkbox
+                          checked={weekdays.includes(weekday)}
+                        ></ion-checkbox>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
+                  <ion-item lines="none">
+                    <ion-label>可選擇時間</ion-label>
+                  </ion-item>
+                  {mapArray(hours, (hour, hour_index) => {
+                    let startTimePickerId =
+                      'startTimePicker_' + timeslot_id + '_' + (hour_index + 1)
+                    let endTimePickerId =
+                      'endTimePicker_' + timeslot_id + '_' + (hour_index + 1)
+                    return (
+                      <ion-item
+                        lines="none"
+                        data-timeslot-id={timeslot_id}
+                        data-hour={hour.part}
+                      >
+                        <div slot="start" class="time-picker--container">
+                          <ion-datetime-button datetime={startTimePickerId} />
+                          <ion-modal>
+                            <ion-datetime
+                              id={startTimePickerId}
+                              value={hour.start}
+                              presentation="time"
+                              hour-cycle="h23"
+                              show-default-buttons="true"
+                            />
+                          </ion-modal>
+                          <div> - </div>
+                          <ion-datetime-button datetime={endTimePickerId} />
+                          <ion-modal>
+                            <ion-datetime
+                              id={endTimePickerId}
+                              value={hour.end}
+                              presentation="time"
+                              hour-cycle="h23"
+                              show-default-buttons="true"
+                            />
+                          </ion-modal>
+                        </div>
+                        <div slot="end">
+                          <ion-buttons>
+                            <ion-button
+                              size="small"
+                              color="danger"
+                              onclick={`emit('${serviceUrl}/timeslot/${timeslot_id}/hour','remove','${hour.part}')`}
+                            >
+                              <ion-icon
+                                name="trash"
+                                slot="icon-only"
+                              ></ion-icon>
+                            </ion-button>
+                          </ion-buttons>
+                        </div>
+                      </ion-item>
+                    )
+                  })}
+                  <div class="ion-text-center">
+                    <ion-button onclick="addHours()">
+                      <ion-icon name="add" slot="start"></ion-icon>
+                      加時間
+                    </ion-button>
+                  </div>
+                </div>
+              )
+            },
+          )}
           <ion-item-divider class="list-description" color="light">
             <p>
-              {timeRanges.length > 0
-                ? `共 ${timeRanges.length} 組時段`
+              {service_timeslot_rows.length > 0
+                ? `共 ${service_timeslot_rows.length} 組時段`
                 : `未有任何時段`}
             </p>
           </ion-item-divider>
           <div class="text-center">
             <ion-button onclick="addOption()">
-              <ion-icon name="cloud-upload" slot="start"></ion-icon>
+              <ion-icon name="add" slot="start"></ion-icon>
               加時段
             </ion-button>
           </div>
@@ -545,12 +635,12 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
         </div>
         {Script(/* javascript */ `
 function chooseWeekdays(button, weekdays) {
-  let item = button.closest('.available-timeslot')
-  let list = item.querySelector('.weekday--list')
-  for (let i of weekdays) {
-    let checkbox = list.children[i].querySelector('ion-checkbox')
-    checkbox.checked = !checkbox.checked
-  }
+let item = button.closest('.available-timeslot')
+let list = item.querySelector('.weekday--list')
+for (let i of weekdays) {
+let checkbox = list.children[i].querySelector('ion-checkbox')
+checkbox.checked = !checkbox.checked
+}
 }
 `)}
 
@@ -567,11 +657,11 @@ function chooseWeekdays(button, weekdays) {
           id="coverImage"
           class="preview-image"
           style="
-            margin: 0 1rem;
-            border-radius: 0.5rem;
-            width: calc(100vw - 2rem);
-            height: calc(100vw - 2rem);
-          "
+        margin: 0 1rem;
+        border-radius: 0.5rem;
+        width: calc(100vw - 2rem);
+        height: calc(100vw - 2rem);
+      "
         />
         <div class="text-center">
           <ion-button
@@ -665,14 +755,14 @@ function chooseWeekdays(button, weekdays) {
             </ion-modal>
           </ion-item>
           {Script(/* javascript */ `
-    datePicker.isDateEnabled = isDateEnabled
-    function isDateEnabled(dateString) {
-      let date = new Date(dateString)
-      let day = date.getDay()
-      if (day == 0 || day == 6) return true
-      return false
-    }
-    `)}
+datePicker.isDateEnabled = isDateEnabled
+function isDateEnabled(dateString) {
+  let date = new Date(dateString)
+  let day = date.getDay()
+  if (day == 0 || day == 6) return true
+  return false
+}
+`)}
           <ion-accordion-group>
             <ion-accordion value="address">
               <ion-item slot="header">
@@ -708,7 +798,7 @@ function chooseWeekdays(button, weekdays) {
           </ion-accordion-group>
           {Script(/* javascript */ `
 timeRadioGroup.addEventListener('ionChange', event => {
-  selectedTimeButton.textContent = event.detail.value || '未選擇'
+selectedTimeButton.textContent = event.detail.value || '未選擇'
 })
 `)}
           <ion-item-divider style="min-height:2px"></ion-item-divider>
@@ -991,18 +1081,79 @@ let routes: Routes = {
             service_id: service.id!,
           })
           if (!option) {
-            return {
-              title: title('option not found'),
-              description: 'The option is not found by id',
-              node: (
-                <Redirect
-                  href={`/shop/${shop_slug}/service/${service_slug}/admin`}
-                />
-              ),
-            }
+            throw new MessageException([
+              'eval',
+              `showAlert('option #${option_id} not found','error')`,
+            ])
           }
           // TODO check if the user is shop owner
           option.name = option_name
+
+          throw new MessageException([
+            'eval',
+            `showToast('updated option name','success')`,
+          ])
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/timeslot/:timeslot_id/hour': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: title('method not supported'),
+          description: 'update service option name',
+          node: <p>This api is only available in over ws</p>,
+        }
+      }
+      let timeslot_id = +context.routerMatch?.params.timeslot_id
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          let {
+            args: { '0': action, 1: part },
+          } = object({
+            type: literal('ws'),
+            args: object({
+              0: values(['remove' as const]),
+              1: optional(
+                string({ nonEmpty: true, match: /^\d{2}:\d{2}-\d{2}:\d{2}$/ }),
+              ),
+            }),
+          }).parse(context)
+          let timeslot = find(proxy.service_timeslot, {
+            id: timeslot_id,
+            service_id: service.id!,
+          })
+          if (!timeslot) {
+            throw new MessageException([
+              'eval',
+              `showAlert('timeslot #${timeslot_id} not found','error')`,
+            ])
+          }
+          // TODO check if the user is shop owner
+          if (action == 'remove') {
+            let hours = parseServiceTimeslotHours(timeslot.hours).filter(
+              hour => hour.part != part,
+            )
+            if (hours.length == 0) {
+              throw new MessageException([
+                'eval',
+                `showToast('需要至少一個時段','error')`,
+              ])
+            }
+            timeslot.hours = serializeServiceTimeslotHours(hours)
+            throw new MessageException([
+              'batch',
+              [
+                [
+                  'remove',
+                  `[data-timeslot-id="${timeslot_id}"][data-hour="${part}"]`,
+                ],
+                ['eval', `showToast('取消了 ${part}','warning')`],
+              ],
+            ])
+          }
 
           throw new MessageException([
             'eval',

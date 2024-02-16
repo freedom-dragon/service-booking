@@ -137,6 +137,16 @@ export type ServiceOption = {
   name: string
 }
 
+export type ServiceTimeslot = {
+  id?: null | number
+  service_id: number
+  service?: Service
+  start_date: string
+  end_date: string
+  weekdays: string
+  hours: string
+}
+
 export type DBProxy = {
   method: Method[]
   url: Url[]
@@ -153,6 +163,7 @@ export type DBProxy = {
   shop_locale: ShopLocale[]
   service: Service[]
   service_option: ServiceOption[]
+  service_timeslot: ServiceTimeslot[]
 }
 
 export let proxy = proxySchema<DBProxy>({
@@ -194,6 +205,10 @@ export let proxy = proxySchema<DBProxy>({
       ['shop', { field: 'shop_id', table: 'shop' }],
     ],
     service_option: [
+      /* foreign references */
+      ['service', { field: 'service_id', table: 'service' }],
+    ],
+    service_timeslot: [
       /* foreign references */
       ['service', { field: 'service_id', table: 'service' }],
     ],

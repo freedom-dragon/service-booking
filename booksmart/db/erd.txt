@@ -154,8 +154,18 @@ service_id integer FK >0- service.id
 name text
 
 
+service_timeslot
+------------------
+id integer PK
+service_id integer FK >- service.id
+start_date text
+end_date text
+weekdays text
+hours text
+
+
 # zoom: 1.000
-# view: (0, 0)
+# view: (-931, -620)
 # text-bg: #6495ed
 # text-color: #000000
 # diagram-bg: #f5f5f5
@@ -175,5 +185,6 @@ name text
 # verification_attempt (50, 400)
 # shop (879, 708)
 # shop_locale (1290, 614)
-# service (884, 904)
-# service_option (1330, 907)
+# service (1280, 1041)
+# service_option (1746, 917)
+# service_timeslot (1754, 1268)
