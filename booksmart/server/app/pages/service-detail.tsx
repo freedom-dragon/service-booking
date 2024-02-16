@@ -44,6 +44,13 @@ let ServiceDetailStyle = Style(/* css */ `
 
 }
 .preview-image,
+#ServiceImages {
+  border-radius: 1rem;
+  /*
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  */
+}
 #ServiceImages .swiper-slide img {
   width: 100vw;
   height: 100vw;
@@ -85,9 +92,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
             backText={'其他' + locale.service}
             color="light"
           />
-          <ion-title role="heading" aria-level="1">
-            {service.name}
-          </ion-title>
+          <ion-title>{locale.service}詳情</ion-title>
           <ion-buttons slot="end">
             <Link
               tagName="ion-button"
@@ -100,18 +105,25 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="ServiceDetail" color="light">
-        <Swiper
-          id="ServiceImages"
-          images={[
-            <img src={getServiceCoverImage(shop_slug, service_slug)} />,
-            ...options.map(option => (
-              <img
-                src={getServiceOptionImage(shop_slug, service_slug, option.id!)}
-              />
-            )),
-          ]}
-          showPagination
-        />
+        <h1 class="ion-margin">{service.name}</h1>
+        <div class="ion-margin-horizontal">
+          <Swiper
+            id="ServiceImages"
+            images={[
+              <img src={getServiceCoverImage(shop_slug, service_slug)} />,
+              ...options.map(option => (
+                <img
+                  src={getServiceOptionImage(
+                    shop_slug,
+                    service_slug,
+                    option.id!,
+                  )}
+                />
+              )),
+            ]}
+            showPagination
+          />
+        </div>
         <h2 class="ion-margin" hidden>
           {service.name}
         </h2>
