@@ -43,6 +43,7 @@ ion-thumbnail {
 }
 .card-text-container {
   margin-inline-start: 1rem;
+  flex-grow: 1;
 }
 .card--field {
   display: flex;
@@ -156,7 +157,9 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                     <ion-icon name="cash-outline" />
                     &nbsp;費用: {service.price}
                   </p>
-                  <ion-button>立即預約</ion-button>
+                  <ion-button size="small" color="primary" fill="block">
+                    立即預約
+                  </ion-button>
                 </div>
               </div>
             </Link>
