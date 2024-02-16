@@ -82,6 +82,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let address_remark = service.address_remark || shop.address_remark
   let options = filter(proxy.service_option, { service_id: service.id! })
   let locale = getShopLocale(shop.id!)
+  let images = getServiceImages(shop_slug, service_slug)
   return (
     <>
       {ServiceDetailStyle}
@@ -109,19 +110,13 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
         <div class="ion-margin-horizontal">
           <Swiper
             id="ServiceImages"
-            images={[
-              <img src={getServiceCoverImage(shop_slug, service_slug)} />,
-              ...options.map(option => (
-                <img
-                  src={getServiceOptionImage(
-                    shop_slug,
-                    service_slug,
-                    option.id!,
-                  )}
-                />
-              )),
-            ]}
+            images={[images.cover, ...images.more, ...images.options].map(
+              url => (
+                <img src={url} />
+              ),
+            )}
             showPagination
+            showArrow
           />
         </div>
         <h2 class="ion-margin" hidden>

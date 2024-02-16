@@ -40,11 +40,15 @@ export function getServiceOptionImage(
 export function getServiceImages(shop_slug: string, service_slug: string) {
   let dir = `assets/shops/${shop_slug}/${service_slug}`
   let filenames = readdirSync(`public/${dir}`)
-  let urls: string[] = []
+  let cover = getServiceCoverImage(shop_slug, service_slug)
+  let more: string[] = []
+  let options: string[] = []
   for (let filename of filenames) {
-    if (!filename.startsWith('cover')) {
-      urls.push(`/${dir}/${filename}`)
+    if (filename.startsWith('more-')) {
+      more.push(`/${dir}/${filename}`)
+    } else if (filename.startsWith('option-')) {
+      options.push(`/${dir}/${filename}`)
     }
   }
-  return urls
+  return { cover, more, options }
 }
