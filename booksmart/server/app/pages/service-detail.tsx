@@ -160,7 +160,11 @@ function selectOption(button){
             <div slot="start">
               <ion-icon name="cash-outline"></ion-icon> 費用
             </div>
-            <ion-label>{service.price}</ion-label>
+            <ion-label id="priceLabel">
+              {service.unit_price
+                ? '$' + service.unit_price + '/' + service.price_unit
+                : service.price_unit}
+            </ion-label>
           </ion-item>
           <ion-item>
             <div slot="start">
@@ -171,8 +175,10 @@ function selectOption(button){
               type="number"
               min="1"
               max={service.quota}
+              /* TODO avoid overbook */
+              oninput={`priceLabel.textContent='$'+${service.unit_price}*this.value+'/'+this.value+'${service.price_unit}'`}
             />
-            <ion-label slot="end"> / {service.quota}</ion-label>
+            <ion-label slot="end">{service.price_unit}</ion-label>
           </ion-item>
           <ion-item>
             <div slot="start">
@@ -430,10 +436,15 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             <div slot="start">
               <ion-icon name="cash-outline"></ion-icon> 費用
             </div>
-            <ion-input
-              value={service.price}
-              placeholder="如: $100/人 、 $150/對情侶"
-            />
+            <div class="d-flex" style="align-items: center; gap: 0.25rem">
+              <span>$</span>
+              <ion-input value={service.unit_price} />
+              <span>/</span>
+              <ion-input value={service.price_unit} />
+            </div>
+            <div slot="helper">
+              如: $100/人 、 $150/對情侶 、 $0/📐 量身訂做
+            </div>
           </ion-item>
           <ion-item>
             <div slot="start">

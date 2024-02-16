@@ -140,7 +140,8 @@ slug text
 name text
 hours text
 book_duration_minute integer
-price text
+unit_price integer
+price_unit text
 time text
 quota text
 address text NULL

@@ -155,7 +155,10 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                   </p>
                   <p class="card--field">
                     <ion-icon name="cash-outline" />
-                    &nbsp;費用: {service.price}
+                    &nbsp;費用:{' '}
+                    {service.unit_price
+                      ? '$' + service.unit_price + '/' + service.price_unit
+                      : service.price_unit}
                   </p>
                   <ion-button size="small" color="primary" fill="block">
                     立即預約

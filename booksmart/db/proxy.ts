@@ -123,7 +123,8 @@ export type Service = {
   name: string
   hours: string
   book_duration_minute: number
-  price: string
+  unit_price: number
+  price_unit: string
   time: string
   quota: string
   address: null | string
