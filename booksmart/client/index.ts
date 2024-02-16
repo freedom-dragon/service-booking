@@ -18,8 +18,9 @@ let origin = location.origin
 let wsUrl = origin.replace('http', 'ws')
 connectWS({
   createWS(protocol) {
-    let status = document.querySelector('#ws_status')
+    let status = document.querySelector<HTMLElement>('#ws_status')
     if (status) {
+      status.hidden = false
       status.textContent = 'connecting ws...'
     }
     return new WebSocket(wsUrl, [protocol])
@@ -123,12 +124,14 @@ connectWS({
       ws.send(message)
     }
 
-    const status = document.querySelector('#ws_status')
+    const status = document.querySelector<HTMLElement>('#ws_status')
     if (status) {
       ws.ws.addEventListener('open', () => {
+        status.hidden = true
         status.textContent = 'connected ws'
       })
       ws.ws.addEventListener('close', () => {
+        status.hidden = false
         status.textContent = 'disconnected ws'
       })
     }
