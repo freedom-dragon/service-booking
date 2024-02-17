@@ -46,6 +46,13 @@ let ServiceDetailStyle = Style(/* css */ `
 
 }
 .preview-image,
+#ServiceImages {
+  border-radius: 1rem;
+  /*
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  */
+}
 #ServiceImages .swiper-slide img {
   width: 100vw;
   height: 100vw;
@@ -77,6 +84,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let address_remark = service.address_remark || shop.address_remark
   let options = filter(proxy.service_option, { service_id: service.id! })
   let locale = getShopLocale(shop.id!)
+  let images = getServiceImages(shop_slug, service_slug)
   return (
     <>
       {ServiceDetailStyle}
@@ -87,9 +95,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
             backText={'其他' + locale.service}
             color="light"
           />
-          <ion-title role="heading" aria-level="1">
-            {service.name}
-          </ion-title>
+          <ion-title>{locale.service}詳情</ion-title>
           <ion-buttons slot="end">
             <Link
               tagName="ion-button"
@@ -102,18 +108,19 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="ServiceDetail" color="light">
-        <Swiper
-          id="ServiceImages"
-          images={[
-            <img src={getServiceCoverImage(shop_slug, service_slug)} />,
-            ...options.map(option => (
-              <img
-                src={getServiceOptionImage(shop_slug, service_slug, option.id!)}
-              />
-            )),
-          ]}
-          showPagination
-        />
+        <h1 class="ion-margin">{service.name}</h1>
+        <div class="ion-margin-horizontal">
+          <Swiper
+            id="ServiceImages"
+            images={[images.cover, ...images.more, ...images.options].map(
+              url => (
+                <img src={url} />
+              ),
+            )}
+            showPagination
+            showArrow
+          />
+        </div>
         <h2 class="ion-margin" hidden>
           {service.name}
         </h2>
@@ -155,7 +162,11 @@ function selectOption(button){
             <div slot="start">
               <ion-icon name="cash-outline"></ion-icon> 費用
             </div>
-            <ion-label>{service.price}</ion-label>
+            <ion-label id="priceLabel">
+              {service.unit_price
+                ? '$' + service.unit_price + '/' + service.price_unit
+                : service.price_unit}
+            </ion-label>
           </ion-item>
           <ion-item>
             <div slot="start">
@@ -166,8 +177,10 @@ function selectOption(button){
               type="number"
               min="1"
               max={service.quota}
+              /* TODO avoid overbook */
+              oninput={`priceLabel.textContent='$'+${service.unit_price}*this.value+'/'+this.value+'${service.price_unit}'`}
             />
-            <ion-label slot="end"> / {service.quota}</ion-label>
+            <ion-label slot="end">{service.price_unit}</ion-label>
           </ion-item>
           <ion-item>
             <div slot="start">
@@ -444,10 +457,15 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             <div slot="start">
               <ion-icon name="cash-outline"></ion-icon> 費用
             </div>
-            <ion-input
-              value={service.price}
-              placeholder="如: $100/人 、 $150/對情侶"
-            />
+            <div class="d-flex" style="align-items: center; gap: 0.25rem">
+              <span>$</span>
+              <ion-input value={service.unit_price} />
+              <span>/</span>
+              <ion-input value={service.price_unit} />
+            </div>
+            <div slot="helper">
+              如: $100/人 、 $150/對情侶 、 $0/📐 量身訂做
+            </div>
           </ion-item>
           <ion-item>
             <div slot="start">
