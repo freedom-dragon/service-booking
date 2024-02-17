@@ -16,12 +16,12 @@ import type { ClientMessage, ServerMessage } from './types'
 let win = window as unknown as WindowStub
 let origin = location.origin
 let wsUrl = origin.replace('http', 'ws')
+let { ws_status } = win
 connectWS({
   createWS(protocol) {
-    let status = document.querySelector<HTMLElement>('#ws_status')
-    if (status) {
-      status.hidden = false
-      status.textContent = 'connecting ws...'
+    if (ws_status) {
+      ws_status.hidden = false
+      ws_status.textContent = 'connecting ws...'
     }
     return new WebSocket(wsUrl, [protocol])
   },
@@ -124,15 +124,16 @@ connectWS({
       ws.send(message)
     }
 
-    const status = document.querySelector<HTMLElement>('#ws_status')
-    if (status) {
+    if (ws_status) {
       ws.ws.addEventListener('open', () => {
-        status.hidden = true
-        status.textContent = 'connected ws'
+        if (!ws_status) return
+        ws_status.hidden = true
+        ws_status.textContent = 'connected ws'
       })
       ws.ws.addEventListener('close', () => {
-        status.hidden = false
-        status.textContent = 'disconnected ws'
+        if (!ws_status) return
+        ws_status.hidden = false
+        ws_status.textContent = 'disconnected ws'
       })
     }
   },
