@@ -1,5 +1,5 @@
 import { seedRow } from 'better-sqlite3-proxy'
-import { Service, proxy } from './proxy'
+import { Service, ServiceTimeslot, proxy } from './proxy'
 
 // This file serve like the knex seed file.
 //
@@ -40,14 +40,41 @@ proxy.shop_locale[2] = {
 }
 
 let option_id = 0
-function seedService(data: Service & { options: string[] }) {
-  let { id, options, ...service } = data
-  proxy.service[id!] = service
+let timeslot_id = 0
+let hour_id = 0
+function seedService(
+  data: Service & {
+    options: string[]
+    timeslots: (Omit<ServiceTimeslot, 'service_id'> & {
+      /** @example '09:00-12:00,14:00-16:30,20:00-22:00' */
+      hours: string
+    })[]
+  },
+) {
+  let { id: service_id, options, timeslots, ...service } = data
+  proxy.service[service_id!] = service
   for (let option of options) {
     option_id++
     proxy.service_option[option_id] = {
-      service_id: id!,
+      service_id: service_id!,
       name: option,
+    }
+  }
+  for (let _timeslot of timeslots) {
+    let { hours, ...timeslot } = _timeslot
+    timeslot_id++
+    proxy.service_timeslot[timeslot_id] = {
+      service_id: service_id!,
+      ...timeslot,
+    }
+    for (let hour of hours.split(',')) {
+      let [start_time, end_time] = hour.split('-')
+      hour_id++
+      proxy.timeslot_hour[hour_id] = {
+        service_timeslot_id: timeslot_id,
+        start_time,
+        end_time,
+      }
     }
   }
 }
@@ -66,22 +93,21 @@ seedService({
   quota: '6 ppl',
   address: null,
   address_remark: null,
+  timeslots: [
+    {
+      start_date: '2024-02-11',
+      end_date: '2024-02-17',
+      weekdays: '日二四六',
+      hours: '09:00-12:00,14:00-16:30,20:00-22:00',
+    },
+    {
+      start_date: '2024-02-18',
+      end_date: '2024-02-24',
+      weekdays: '一三五',
+      hours: '14:00-16:30',
+    },
+  ],
 })
-
-proxy.service_timeslot[1] = {
-  service_id: 1,
-  start_date: '2024-02-11',
-  end_date: '2024-02-17',
-  weekdays: '日二四六',
-  hours: '09:00-12:00,14:00-16:30,20:00-22:00',
-}
-proxy.service_timeslot[2] = {
-  service_id: 1,
-  start_date: '2024-02-18',
-  end_date: '2024-02-24',
-  weekdays: '一三五',
-  hours: '14:00-16:30',
-}
 
 seedService({
   id: 2,
@@ -97,6 +123,7 @@ seedService({
   quota: '6 ppl',
   address: null,
   address_remark: null,
+  timeslots: [],
 })
 
 seedService({
@@ -113,6 +140,7 @@ seedService({
   quota: '2 pairs 情侶',
   address: null,
   address_remark: null,
+  timeslots: [],
 })
 
 seedService({
@@ -129,4 +157,5 @@ seedService({
   quota: '1 ppl',
   address: null,
   address_remark: null,
+  timeslots: [],
 })

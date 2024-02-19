@@ -11,19 +11,17 @@ import {
 } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { id, literal, object, optional, string, values } from 'cast.ts'
+import { id, int, literal, object, optional, string, values } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
-import { Service, proxy } from '../../../db/proxy.js'
-import { filter, find } from 'better-sqlite3-proxy'
+import { Service, TimeslotHour, proxy } from '../../../db/proxy.js'
+import { del, filter, find } from 'better-sqlite3-proxy'
 import {
   getServiceCoverImage,
   getServiceImages,
   getServiceOptionImage,
   getShopLocale,
-  parseServiceTimeslotHours,
-  serializeServiceTimeslotHours,
 } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
 import { wsStatus } from '../components/ws-status.js'
@@ -37,6 +35,7 @@ import { join } from 'path'
 import { Formidable } from 'formidable'
 import { renameSync } from 'fs'
 import { EarlyTerminate, MessageException } from '../helpers.js'
+import { nodeToVNode } from '../jsx/vnode.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -492,9 +491,12 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           {mapArray(
             service_timeslot_rows,
             (service_timeslot, timeslot_index) => {
-              let { id: timeslot_id, weekdays } = service_timeslot
+              let { weekdays } = service_timeslot
+              let timeslot_id = service_timeslot.id!
 
-              let hours = parseServiceTimeslotHours(service_timeslot.hours)
+              let hours = filter(proxy.timeslot_hour, {
+                service_timeslot_id: timeslot_id,
+              })
 
               return (
                 <div class="available-timeslot">
@@ -570,59 +572,19 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                   <ion-item lines="none">
                     <ion-label>可選擇時間</ion-label>
                   </ion-item>
-                  {mapArray(hours, (hour, hour_index) => {
-                    let startTimePickerId =
-                      'startTimePicker_' + timeslot_id + '_' + (hour_index + 1)
-                    let endTimePickerId =
-                      'endTimePicker_' + timeslot_id + '_' + (hour_index + 1)
-                    return (
-                      <ion-item
-                        lines="none"
-                        data-timeslot-id={timeslot_id}
-                        data-hour={hour.part}
-                      >
-                        <div slot="start" class="time-picker--container">
-                          <ion-datetime-button datetime={startTimePickerId} />
-                          <ion-modal>
-                            <ion-datetime
-                              id={startTimePickerId}
-                              value={hour.start}
-                              presentation="time"
-                              hour-cycle="h23"
-                              show-default-buttons="true"
-                            />
-                          </ion-modal>
-                          <div> - </div>
-                          <ion-datetime-button datetime={endTimePickerId} />
-                          <ion-modal>
-                            <ion-datetime
-                              id={endTimePickerId}
-                              value={hour.end}
-                              presentation="time"
-                              hour-cycle="h23"
-                              show-default-buttons="true"
-                            />
-                          </ion-modal>
-                        </div>
-                        <div slot="end">
-                          <ion-buttons>
-                            <ion-button
-                              size="small"
-                              color="danger"
-                              onclick={`emit('${serviceUrl}/timeslot/${timeslot_id}/hour','remove','${hour.part}')`}
-                            >
-                              <ion-icon
-                                name="trash"
-                                slot="icon-only"
-                              ></ion-icon>
-                            </ion-button>
-                          </ion-buttons>
-                        </div>
-                      </ion-item>
-                    )
-                  })}
+                  <div class="time-picker--list" data-timeslot-id={timeslot_id}>
+                    {mapArray(hours, hour =>
+                      TimePickerListItem({
+                        serviceUrl,
+                        timeslot_id,
+                        hour,
+                      }),
+                    )}
+                  </div>
                   <div class="ion-text-center">
-                    <ion-button onclick="addHours()">
+                    <ion-button
+                      onclick={`emit('${serviceUrl}/timeslot/${timeslot_id}/hour','add')`}
+                    >
                       <ion-icon name="add" slot="start"></ion-icon>
                       加時間
                     </ion-button>
@@ -865,6 +827,55 @@ selectedTimeButton.textContent = event.detail.value || '未選擇'
       </ion-content>
       {ManageServiceScripts}
     </>
+  )
+}
+
+function TimePickerListItem(attrs: {
+  serviceUrl: string
+  timeslot_id: number
+  hour: TimeslotHour
+}) {
+  let { serviceUrl, timeslot_id, hour } = attrs
+  let hour_id = hour.id!
+  let startTimePickerId = 'startTimePicker_' + hour_id
+  let endTimePickerId = 'endTimePicker_' + hour_id
+  return (
+    <ion-item lines="none" data-timeslot-hour-id={hour.id}>
+      <div slot="start" class="time-picker--container">
+        <ion-datetime-button datetime={startTimePickerId} />
+        <ion-modal>
+          <ion-datetime
+            id={startTimePickerId}
+            value={hour.start_time}
+            presentation="time"
+            hour-cycle="h23"
+            show-default-buttons="true"
+          />
+        </ion-modal>
+        <div> - </div>
+        <ion-datetime-button datetime={endTimePickerId} />
+        <ion-modal>
+          <ion-datetime
+            id={endTimePickerId}
+            value={hour.end_time}
+            presentation="time"
+            hour-cycle="h23"
+            show-default-buttons="true"
+          />
+        </ion-modal>
+      </div>
+      <div slot="end">
+        <ion-buttons>
+          <ion-button
+            size="small"
+            color="danger"
+            onclick={`emit('${serviceUrl}/timeslot/${timeslot_id}/hour','remove','${hour_id}')`}
+          >
+            <ion-icon name="trash" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </div>
+    </ion-item>
   )
 }
 
@@ -1129,12 +1140,13 @@ let routes: Routes = {
         context,
         ({ service, shop, shop_slug, service_slug }) => {
           let {
-            args: { '0': action, 1: part },
+            args: { '0': action, 1: hour_id, 2: part },
           } = object({
             type: literal('ws'),
             args: object({
-              0: values(['remove' as const]),
-              1: optional(
+              0: values(['remove' as const, 'add' as const]),
+              1: optional(int()),
+              2: optional(
                 string({ nonEmpty: true, match: /^\d{2}:\d{2}-\d{2}:\d{2}$/ }),
               ),
             }),
@@ -1150,33 +1162,67 @@ let routes: Routes = {
             ])
           }
           // TODO check if the user is shop owner
-          if (action == 'remove') {
-            let hours = parseServiceTimeslotHours(timeslot.hours).filter(
-              hour => hour.part != part,
-            )
-            if (hours.length == 0) {
+          switch (action) {
+            case 'add': {
+              // clone last timeslot hour
+              let hours = filter(proxy.timeslot_hour, {
+                service_timeslot_id: timeslot_id,
+              })
+              let hour = hours.pop()
+              if (!hour) {
+                throw EarlyTerminate
+              }
+              hour_id = proxy.timeslot_hour.push({
+                service_timeslot_id: timeslot_id,
+                start_time: hour.start_time,
+                end_time: hour.end_time,
+              })
+              hour = proxy.timeslot_hour[hour_id]
+              let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
               throw new MessageException([
-                'eval',
-                `showToast('需要至少一個時段','error')`,
+                'append',
+                `.time-picker--list[data-timeslot-id="${timeslot_id}"]`,
+                nodeToVNode(
+                  TimePickerListItem({
+                    serviceUrl,
+                    timeslot_id,
+                    hour,
+                  }),
+                  context,
+                ),
               ])
             }
-            timeslot.hours = serializeServiceTimeslotHours(hours)
-            throw new MessageException([
-              'batch',
-              [
+            case 'remove': {
+              // remove if it is not the last timeslot hour
+              let hours = filter(proxy.timeslot_hour, {
+                service_timeslot_id: timeslot_id,
+              })
+              if (hours.length <= 1) {
+                throw new MessageException([
+                  'eval',
+                  `showToast('需要至少一個時段','error')`,
+                ])
+              }
+              let hour = proxy.timeslot_hour[hour_id!]
+              if (!hour || hour.service_timeslot_id != timeslot_id) {
+                throw EarlyTerminate
+              }
+              part = hour.start_time + '-' + hour.end_time
+              delete proxy.timeslot_hour[hour_id!]
+              throw new MessageException([
+                'batch',
                 [
-                  'remove',
-                  `[data-timeslot-id="${timeslot_id}"][data-hour="${part}"]`,
+                  ['remove', `[data-timeslot-hour-id="${hour_id}"]`],
+                  ['eval', `showToast('取消了 ${part}','warning')`],
                 ],
-                ['eval', `showToast('取消了 ${part}','warning')`],
-              ],
-            ])
+              ])
+            }
+            default:
+              throw new MessageException([
+                'eval',
+                `showToast('updated option name','success')`,
+              ])
           }
-
-          throw new MessageException([
-            'eval',
-            `showToast('updated option name','success')`,
-          ])
         },
       )
     },

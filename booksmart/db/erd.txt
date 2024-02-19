@@ -156,17 +156,24 @@ name text
 
 
 service_timeslot
-------------------
+----------------
 id integer PK
 service_id integer FK >- service.id
 start_date text
 end_date text
 weekdays text
-hours text
+
+
+timeslot_hour
+-------------
+id integer PK
+service_timeslot_id integer FK >0- service_timeslot.id
+start_time text
+end_time text
 
 
 # zoom: 1.000
-# view: (-931, -620)
+# view: (993, 813)
 # text-bg: #6495ed
 # text-color: #000000
 # diagram-bg: #f5f5f5
@@ -189,3 +196,4 @@ hours text
 # service (1280, 1041)
 # service_option (1746, 917)
 # service_timeslot (1754, 1268)
+# timeslot_hour (1676, 1512)

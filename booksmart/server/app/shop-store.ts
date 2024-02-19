@@ -52,20 +52,3 @@ export function getServiceImages(shop_slug: string, service_slug: string) {
   }
   return { cover, more, options }
 }
-
-export function parseServiceTimeslotHours(
-  /** @example '09:00-12:00,14:00-16:30,20:00-22:00' */
-  hours: string,
-) {
-  return hours
-    .split(',')
-    .filter(part => part.includes('-'))
-    .map(part => {
-      let [start, end] = part.split('-')
-      return { part, start, end }
-    })
-}
-
-export function serializeServiceTimeslotHours(hours: { part: string }[]) {
-  return hours.map(hour => hour.part).join(',')
-}
