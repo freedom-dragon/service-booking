@@ -863,6 +863,19 @@ function TimePickerListItem(attrs: {
           />
         </ion-modal>
       </div>
+      {[
+        'raw',
+        /* html */ `<script>
+${startTimePickerId}.addEventListener('ionChange', event => {
+  let value = event.detail.value
+  emit('${serviceUrl}/timeslot/${timeslot_id}/hour','update',${hour.id},'start_time',value)
+})
+${endTimePickerId}.addEventListener('ionChange', event => {
+  let value = event.detail.value
+  emit('${serviceUrl}/timeslot/${timeslot_id}/hour','update',${hour.id},'end_time',value)
+})
+</script>`,
+      ]}
       <div slot="end">
         <ion-buttons>
           <ion-button
@@ -1139,15 +1152,14 @@ let routes: Routes = {
         context,
         ({ service, shop, shop_slug, service_slug }) => {
           let {
-            args: { '0': action, 1: hour_id, 2: part },
+            args: { '0': action, 1: hour_id, 2: field, 3: field_value },
           } = object({
             type: literal('ws'),
             args: object({
-              0: values(['remove' as const, 'add' as const]),
+              0: values(['remove' as const, 'add' as const, 'update' as const]),
               1: optional(int()),
-              2: optional(
-                string({ nonEmpty: true, match: /^\d{2}:\d{2}-\d{2}:\d{2}$/ }),
-              ),
+              2: optional(values(['start_time' as const, 'end_time' as const])),
+              3: optional(string({ nonEmpty: true, match: /^\d{2}:\d{2}$/ })),
             }),
           }).parse(context)
           let timeslot = find(proxy.service_timeslot, {
@@ -1206,7 +1218,7 @@ let routes: Routes = {
               if (!hour || hour.service_timeslot_id != timeslot_id) {
                 throw EarlyTerminate
               }
-              part = hour.start_time + '-' + hour.end_time
+              let part = hour.start_time + '-' + hour.end_time
               delete proxy.timeslot_hour[hour_id!]
               throw new MessageException([
                 'batch',
@@ -1214,6 +1226,23 @@ let routes: Routes = {
                   ['remove', `[data-timeslot-hour-id="${hour_id}"]`],
                   ['eval', `showToast('取消了 ${part}','warning')`],
                 ],
+              ])
+            }
+            case 'update': {
+              let hour = proxy.timeslot_hour[hour_id!]
+              if (
+                !hour ||
+                hour.service_timeslot_id != timeslot_id ||
+                !field ||
+                !field_value
+              ) {
+                throw EarlyTerminate
+              }
+              hour[field] = field_value
+              let part = hour.start_time + '-' + hour.end_time
+              throw new MessageException([
+                'eval',
+                `showToast('更新了 ${part}','info')`,
               ])
             }
             default:
