@@ -40,8 +40,8 @@ import Profile from './pages/profile.js'
 import { logRequest } from './log.js'
 import { WindowStub } from '../../client/internal.js'
 import { updateRequestSession } from '../../db/request-log.js'
-import verificationCode from './pages/verification-code.js'
 import { Link } from './components/router.js'
+import verificationCode from './pages/verification-code.js'
 import ServiceDetail from './pages/service-detail.js'
 
 if (config.development) {
@@ -88,8 +88,12 @@ let scripts = config.development ? (
 )
 
 let brand = (
-  <div style="color: darkblue; font-weight: bold" class="brand">
-    <Link style="font-size: 1.7rem" class="text-no-wrap" href="/">
+  <div style="color: darkblue; font-weight: bold">
+    <Link
+      style="font-size: 1.7rem; text-decoration: none"
+      class="text-no-wrap"
+      href="/"
+    >
       BookSmart
     </Link>{' '}
     <div class="text-no-wrap">

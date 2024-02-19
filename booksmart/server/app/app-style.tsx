@@ -13,9 +13,6 @@ ${ErrorStyle}
 ${UpdateMessageStyle}
 ${CommonStyle}
 ${FormStyle}
-.brand a {
-  text-decoration: none;
-}
 h2 {
   color: var(--ion-color-primary)
 }

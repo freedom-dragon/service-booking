@@ -75,7 +75,6 @@ export let config = {
     },
   },
   shop_slug: 'lab.on.the.balconi',
-  max_image_size: 300 * 1000,
 }
 
 const titleSuffix = ' | ' + config.site_name

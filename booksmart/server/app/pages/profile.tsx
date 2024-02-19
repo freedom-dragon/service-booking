@@ -1,4 +1,4 @@
-import { apiEndpointTitle, config, title } from '../../config.js'
+import { apiEndpointTitle, title } from '../../config.js'
 import { commonTemplatePageText } from '../components/common-template.js'
 import { Link, Redirect } from '../components/router.js'
 import { DynamicContext, ExpressContext } from '../context.js'
@@ -13,6 +13,7 @@ import Style from '../components/style.js'
 import { renderError } from '../components/error.js'
 import { Raw } from '../components/raw.js'
 import { loadClientPlugin } from '../../client-plugin.js'
+import { client_config } from '../../../client/client-config.js'
 
 let style = Style(/* css */ `
 #profile .avatar {
@@ -153,9 +154,9 @@ function attachRoutes(app: Router) {
 
       let form = createUploadForm({
         mimeTypeRegex: /^image\/.+/,
-        maxFileSize: config.max_image_size,
+        maxFileSize: client_config.max_image_size,
       })
-      let [fields, files] = await form.parse(req)
+      let [_fields, files] = await form.parse(req)
 
       let file = files.avatar?.[0]
       if (!file) throw 'missing avatar file'
