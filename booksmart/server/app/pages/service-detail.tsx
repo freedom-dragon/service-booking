@@ -36,6 +36,7 @@ import { Formidable } from 'formidable'
 import { renameSync } from 'fs'
 import { EarlyTerminate, MessageException } from '../helpers.js'
 import { nodeToVNode } from '../jsx/vnode.js'
+import { client_config } from '../../../client/client-config.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -1044,7 +1045,7 @@ function attachRoutes(app: Router) {
           filename: () => filename + '.tmp',
           filter: part => part.mimetype == 'image/webp',
           maxFiles: 1,
-          maxFileSize: config.max_image_size,
+          maxFileSize: client_config.max_image_size,
         })
         let [fields, files] = await form.parse(req)
         let file = files.file?.[0].filepath
