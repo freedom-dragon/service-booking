@@ -355,6 +355,14 @@ let ManageServiceScripts = (
     {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     {Script(/* javascript */ `
+function chooseWeekdays(button, weekdays) {
+  let item = button.closest('.available-timeslot')
+  let list = item.querySelector('.weekday--list')
+  for (let i of weekdays) {
+    let checkbox = list.children[i].querySelector('ion-checkbox')
+    checkbox.checked = !checkbox.checked
+  }
+}
 async function editCoverImage() {
   let image = await selectServiceImage()
   if (!image) return
@@ -613,16 +621,6 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             <span class="button-text">Save</span>
           </ion-button>
         </div>
-        {Script(/* javascript */ `
-function chooseWeekdays(button, weekdays) {
-let item = button.closest('.available-timeslot')
-let list = item.querySelector('.weekday--list')
-for (let i of weekdays) {
-let checkbox = list.children[i].querySelector('ion-checkbox')
-checkbox.checked = !checkbox.checked
-}
-}
-`)}
 
         <h2 class="ion-margin d-flex">
           封面相
