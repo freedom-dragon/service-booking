@@ -15,7 +15,12 @@ import { id, int, literal, object, optional, string, values } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
-import { Service, TimeslotHour, proxy } from '../../../db/proxy.js'
+import {
+  Service,
+  ServiceTimeslot,
+  TimeslotHour,
+  proxy,
+} from '../../../db/proxy.js'
 import { del, filter, find } from 'better-sqlite3-proxy'
 import {
   getServiceCoverImage,
@@ -37,6 +42,8 @@ import { renameSync } from 'fs'
 import { EarlyTerminate, MessageException } from '../helpers.js'
 import { nodeToVNode } from '../jsx/vnode.js'
 import { client_config } from '../../../client/client-config.js'
+import { TimezoneDate } from 'timezone-date.ts'
+import { format_2_digit, format_datetime } from '@beenotung/tslib/format.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -343,8 +350,6 @@ let ManageServiceStyle = Style(/* css */ `
   align-items: center;
   gap: 0.5rem;
 }
-#ManageService .available-timeslot {
-}
 #ManageService .time-picker--container {
   display: flex;
   align-items: center;
@@ -357,7 +362,7 @@ let ManageServiceScripts = (
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     {Script(/* javascript */ `
 function chooseWeekdays(button, weekdays) {
-  let item = button.closest('.available-timeslot')
+  let item = button.closest('.available-timeslot--item')
   let list = item.querySelector('.weekday--list')
   for (let i of weekdays) {
     let checkbox = list.children[i].querySelector('ion-checkbox')
@@ -496,110 +501,21 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
         </div>
 
         <h2 class="ion-margin">可預約時段</h2>
-        <ion-list lines="full" inset="true" style="margin-bottom: 0.5rem">
+        <ion-list
+          lines="full"
+          inset="true"
+          style="margin-bottom: 0.5rem"
+          class="available-timeslot--list"
+        >
           {mapArray(
             service_timeslot_rows,
             (service_timeslot, timeslot_index) => {
-              let { weekdays } = service_timeslot
-              let timeslot_id = service_timeslot.id!
-
-              let hours = filter(proxy.timeslot_hour, {
-                service_timeslot_id: timeslot_id,
+              return TimeslotItem({
+                service_timeslot,
+                timeslot_index,
+                dateRange,
+                serviceUrl,
               })
-
-              return (
-                <div class="available-timeslot">
-                  {timeslot_index > 0 ? (
-                    <ion-item-divider></ion-item-divider>
-                  ) : null}
-                  <ion-item>
-                    <ion-label>可預約時段 {timeslot_index + 1}</ion-label>
-                  </ion-item>
-                  <ion-item>
-                    <ion-label>開始日期</ion-label>
-                    <ion-datetime-button
-                      datetime={'startDatePicker_' + timeslot_id}
-                    />
-                    <ion-modal>
-                      <ion-datetime
-                        id={'startDatePicker_' + timeslot_id}
-                        value={service_timeslot.start_date}
-                        presentation="date"
-                        show-default-buttons="true"
-                        min={dateRange.min}
-                        max={dateRange.max}
-                      />
-                    </ion-modal>
-                  </ion-item>
-                  <ion-item>
-                    <ion-label>結束日期</ion-label>
-                    <ion-datetime-button
-                      datetime={'endDatePicker_' + timeslot_id}
-                    />
-                    <ion-modal>
-                      <ion-datetime
-                        id={'endDatePicker_' + timeslot_id}
-                        value={service_timeslot.end_date}
-                        presentation="date"
-                        show-default-buttons="true"
-                        min={dateRange.min}
-                        max={dateRange.max}
-                      />
-                    </ion-modal>
-                  </ion-item>
-                  <ion-item lines="none">
-                    <ion-label>可選擇星期</ion-label>
-                  </ion-item>
-                  <ion-item lines="none">
-                    <div slot="start" style="color: var(--ion-color-medium)">
-                      快捷選項
-                    </div>
-                    <div slot="end">
-                      <ion-button onclick="chooseWeekdays(this,[1,2,3,4,5])">
-                        星期一至五
-                      </ion-button>
-                      <ion-button onclick="chooseWeekdays(this,[0,6])">
-                        星期六日
-                      </ion-button>
-                    </div>
-                  </ion-item>
-                  <ion-item lines="none">
-                    <div slot="start" style="color: var(--ion-color-medium)">
-                      自選組合
-                    </div>
-                  </ion-item>
-                  <div class="ion-margin d-flex weekday--list">
-                    {mapArray('日一二三四五六'.split(''), weekday => (
-                      <div class="flex-column weekday--item">
-                        <ion-label>{weekday}</ion-label>
-                        <ion-checkbox
-                          checked={weekdays.includes(weekday)}
-                        ></ion-checkbox>
-                      </div>
-                    ))}
-                  </div>
-                  <ion-item lines="none">
-                    <ion-label>可選擇時間</ion-label>
-                  </ion-item>
-                  <div class="time-picker--list" data-timeslot-id={timeslot_id}>
-                    {mapArray(hours, hour =>
-                      TimePickerListItem({
-                        serviceUrl,
-                        timeslot_id,
-                        hour,
-                      }),
-                    )}
-                  </div>
-                  <div class="ion-text-center">
-                    <ion-button
-                      onclick={`emit('${serviceUrl}/timeslot/${timeslot_id}/hour','add')`}
-                    >
-                      <ion-icon name="add" slot="start"></ion-icon>
-                      加時間
-                    </ion-button>
-                  </div>
-                </div>
-              )
             },
           )}
           <ion-item-divider class="list-description" color="light">
@@ -610,7 +526,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             </p>
           </ion-item-divider>
           <div class="text-center">
-            <ion-button onclick="addOption()">
+            <ion-button onclick={`emit('${serviceUrl}/timeslot/add')`}>
               <ion-icon name="add" slot="start"></ion-icon>
               加時段
             </ion-button>
@@ -636,11 +552,11 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           id="coverImage"
           class="preview-image"
           style="
-        margin: 0 1rem;
-        border-radius: 0.5rem;
-        width: calc(100vw - 2rem);
-        height: calc(100vw - 2rem);
-      "
+      margin: 0 1rem;
+      border-radius: 0.5rem;
+      width: calc(100vw - 2rem);
+      height: calc(100vw - 2rem);
+    "
         />
         <div class="text-center">
           <ion-button
@@ -736,10 +652,10 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           {Script(/* javascript */ `
 datePicker.isDateEnabled = isDateEnabled
 function isDateEnabled(dateString) {
-  let date = new Date(dateString)
-  let day = date.getDay()
-  if (day == 0 || day == 6) return true
-  return false
+let date = new Date(dateString)
+let day = date.getDay()
+if (day == 0 || day == 6) return true
+return false
 }
 `)}
           <ion-accordion-group>
@@ -826,6 +742,105 @@ selectedTimeButton.textContent = event.detail.value || '未選擇'
       </ion-content>
       {ManageServiceScripts}
     </>
+  )
+}
+
+function TimeslotItem(attrs: {
+  service_timeslot: ServiceTimeslot
+  timeslot_index: number
+  dateRange: { min: string; max: string }
+  serviceUrl: string
+}) {
+  let { service_timeslot, timeslot_index, dateRange, serviceUrl } = attrs
+  let { weekdays } = service_timeslot
+  let timeslot_id = service_timeslot.id!
+
+  let hours = filter(proxy.timeslot_hour, {
+    service_timeslot_id: timeslot_id,
+  })
+
+  return (
+    <div class="available-timeslot--item">
+      {timeslot_index > 0 ? <ion-item-divider></ion-item-divider> : null}
+      <ion-item>
+        <ion-label>可預約時段 {timeslot_index + 1}</ion-label>
+      </ion-item>
+      <ion-item>
+        <ion-label>開始日期</ion-label>
+        <ion-datetime-button datetime={'startDatePicker_' + timeslot_id} />
+        <ion-modal>
+          <ion-datetime
+            id={'startDatePicker_' + timeslot_id}
+            value={service_timeslot.start_date}
+            presentation="date"
+            show-default-buttons="true"
+            min={dateRange.min}
+            max={dateRange.max}
+          />
+        </ion-modal>
+      </ion-item>
+      <ion-item>
+        <ion-label>結束日期</ion-label>
+        <ion-datetime-button datetime={'endDatePicker_' + timeslot_id} />
+        <ion-modal>
+          <ion-datetime
+            id={'endDatePicker_' + timeslot_id}
+            value={service_timeslot.end_date}
+            presentation="date"
+            show-default-buttons="true"
+            min={dateRange.min}
+            max={dateRange.max}
+          />
+        </ion-modal>
+      </ion-item>
+      <ion-item lines="none">
+        <ion-label>可選擇星期</ion-label>
+      </ion-item>
+      <ion-item lines="none">
+        <div slot="start" style="color: var(--ion-color-medium)">
+          快捷選項
+        </div>
+        <div slot="end">
+          <ion-button onclick="chooseWeekdays(this,[1,2,3,4,5])">
+            星期一至五
+          </ion-button>
+          <ion-button onclick="chooseWeekdays(this,[0,6])">星期六日</ion-button>
+        </div>
+      </ion-item>
+      <ion-item lines="none">
+        <div slot="start" style="color: var(--ion-color-medium)">
+          自選組合
+        </div>
+      </ion-item>
+      <div class="ion-margin d-flex weekday--list">
+        {mapArray('日一二三四五六'.split(''), weekday => (
+          <div class="flex-column weekday--item">
+            <ion-label>{weekday}</ion-label>
+            <ion-checkbox checked={weekdays.includes(weekday)}></ion-checkbox>
+          </div>
+        ))}
+      </div>
+      <ion-item lines="none">
+        <ion-label>可選擇時間</ion-label>
+      </ion-item>
+      <div class="time-picker--list" data-timeslot-id={timeslot_id}>
+        {mapArray(hours, hour =>
+          TimePickerListItem({
+            serviceUrl,
+            timeslot_id,
+            hour,
+          }),
+        )}
+      </div>
+      <div class="ion-text-center">
+        <ion-button
+          onclick={`emit('${serviceUrl}/timeslot/${timeslot_id}/hour','add')`}
+        >
+          <ion-icon name="add" slot="start"></ion-icon>
+          加時間
+        </ion-button>
+      </div>
+    </div>
   )
 }
 
@@ -1134,6 +1149,58 @@ let routes: Routes = {
             'eval',
             `showToast('updated option name','success')`,
           ])
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/timeslot/add': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: title('method not supported'),
+          description: 'update service option name',
+          node: <p>This api is only available in over ws</p>,
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          let timeslot = filter(proxy.service_timeslot, {
+            service_id: service.id!,
+          }).pop()!
+          if (!timeslot) {
+            let date = new TimezoneDate()
+            date.timezone = +8
+            let y = date.getFullYear()
+            let m = date.getMonth() + 1
+            let d = date.getDate()
+            let str = [y, format_2_digit(m), format_2_digit(d)].join('-')
+            timeslot = {} as any
+            timeslot.start_date = str
+            timeslot.end_date = str
+          }
+          // TODO check if the user is shop owner
+          let timeslot_id = proxy.service_timeslot.push({
+            service_id: service.id!,
+            start_date: timeslot.start_date,
+            end_date: timeslot.end_date,
+            weekdays: '',
+          })
+          timeslot = proxy.service_timeslot[timeslot_id]
+          // TODO send ws message
+          context.ws.send([
+            'append',
+            '.available-timeslot--list',
+            nodeToVNode(
+              TimeslotItem({
+                service_timeslot: timeslot,
+                timeslot_index,
+                dateRange: getDateRange(),
+                serviceUrl,
+              }),
+            ),
+          ])
+          throw EarlyTerminate
         },
       )
     },
