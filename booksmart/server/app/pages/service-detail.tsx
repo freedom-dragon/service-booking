@@ -512,7 +512,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             (service_timeslot, timeslot_index) => {
               return TimeslotItem({
                 service_timeslot,
-                timeslot_index,
+                is_first_slot: timeslot_index == 0,
                 dateRange,
                 serviceUrl,
               })
@@ -747,11 +747,11 @@ selectedTimeButton.textContent = event.detail.value || '未選擇'
 
 function TimeslotItem(attrs: {
   service_timeslot: ServiceTimeslot
-  timeslot_index: number
+  is_first_slot: boolean
   dateRange: { min: string; max: string }
   serviceUrl: string
 }) {
-  let { service_timeslot, timeslot_index, dateRange, serviceUrl } = attrs
+  let { service_timeslot, is_first_slot, dateRange, serviceUrl } = attrs
   let { weekdays } = service_timeslot
   let timeslot_id = service_timeslot.id!
 
@@ -761,9 +761,9 @@ function TimeslotItem(attrs: {
 
   return (
     <div class="available-timeslot--item">
-      {timeslot_index > 0 ? <ion-item-divider></ion-item-divider> : null}
+      {is_first_slot ? null : <ion-item-divider></ion-item-divider>}
       <ion-item>
-        <ion-label>可預約時段 {timeslot_index + 1}</ion-label>
+        <ion-label>可預約時段</ion-label>
       </ion-item>
       <ion-item>
         <ion-label>開始日期</ion-label>
@@ -1165,9 +1165,11 @@ let routes: Routes = {
       return resolveServiceRoute(
         context,
         ({ service, shop, shop_slug, service_slug }) => {
-          let timeslot = filter(proxy.service_timeslot, {
+          let timeslots = filter(proxy.service_timeslot, {
             service_id: service.id!,
-          }).pop()!
+          })
+          let new_timeslot_count = timeslots.length + 1
+          let timeslot = timeslots[timeslots.length - 1]
           if (!timeslot) {
             let date = new TimezoneDate()
             date.timezone = +8
@@ -1188,17 +1190,29 @@ let routes: Routes = {
           })
           timeslot = proxy.service_timeslot[timeslot_id]
           // TODO send ws message
+          let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
           context.ws.send([
-            'append',
-            '.available-timeslot--list',
-            nodeToVNode(
-              TimeslotItem({
-                service_timeslot: timeslot,
-                timeslot_index,
-                dateRange: getDateRange(),
-                serviceUrl,
-              }),
-            ),
+            'batch',
+            [
+              [
+                'insert-before',
+                '.available-timeslot--list .list-description',
+                nodeToVNode(
+                  TimeslotItem({
+                    service_timeslot: timeslot,
+                    is_first_slot: false,
+                    dateRange: getDateRange(),
+                    serviceUrl,
+                  }),
+                  context,
+                ),
+              ],
+              [
+                'update-text',
+                '.available-timeslot--list .list-description p',
+                `共 ${new_timeslot_count} 組時段`,
+              ],
+            ],
           ])
           throw EarlyTerminate
         },
