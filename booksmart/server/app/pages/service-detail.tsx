@@ -1262,7 +1262,9 @@ let routes: Routes = {
               })
               let hour = hours.pop()
               if (!hour) {
-                throw EarlyTerminate
+                hour = {} as TimeslotHour
+                hour.start_time = '15:00'
+                hour.end_time = '17:00'
               }
               hour_id = proxy.timeslot_hour.push({
                 service_timeslot_id: timeslot_id,
