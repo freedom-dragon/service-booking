@@ -21,7 +21,7 @@ import {
   TimeslotHour,
   proxy,
 } from '../../../db/proxy.js'
-import { del, filter, find } from 'better-sqlite3-proxy'
+import { count, del, filter, find } from 'better-sqlite3-proxy'
 import {
   getServiceCoverImage,
   getServiceImages,
@@ -760,10 +760,22 @@ function TimeslotItem(attrs: {
   })
 
   return (
-    <div class="available-timeslot--item">
+    <div
+      class="available-timeslot--item"
+      data-timeslot-id={service_timeslot.id}
+    >
       {is_first_slot ? null : <ion-item-divider></ion-item-divider>}
       <ion-item>
         <ion-label>可預約時段</ion-label>
+        <ion-buttons slot="end">
+          <ion-button
+            size="small"
+            color="danger"
+            onclick={`emit('${serviceUrl}/timeslot/${timeslot_id}/remove')`}
+          >
+            <ion-icon name="trash" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-item>
       <ion-item>
         <ion-label>開始日期</ion-label>
@@ -1153,12 +1165,73 @@ let routes: Routes = {
       )
     },
   },
+  '/shop/:shop_slug/service/:service_slug/timeslot/:timeslot_id/remove': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'remove service available timeslot by id',
+          node: <p>This api is only available in over ws</p>,
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          let new_timeslot_count =
+            count(proxy.service_timeslot, {
+              service_id: service.id!,
+            }) - 1
+          if (new_timeslot_count === 0) {
+            throw new MessageException([
+              'eval',
+              `showToast('需要至少一個時段','error')`,
+            ])
+          }
+
+          let timeslot_id = context.routerMatch?.params.timeslot_id
+
+          let timeslot = find(proxy.service_timeslot, {
+            service_id: service.id!,
+            id: timeslot_id,
+          })
+          if (!timeslot) {
+            throw EarlyTerminate
+          }
+          // TODO check if the user is shop owner
+
+          del(proxy.timeslot_hour, { service_timeslot_id: timeslot_id })
+          delete proxy.service_timeslot[timeslot_id]
+
+          context.ws.send([
+            'batch',
+            [
+              [
+                'remove',
+                `.available-timeslot--item[data-timeslot-id="${timeslot_id}"]`,
+              ],
+              ['eval', `showToast('取消了一組時段','warning')`],
+              [
+                'update-text',
+                '.available-timeslot--list .list-description p',
+                `共 ${new_timeslot_count} 組時段`,
+              ],
+              [
+                'remove',
+                '.available-timeslot--item:first-child ion-item-divider',
+              ],
+            ],
+          ])
+          throw EarlyTerminate
+        },
+      )
+    },
+  },
   '/shop/:shop_slug/service/:service_slug/timeslot/add': {
     resolve(context) {
       if (context.type !== 'ws') {
         return {
-          title: title('method not supported'),
-          description: 'update service option name',
+          title: apiEndpointTitle,
+          description: 'add service available timeslot',
           node: <p>This api is only available in over ws</p>,
         }
       }
@@ -1331,7 +1404,7 @@ let routes: Routes = {
             default:
               throw new MessageException([
                 'eval',
-                `showToast('updated option name','success')`,
+                `showToast('unknown action: ${action satisfies never}','error')`,
               ])
           }
         },
