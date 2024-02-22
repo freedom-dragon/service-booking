@@ -1,6 +1,8 @@
 import { filter } from 'better-sqlite3-proxy'
 import { proxy } from '../../db/proxy.js'
 import { readdirSync } from 'fs'
+import { TimezoneDate } from 'timezone-date.ts'
+import { format_2_digit } from '@beenotung/tslib/format.js'
 
 export function getShopLocale(shop_id: number) {
   let rows = filter(proxy.shop_locale, { shop_id })
@@ -51,4 +53,13 @@ export function getServiceImages(shop_slug: string, service_slug: string) {
     }
   }
   return { cover, more, options }
+}
+
+export function toDatePart(date: TimezoneDate) {
+  date.timezone = +8
+  let y = date.getFullYear()
+  let m = date.getMonth() + 1
+  let d = date.getDate()
+  let str = [y, format_2_digit(m), format_2_digit(d)].join('-')
+  return str
 }

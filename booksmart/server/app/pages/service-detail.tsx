@@ -11,7 +11,16 @@ import {
 } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { id, int, literal, object, optional, string, values } from 'cast.ts'
+import {
+  date,
+  id,
+  int,
+  literal,
+  object,
+  optional,
+  string,
+  values,
+} from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
@@ -27,10 +36,11 @@ import {
   getServiceImages,
   getServiceOptionImage,
   getShopLocale,
+  toDatePart,
 } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
 import { wsStatus } from '../components/ws-status.js'
-import { Script } from '../components/script.js'
+import { Script, iife } from '../components/script.js'
 import { resolveServiceRoute } from '../shop-route.js'
 import { concat_words } from '@beenotung/tslib/string.js'
 import { loadClientPlugin } from '../../client-plugin.js'
@@ -759,6 +769,9 @@ function TimeslotItem(attrs: {
     service_timeslot_id: timeslot_id,
   })
 
+  let startDatePickerId = 'startDatePicker_' + timeslot_id
+  let endDatePickerId = 'endDatePicker_' + timeslot_id
+
   return (
     <div
       class="available-timeslot--item"
@@ -779,10 +792,10 @@ function TimeslotItem(attrs: {
       </ion-item>
       <ion-item>
         <ion-label>開始日期</ion-label>
-        <ion-datetime-button datetime={'startDatePicker_' + timeslot_id} />
+        <ion-datetime-button datetime={startDatePickerId} />
         <ion-modal>
           <ion-datetime
-            id={'startDatePicker_' + timeslot_id}
+            id={startDatePickerId}
             value={service_timeslot.start_date}
             presentation="date"
             show-default-buttons="true"
@@ -793,10 +806,10 @@ function TimeslotItem(attrs: {
       </ion-item>
       <ion-item>
         <ion-label>結束日期</ion-label>
-        <ion-datetime-button datetime={'endDatePicker_' + timeslot_id} />
+        <ion-datetime-button datetime={endDatePickerId} />
         <ion-modal>
           <ion-datetime
-            id={'endDatePicker_' + timeslot_id}
+            id={endDatePickerId}
             value={service_timeslot.end_date}
             presentation="date"
             show-default-buttons="true"
@@ -805,6 +818,19 @@ function TimeslotItem(attrs: {
           />
         </ion-modal>
       </ion-item>
+      {Script(
+        /* javascript */ `
+${startDatePickerId}.addEventListener('ionChange', event => {
+  let value = event.detail.value;
+  emit('${serviceUrl}/timeslot/${timeslot_id}/update','start_date',value);
+});
+${endDatePickerId}.addEventListener('ionChange', event => {
+  let value = event.detail.value;
+  emit('${serviceUrl}/timeslot/${timeslot_id}/update','end_date',value)
+});
+`,
+        'no-minify',
+      )}
       <ion-item lines="none">
         <ion-label>可選擇星期</ion-label>
       </ion-item>
@@ -1165,6 +1191,47 @@ let routes: Routes = {
       )
     },
   },
+  '/shop/:shop_slug/service/:service_slug/timeslot/:timeslot_id/update': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'remove service available timeslot by id',
+          node: <p>This api is only available in over ws</p>,
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          // TODO check if the user is shop owner
+          let timeslot_id = context.routerMatch?.params.timeslot_id
+          let timeslot = find(proxy.service_timeslot, {
+            service_id: service.id!,
+            id: timeslot_id,
+          })
+          if (!timeslot) {
+            throw new MessageException([
+              'eval',
+              `showToast('timeslot not found','error')`,
+            ])
+          }
+
+          let { 0: field, 1: inputDate } = object({
+            0: values(['start_date' as const, 'end_date' as const]),
+            1: date(),
+          }).parse(context.args)
+
+          let field_value = toDatePart(new TimezoneDate(inputDate.getTime()))
+          timeslot[field] = field_value
+
+          throw new MessageException([
+            'eval',
+            `showToast('更新了 ${field}','info')`,
+          ])
+        },
+      )
+    },
+  },
   '/shop/:shop_slug/service/:service_slug/timeslot/:timeslot_id/remove': {
     resolve(context) {
       if (context.type !== 'ws') {
@@ -1245,11 +1312,7 @@ let routes: Routes = {
           let timeslot = timeslots[timeslots.length - 1]
           if (!timeslot) {
             let date = new TimezoneDate()
-            date.timezone = +8
-            let y = date.getFullYear()
-            let m = date.getMonth() + 1
-            let d = date.getDate()
-            let str = [y, format_2_digit(m), format_2_digit(d)].join('-')
+            let str = toDatePart(date)
             timeslot = {} as any
             timeslot.start_date = str
             timeslot.end_date = str
