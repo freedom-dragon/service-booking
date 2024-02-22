@@ -377,25 +377,25 @@ function chooseWeekdays(button, weekdays) {
     let checkbox = list.children[i].querySelector('ion-checkbox')
     checkbox.checked = !checkbox.checked
   }
-  let form = button.closest('form')
-  saveWeekdays(form)
+  saveWeekdays(button)
 }
-function saveWeekdays(form) {
+function saveWeekdays(target) {
+  let item = target.closest('.available-timeslot--item')
   let weekdays = ''
-  for (let checkbox of form.querySelectorAll('ion-checkbox[name="weekday"]')) {
+  for (let checkbox of item.querySelectorAll('ion-checkbox[name="weekday"]')) {
     if (checkbox.checked) {
       weekdays += checkbox.value
     }
   }
-  let timeslot_id = form.dataset.timeslotId
-  let url = form.dataset.updateUrl
+  let timeslot_id = item.dataset.timeslotId
+  let url = item.dataset.updateUrl
   emit(url, 'weekdays', weekdays)
 }
 window.addEventListener('ionChange', event => {
-  if (!event.target.matches('form.available-timeslot--item ion-checkbox')) return
+  if (!event.target.matches('.available-timeslot--item ion-checkbox[name="weekday"]'))
+    return
   event.stopImmediatePropagation()
-  let form = event.target.closest('form')
-  saveWeekdays(form)
+  saveWeekdays(event.target)
 })
 async function editCoverImage() {
   let image = await selectServiceImage()
@@ -784,7 +784,7 @@ function TimeslotItem(attrs: {
   let endDatePickerId = 'endDatePicker_' + timeslot_id
 
   return (
-    <form
+    <div
       class="available-timeslot--item"
       data-timeslot-id={service_timeslot.id}
       data-update-url={`${serviceUrl}/timeslot/${timeslot_id}/update`}
@@ -896,7 +896,7 @@ ${endDatePickerId}.addEventListener('ionChange', event => {
           加時間
         </ion-button>
       </div>
-    </form>
+    </div>
   )
 }
 
