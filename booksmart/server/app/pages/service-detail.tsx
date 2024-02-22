@@ -247,7 +247,6 @@ function selectOption(button){
                 <ion-radio-group
                   id="timeRadioGroup"
                   allow-empty-selection="true"
-                  onionChange="console.log(event)"
                 >
                   <ion-item>
                     <ion-radio value="9:00">9:00 - 11:00</ion-radio>
@@ -378,7 +377,26 @@ function chooseWeekdays(button, weekdays) {
     let checkbox = list.children[i].querySelector('ion-checkbox')
     checkbox.checked = !checkbox.checked
   }
+  let form = button.closest('form')
+  saveWeekdays(form)
 }
+function saveWeekdays(form) {
+  let weekdays = ''
+  for (let checkbox of form.querySelectorAll('ion-checkbox[name="weekday"]')) {
+    if (checkbox.checked) {
+      weekdays += checkbox.value
+    }
+  }
+  let timeslot_id = form.dataset.timeslotId
+  let url = form.dataset.updateUrl
+  emit(url, 'weekdays', weekdays)
+}
+window.addEventListener('ionChange', event => {
+  if (!event.target.matches('form.available-timeslot--item ion-checkbox')) return
+  event.stopImmediatePropagation()
+  let form = event.target.closest('form')
+  saveWeekdays(form)
+})
 async function editCoverImage() {
   let image = await selectServiceImage()
   if (!image) return
@@ -542,12 +560,6 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             </ion-button>
           </div>
         </ion-list>
-        <div class="ion-text-center">
-          <ion-button color="primary">
-            <ion-icon name="save" slot="start" />
-            <span class="button-text">Save</span>
-          </ion-button>
-        </div>
 
         <h2 class="ion-margin d-flex">
           封面相
@@ -686,7 +698,6 @@ return false
                 <ion-radio-group
                   id="timeRadioGroup"
                   allow-empty-selection="true"
-                  onionChange="console.log(event)"
                 >
                   <ion-item>
                     <ion-radio value="9:00">9:00 - 11:00</ion-radio>
@@ -773,9 +784,11 @@ function TimeslotItem(attrs: {
   let endDatePickerId = 'endDatePicker_' + timeslot_id
 
   return (
-    <div
+    <form
       class="available-timeslot--item"
       data-timeslot-id={service_timeslot.id}
+      data-update-url={`${serviceUrl}/timeslot/${timeslot_id}/update`}
+      method="POST"
     >
       {is_first_slot ? null : <ion-item-divider></ion-item-divider>}
       <ion-item>
@@ -854,7 +867,12 @@ ${endDatePickerId}.addEventListener('ionChange', event => {
         {mapArray('日一二三四五六'.split(''), weekday => (
           <div class="flex-column weekday--item">
             <ion-label>{weekday}</ion-label>
-            <ion-checkbox checked={weekdays.includes(weekday)}></ion-checkbox>
+            <ion-checkbox
+              data-timeslot-id={timeslot_id}
+              name="weekday"
+              value={weekday}
+              checked={weekdays.includes(weekday)}
+            ></ion-checkbox>
           </div>
         ))}
       </div>
@@ -878,7 +896,7 @@ ${endDatePickerId}.addEventListener('ionChange', event => {
           加時間
         </ion-button>
       </div>
-    </div>
+    </form>
   )
 }
 
@@ -1216,18 +1234,44 @@ let routes: Routes = {
             ])
           }
 
-          let { 0: field, 1: inputDate } = object({
-            0: values(['start_date' as const, 'end_date' as const]),
-            1: date(),
+          let { 0: field, 1: value } = object({
+            0: values([
+              'start_date' as const,
+              'end_date' as const,
+              'weekdays' as const,
+            ]),
+            1: string(),
           }).parse(context.args)
 
-          let field_value = toDatePart(new TimezoneDate(inputDate.getTime()))
-          timeslot[field] = field_value
-
-          throw new MessageException([
-            'eval',
-            `showToast('更新了 ${field}','info')`,
-          ])
+          switch (field) {
+            case 'start_date':
+              timeslot.start_date = toDatePart(
+                new TimezoneDate(date().parse(value).getTime()),
+              )
+              throw new MessageException([
+                'eval',
+                `showToast('更新了開始日期','info')`,
+              ])
+            case 'end_date':
+              timeslot.end_date = toDatePart(
+                new TimezoneDate(date().parse(value).getTime()),
+              )
+              throw new MessageException([
+                'eval',
+                `showToast('更新了結束日期','info')`,
+              ])
+            case 'weekdays':
+              timeslot.weekdays = value
+              throw new MessageException([
+                'eval',
+                `showToast('更新了可選擇星期','info')`,
+              ])
+            default:
+              throw new MessageException([
+                'eval',
+                `showToast('unknown field ${field satisfies never}','error')`,
+              ])
+          }
         },
       )
     },
