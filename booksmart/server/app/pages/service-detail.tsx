@@ -1169,7 +1169,7 @@ let routes: Routes = {
         return {
           title: title('method not supported'),
           description: 'update service option name',
-          node: <p>This api is only available in over ws</p>,
+          node: 'This api is only available over ws',
         }
       }
       return resolveServiceRoute(
@@ -1208,7 +1208,7 @@ let routes: Routes = {
         return {
           title: apiEndpointTitle,
           description: 'remove service available timeslot by id',
-          node: <p>This api is only available in over ws</p>,
+          node: 'This api is only available over ws',
         }
       }
       return resolveServiceRoute(
@@ -1275,7 +1275,7 @@ let routes: Routes = {
         return {
           title: apiEndpointTitle,
           description: 'remove service available timeslot by id',
-          node: <p>This api is only available in over ws</p>,
+          node: 'This api is only available over ws',
         }
       }
       return resolveServiceRoute(
@@ -1336,7 +1336,7 @@ let routes: Routes = {
         return {
           title: apiEndpointTitle,
           description: 'add service available timeslot',
-          node: <p>This api is only available in over ws</p>,
+          node: 'This api is only available over ws',
         }
       }
       return resolveServiceRoute(
@@ -1398,7 +1398,7 @@ let routes: Routes = {
         return {
           title: title('method not supported'),
           description: 'update service option name',
-          node: <p>This api is only available in over ws</p>,
+          node: 'This api is only available over ws',
         }
       }
       let timeslot_id = +context.routerMatch?.params.timeslot_id
