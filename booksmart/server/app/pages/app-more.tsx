@@ -57,6 +57,10 @@ let page = (
           <ion-icon slot="start" name="information" />
           <ion-label>關於我們</ion-label>
         </Link>
+        <Link tagName="ion-item" href={`/shop/${config.shop_slug}/admin`}>
+          <ion-icon slot="start" ios="cog" md="settings" />
+          <ion-label>商戶管理</ion-label>
+        </Link>
         <Link tagName="ion-item" href="/settings">
           <ion-icon slot="start" ios="cog" md="settings" />
           <ion-label>Settings</ion-label>
