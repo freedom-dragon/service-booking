@@ -12,7 +12,7 @@ import { appIonTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { readFileSync } from 'fs'
 
-let pageTitle = 'More'
+let pageTitle = '更多'
 
 let style = Style(/* css */ `
 #More {
