@@ -123,7 +123,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           <b>{shop.bio}</b>
           <p>{shop.desc}</p>
         </div>
-        <h2 class="ion-margin">
+        <h2 class="ion-margin" style="margin-bottom:0">
           {/* {owner_name} {locale.service} */}
           Booking
         </h2>
