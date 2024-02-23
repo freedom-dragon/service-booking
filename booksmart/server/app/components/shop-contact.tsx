@@ -1,9 +1,8 @@
+import { Shop } from '../../../db/proxy.js'
 import { o } from '../jsx/jsx.js'
-import { getShopContacts } from '../shop-store.js'
+import { ShopContact } from '../shop-store.js'
 import { mapArray } from './fragment.js'
 import Style from './style.js'
-
-export type ContactItem = ReturnType<typeof getShopContacts>[number]
 
 export let ShopContactsStyle = Style(/* css */ `
 .social-media-buttons
@@ -26,12 +25,14 @@ export let ShopContactsStyle = Style(/* css */ `
 }
 `)
 
-export function ShopContacts(attrs: { items: ContactItem[] }) {
+export function ShopContacts(attrs: { shop: Shop; items: ShopContact[] }) {
+  let { shop } = attrs
   return (
     <ion-buttons class="social-media-buttons ion-margin">
-      {mapArray(attrs.items, item =>
-        item.slug ? (
-          <ion-button href={item.prefix + item.slug} target="_blank">
+      {mapArray(attrs.items, item => {
+        let slug = shop[item.field]
+        return slug ? (
+          <ion-button href={item.prefix + slug} target="_blank">
             <img
               class="img-icon"
               slot="icon-only"
@@ -40,11 +41,11 @@ export function ShopContacts(attrs: { items: ContactItem[] }) {
               aria-hidden="true"
             />
             <span class="img-icon--text" title={item.label}>
-              {item.slug}
+              {slug}
             </span>
           </ion-button>
-        ) : null,
-      )}
+        ) : null
+      })}
     </ion-buttons>
   )
 }

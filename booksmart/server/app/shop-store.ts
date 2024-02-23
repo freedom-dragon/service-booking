@@ -3,6 +3,7 @@ import { Shop, proxy } from '../../db/proxy.js'
 import { readdirSync } from 'fs'
 import { TimezoneDate } from 'timezone-date.ts'
 import { format_2_digit } from '@beenotung/tslib/format.js'
+import { values } from 'cast.ts'
 
 export function getShopLocale(shop_id: number) {
   let rows = filter(proxy.shop_locale, { shop_id })
@@ -63,7 +64,7 @@ export function getShopContacts(shop: Shop) {
       type: 'tel',
       icon: 'phone.webp',
       prefix: 'tel:',
-      slug: shop.tel,
+      field: 'tel',
       credit: 'Kreasi Kanvas on iconscout.com',
     },
     {
@@ -72,7 +73,7 @@ export function getShopContacts(shop: Shop) {
       type: 'email',
       icon: 'gmail.webp',
       prefix: 'mailto:',
-      slug: shop.email,
+      field: 'email',
       credit: 'মুহম্মদ রাগিব হাসিন on wikipedia.org',
     },
     {
@@ -81,7 +82,7 @@ export function getShopContacts(shop: Shop) {
       type: 'text',
       icon: 'google_map.webp',
       prefix: 'https://www.google.com/maps/search/',
-      slug: shop.address,
+      field: 'address',
       credit: 'Abdul Abid on iconscout.com',
     },
     {
@@ -90,7 +91,7 @@ export function getShopContacts(shop: Shop) {
       type: 'text',
       icon: 'Facebook_icon.svg',
       prefix: 'https://www.facebook.com/',
-      slug: shop.facebook,
+      field: 'facebook',
       credit: 'Tkgd2007 on wikipedia.org',
     },
     {
@@ -99,7 +100,7 @@ export function getShopContacts(shop: Shop) {
       type: 'text',
       icon: 'facebook_messenger.svg',
       prefix: 'https://m.me/',
-      slug: shop.messenger,
+      field: 'messenger',
       credit: 'Totie on wikipedia.org',
     },
     {
@@ -108,7 +109,7 @@ export function getShopContacts(shop: Shop) {
       type: 'text',
       icon: 'instagram.svg',
       prefix: 'https://www.instagram.com/',
-      slug: shop.instagram,
+      field: 'instagram',
       credit: 'diej4cob on wikipedia.org',
     },
     {
@@ -117,7 +118,7 @@ export function getShopContacts(shop: Shop) {
       type: 'text',
       icon: 'youtube.webp',
       prefix: 'https://www.youtube.com/@',
-      slug: shop.youtube,
+      field: 'youtube',
       credit: 'Pixel Icons on iconscout.com',
     },
     {
@@ -126,7 +127,7 @@ export function getShopContacts(shop: Shop) {
       type: 'tel',
       icon: 'whatsapp.webp',
       prefix: 'https://wa.me/' + (shop.whatsapp?.length === 8 ? '852' : ''),
-      slug: shop.whatsapp,
+      field: 'whatsapp',
       credit: 'Icon Mafia on iconscout.com',
     },
     {
@@ -135,7 +136,7 @@ export function getShopContacts(shop: Shop) {
       type: 'text',
       icon: 'telegram.webp',
       prefix: 'https://t.me/',
-      slug: shop.telegram,
+      field: 'telegram',
       credit: 'Javitomad on wikipedia.org',
     },
     {
@@ -144,11 +145,19 @@ export function getShopContacts(shop: Shop) {
       type: 'text',
       icon: 'twitter.svg',
       prefix: 'https://twitter.com/',
-      slug: shop.twitter,
+      field: 'twitter',
       credit: 'Smasongarrison on wikipedia.org',
     },
-  ]
+  ] satisfies {
+    field: keyof Shop
+    [key: string]: string
+  }[]
 }
+
+export type ShopContact = ReturnType<typeof getShopContacts>[number]
+
+export let contactFields = getShopContacts({} as Shop).map(item => item.field)
+export let contactFieldsParser = values(contactFields)
 
 export function toDatePart(date: TimezoneDate) {
   date.timezone = +8

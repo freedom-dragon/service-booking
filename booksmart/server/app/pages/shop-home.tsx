@@ -149,7 +149,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         </ion-list>
         <h2 class="ion-margin">聯絡方法</h2>
         {ShopContactsStyle}
-        <ShopContacts items={getShopContacts(shop)} />
+        <ShopContacts shop={shop} items={getShopContacts(shop)} />
         {wsStatus.safeArea}
       </ion-content>
       <ion-footer>
