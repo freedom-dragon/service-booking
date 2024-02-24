@@ -47,6 +47,7 @@ import { EarlyTerminate, MessageException } from '../helpers.js'
 import { nodeToVNode } from '../jsx/vnode.js'
 import { client_config } from '../../../client/client-config.js'
 import { TimezoneDate } from 'timezone-date.ts'
+import { db } from '../../../db/db.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -85,6 +86,29 @@ ion-item [slot="start"] ion-icon {
 }
 `)
 
+type ServiceTimeslotRow = Record<
+  'id' | 'start_date' | 'end_date' | 'weekdays',
+  string
+>
+let select_service_timeslot = db.prepare(/* sql */ `
+select
+  id
+, start_date
+, end_date
+, weekdays
+from service_timeslot
+where service_id = :service_id
+`)
+
+type TimeslotHourRow = Record<'start_time' | 'end_time', string>
+let select_timeslot_hour = db.prepare(/* sql */ `
+select
+  start_time
+, end_time
+from timeslot_hour
+where service_timeslot_id = :service_timeslot_id
+`)
+
 function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let { service } = attrs
   let shop = service.shop!
@@ -95,6 +119,18 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let options = filter(proxy.service_option, { service_id: service.id! })
   let locale = getShopLocale(shop.id!)
   let images = getServiceImages(shop_slug, service_slug)
+
+  let availableTimeslots = (
+    select_service_timeslot.all({
+      service_id: service.id,
+    }) as ServiceTimeslotRow[]
+  ).map(timeslot => {
+    let hours = select_timeslot_hour.all({
+      service_timeslot_id: timeslot.id,
+    }) as TimeslotHourRow[]
+    return { timeslot, hours }
+  })
+
   return (
     <>
       {ServiceDetailStyle}
@@ -214,13 +250,64 @@ function selectOption(button){
             </ion-modal>
           </ion-item>
           {Script(/* javascript */ `
-    datePicker.isDateEnabled = isDateEnabled
-    function isDateEnabled(dateString) {
-      let date = new Date(dateString)
-      let day = date.getDay()
-      if (day == 0 || day == 6) return true
-      return false
-    }
+    datePicker.isDateEnabled = (${function (
+      timeslots: typeof availableTimeslots,
+    ) {
+      return function isDateEnabled(dateString: string) {
+        let date = new Date(dateString)
+        let day = date.getDay()
+        for (let { timeslot, hours } of timeslots) {
+          if (
+            timeslot.start_date <= dateString &&
+            dateString <= timeslot.end_date
+          ) {
+            let canSelect = '日一二三四五六'
+              .split('')
+              .some(
+                (weekday, i) => timeslot.weekdays.includes(weekday) && day == i,
+              )
+            if (canSelect) return true
+          }
+        }
+      }
+    }})(availableTimeslots);
+    datePicker.addEventListener('ionChange', (${function (
+      timeslots: typeof availableTimeslots,
+    ) {
+      return function onDateSelected(event: any) {
+        let dateString = event.detail.value as string
+        dateString = dateString.split('T')[0]
+        let date = new Date(dateString)
+        let day = date.getDay()
+        for (let { timeslot, hours } of timeslots) {
+          if (
+            timeslot.start_date <= dateString &&
+            dateString <= timeslot.end_date
+          ) {
+            let canSelect = '日一二三四五六'
+              .split('')
+              .some(
+                (weekday, i) => timeslot.weekdays.includes(weekday) && day == i,
+              )
+            if (canSelect) {
+              timeRadioGroup
+                .querySelectorAll('ion-item')
+                .forEach(e => e.remove())
+              for (let hour of hours) {
+                let item = document.createElement('ion-item')
+                let radio = document.createElement(
+                  'ion-radio',
+                ) as HTMLInputElement
+                radio.value = hour.start_time
+                radio.textContent = hour.start_time + ' - ' + hour.end_time
+                item.appendChild(radio)
+                timeRadioGroup.appendChild(item)
+              }
+            }
+          }
+        }
+      }
+    }})(availableTimeslots))
     `)}
           <ion-accordion-group>
             <ion-accordion value="address">
@@ -1532,3 +1619,5 @@ let routes: Routes = {
 }
 
 export default { routes, attachRoutes }
+
+declare var timeRadioGroup: HTMLElement
