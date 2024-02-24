@@ -31,6 +31,9 @@ let style = Style(/* css */ `
 #ShopHome {
 
 }
+.service--card:first-child {
+  margin-top: 0;
+}
 ion-card
 ion-thumbnail {
   --size: 12rem;
@@ -38,6 +41,9 @@ ion-thumbnail {
 .card-text-container {
   margin-inline-start: 1rem;
   flex-grow: 1;
+}
+.card-text-container ion-button {
+  margin-inline-end: 1rem;
 }
 .card--field {
   display: flex;
@@ -110,7 +116,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           <b>{shop.bio}</b>
           <p>{shop.desc}</p>
         </div>
-        <h2 class="ion-margin" style="margin-bottom:0">
+        <h2 class="ion-margin">
           {/* {owner_name} {locale.service} */}
           Booking
         </h2>
@@ -119,6 +125,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
             <Link
               tagName="ion-card"
               href={`/shop/${shop.slug}/service/${service.slug}`}
+              class="service--card"
             >
               <div class="d-flex">
                 <div>
