@@ -15,7 +15,7 @@ import { commonTemplatePageText } from '../components/common-template.js'
 import { appIonTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 
-let pageTitle = 'Calendar'
+let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
 
 let style = Style(/* css */ `
@@ -107,7 +107,7 @@ function Main(attrs: {}, context: Context) {
     <>
       {calendarStyle}
       <h2 class="calendar--title">Today</h2>
-      <table class="calendar--table">
+      <table class="calendar--table" hidden>
         <thead>
           <tr class="calendar--weekdays">
             {mapArray(
@@ -156,8 +156,8 @@ function Main(attrs: {}, context: Context) {
       <ion-list>
         <ion-item>No events yet.</ion-item>
       </ion-list>
-      <ion-list-header>Available Timeslots</ion-list-header>
-      <ion-list>
+      <ion-list-header hidden>Available Timeslots</ion-list-header>
+      <ion-list hidden>
         <ion-item>9am - 12nn</ion-item>
       </ion-list>
       {user ? (
@@ -165,7 +165,7 @@ function Main(attrs: {}, context: Context) {
           {addPageTitle}
         </Link>
       ) : (
-        <p>
+        <p hidden>
           You can add event / available timeslot after{' '}
           <Link href="/login">login</Link>.
         </p>
