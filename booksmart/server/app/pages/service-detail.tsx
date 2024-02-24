@@ -250,6 +250,7 @@ function selectOption(button){
             </ion-modal>
           </ion-item>
           {Script(/* javascript */ `
+    var availableTimeslots = ${JSON.stringify(availableTimeslots)};
     datePicker.isDateEnabled = (${function (
       timeslots: typeof availableTimeslots,
     ) {
@@ -329,13 +330,7 @@ function selectOption(button){
                   allow-empty-selection="true"
                 >
                   <ion-item>
-                    <ion-radio value="9:00">9:00 - 11:00</ion-radio>
-                  </ion-item>
-                  <ion-item>
-                    <ion-radio value="9:30">9:30 - 11:30</ion-radio>
-                  </ion-item>
-                  <ion-item>
-                    <ion-radio value="10:00">10:00 - 12:00</ion-radio>
+                    <ion-radio value="">請先選擇日期</ion-radio>
                   </ion-item>
                 </ion-radio-group>
               </div>
@@ -567,12 +562,20 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
       </ion-header>
       <ion-content id="ManageService" color="light">
         <h2 class="ion-margin">{locale.service}資料</h2>
-        <ion-list lines="full" inset="true" style="margin-bottom: 0.5rem">
+        <ion-list
+          lines="full"
+          inset="true"
+          style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;"
+        >
           <ion-item>
             <div slot="start">
               <ion-icon name="people-outline"></ion-icon> 標題
             </div>
-            <ion-input placeholder="輸入一個簡短的標題" value={service.name} />
+            <ion-input
+              placeholder="輸入一個簡短的標題"
+              value={service.name}
+              onchange={`emit('${serviceUrl}/update','name',this.value)`}
+            />
           </ion-item>
           <ion-item>
             <div slot="start">
@@ -580,9 +583,19 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             </div>
             <div class="d-flex" style="align-items: center; gap: 0.25rem">
               <span>$</span>
-              <ion-input value={service.unit_price} />
+              <ion-input
+                value={service.unit_price}
+                placeholder="單價"
+                type="number"
+                min="0"
+                onchange={`emit('${serviceUrl}/update','unit_price',this.value)`}
+              />
               <span>/</span>
-              <ion-input value={service.price_unit} />
+              <ion-input
+                value={service.price_unit}
+                placeholder="單位"
+                onchange={`emit('${serviceUrl}/update','price_unit',this.value)`}
+              />
             </div>
             <div slot="helper">
               如: $100/人 、 $150/對情侶 、 $0/📐 量身訂做
@@ -592,27 +605,46 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
             <div slot="start">
               <ion-icon name="people-outline"></ion-icon> 人數
             </div>
-            <ion-input value={service.quota} placeholder="如: 6人 / 2對情侶" />
+            <ion-input
+              value={service.quota}
+              placeholder="如: 6人 / 2對情侶"
+              onchange={`emit('${serviceUrl}/update','quota',this.value)`}
+            />
           </ion-item>
           <ion-item>
             <div slot="start">
-              <ion-icon name="hourglass-outline"></ion-icon> 時長
+              <ion-icon name="hourglass-outline"></ion-icon> 時長 (顯示)
             </div>
-            <ion-input value={service.hours} placeholder="如: 2.5 - 3 小時" />
+            <ion-input
+              value={service.hours}
+              placeholder="如: 2.5 - 3 小時"
+              onchange={`emit('${serviceUrl}/update','hours',this.value)`}
+            />
+            <div slot="helper">作顯示用途。可以是範圍，如: 2.5 - 3 小時</div>
+          </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="hourglass-outline"></ion-icon> 時長 (計算)
+            </div>
+            <div slot="end">分鐘</div>
+            <ion-input
+              value={service.book_duration_minute}
+              placeholder="如: 120"
+              onchange={`emit('${serviceUrl}/update','book_duration_minute',this.value)`}
+              type="number"
+              min="1"
+            />
+            <div slot="helper">
+              系統會以這個分鐘數作為計算。建議輸入每節最長時間。
+            </div>
           </ion-item>
         </ion-list>
-        <div class="ion-text-center">
-          <ion-button color="primary">
-            <ion-icon name="save" slot="start" />
-            <span class="button-text">Save</span>
-          </ion-button>
-        </div>
 
         <h2 class="ion-margin">可預約時段</h2>
         <ion-list
           lines="full"
           inset="true"
-          style="margin-bottom: 0.5rem"
+          style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;"
           class="available-timeslot--list"
         >
           {mapArray(
@@ -1250,11 +1282,98 @@ let routes: Routes = {
       })
     },
   },
+  '/shop/:shop_slug/service/:service_slug/update': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'update service details',
+          node: 'This api is only available over ws',
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          try {
+            let { 0: field, 1: value } = object({
+              0: values([
+                'name' as const,
+                'unit_price' as const,
+                'price_unit' as const,
+                'quota' as const,
+                'hours' as const,
+                'book_duration_minute' as const,
+              ]),
+              1: string(),
+            }).parse(context.args)
+
+            let label: string
+            let ok = () => {
+              throw new MessageException([
+                'eval',
+                `showToast('更新了${label}','info')`,
+              ])
+            }
+            let invalid = () => {
+              throw new MessageException([
+                'eval',
+                `showToast('無效的${label}','error')`,
+              ])
+            }
+
+            switch (field) {
+              case 'name':
+                label = '標題'
+                service[field] = value
+                ok()
+                break
+              case 'unit_price':
+                label = '費用 (單價)'
+                if (!+value) invalid()
+                service[field] = +value
+                ok()
+                break
+              case 'price_unit':
+                label = '費用 (單位)'
+                service[field] = value
+                ok()
+                break
+              case 'quota':
+                label = '人數'
+                service[field] = value
+                ok()
+                break
+              case 'hours':
+                label = '時長 (顯示)'
+                service[field] = value
+                ok()
+                break
+              case 'book_duration_minute':
+                label = '時長 (計算)'
+                if (!+value) invalid()
+                service[field] = +value
+                ok()
+                break
+              default:
+                field satisfies never
+            }
+            throw new Error('not supported fields: ' + field)
+          } catch (error) {
+            if (error instanceof MessageException) throw error
+            throw new MessageException([
+              'eval',
+              `showToast(${JSON.stringify(String(error))},'error')`,
+            ])
+          }
+        },
+      )
+    },
+  },
   '/shop/:shop_slug/service/:service_slug/option/name': {
     resolve(context) {
       if (context.type !== 'ws') {
         return {
-          title: title('method not supported'),
+          title: apiEndpointTitle,
           description: 'update service option name',
           node: 'This api is only available over ws',
         }
@@ -1460,7 +1579,7 @@ let routes: Routes = {
                 nodeToVNode(
                   TimeslotItem({
                     service_timeslot: timeslot,
-                    is_first_slot: false,
+                    is_first_slot: new_timeslot_count == 1,
                     dateRange: getDateRange(),
                     serviceUrl,
                   }),
