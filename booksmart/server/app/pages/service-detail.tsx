@@ -661,6 +661,49 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               系統會以這個分鐘數作為計算。建議輸入每節最長時間。
             </div>
           </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="map-outline"></ion-icon> 地址 (街道)
+            </div>
+            <ion-input
+              value={service.address}
+              placeholder={shop.address}
+              onchange={`emit('${serviceUrl}/update','address',this.value)`}
+            />
+            {address ? (
+              <div
+                slot="helper"
+                style1="display: flex; align-items: center; gap: 1rem"
+                class="w-100"
+              >
+                預覽
+                <ion-button
+                  fill="block"
+                  color="primary"
+                  size="normal"
+                  href={
+                    'https://www.google.com/maps/search/' +
+                    encodeURIComponent(address)
+                  }
+                  target="_blank"
+                >
+                  <ion-icon name="map-outline" slot="start"></ion-icon>
+                  View on Map
+                </ion-button>
+              </div>
+            ) : null}
+          </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="map-outline"></ion-icon> 地址 (備註)
+            </div>
+            <ion-textarea
+              value={service.address_remark}
+              placeholder={shop.address_remark}
+              auto-grow
+              onchange={`emit('${serviceUrl}/update','address_remark',this.value)`}
+            />
+          </ion-item>
         </ion-list>
 
         <h2 class="ion-margin">可預約時段</h2>
@@ -789,111 +832,6 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           </div>
         </ion-list>
 
-        <h2 class="ion-margin">Others</h2>
-        <ion-list lines="full" inset="true">
-          <ion-item>
-            <div slot="start">
-              <ion-icon name="calendar-outline"></ion-icon> 日期
-            </div>
-            <ion-datetime-button datetime="datePicker"></ion-datetime-button>
-            <ion-modal>
-              <ion-datetime
-                id="datePicker"
-                presentation="date"
-                show-default-buttons="true"
-              >
-                <span slot="title">預約日期</span>
-              </ion-datetime>
-            </ion-modal>
-          </ion-item>
-          {Script(/* javascript */ `
-datePicker.isDateEnabled = isDateEnabled
-function isDateEnabled(dateString) {
-let date = new Date(dateString)
-let day = date.getDay()
-if (day == 0 || day == 6) return true
-return false
-}
-`)}
-          <ion-accordion-group>
-            <ion-accordion value="address">
-              <ion-item slot="header">
-                <div slot="start">
-                  <ion-icon name="time-outline"></ion-icon> 時間
-                  <ion-button
-                    id="selectedTimeButton"
-                    color="light"
-                    class="ion-padding-horizontal"
-                  >
-                    未選擇
-                  </ion-button>
-                </div>
-              </ion-item>
-              <div class="ion-padding-horizontal" slot="content">
-                <ion-radio-group
-                  id="timeRadioGroup"
-                  allow-empty-selection="true"
-                >
-                  <ion-item>
-                    <ion-radio value="9:00">9:00 - 11:00</ion-radio>
-                  </ion-item>
-                  <ion-item>
-                    <ion-radio value="9:30">9:30 - 11:30</ion-radio>
-                  </ion-item>
-                  <ion-item>
-                    <ion-radio value="10:00">10:00 - 12:00</ion-radio>
-                  </ion-item>
-                </ion-radio-group>
-              </div>
-            </ion-accordion>
-          </ion-accordion-group>
-          {Script(/* javascript */ `
-timeRadioGroup.addEventListener('ionChange', event => {
-selectedTimeButton.textContent = event.detail.value || '未選擇'
-})
-`)}
-          <ion-item-divider style="min-height:2px"></ion-item-divider>
-          {!address ? null : address_remark ? (
-            <ion-accordion-group>
-              <ion-accordion value="address">
-                <ion-item slot="header">
-                  <div slot="start">
-                    <ion-icon name="map-outline"></ion-icon> 地址
-                  </div>
-                  <ion-label>{address}</ion-label>
-                </ion-item>
-                <div class="ion-padding" slot="content">
-                  <p style="white-space: pre-wrap">{address_remark}</p>
-                  <ion-button
-                    fill="block"
-                    color="primary"
-                    href={
-                      'https://www.google.com/maps/search/' +
-                      encodeURIComponent(address)
-                    }
-                    target="_blank"
-                  >
-                    <ion-icon name="map-outline" slot="start"></ion-icon>
-                    View on Map
-                  </ion-button>
-                </div>
-              </ion-accordion>
-            </ion-accordion-group>
-          ) : (
-            <ion-item
-              href={
-                'https://www.google.com/maps/search/' +
-                encodeURIComponent(address)
-              }
-              target="_blank"
-            >
-              <div slot="start">
-                <ion-icon name="map-outline"></ion-icon> 地址
-              </div>
-              <ion-label>{address}</ion-label>
-            </ion-item>
-          )}
-        </ion-list>
         {wsStatus.safeArea}
       </ion-content>
       {ManageServiceScripts}
@@ -1326,8 +1264,10 @@ let routes: Routes = {
                 'quota' as const,
                 'hours' as const,
                 'book_duration_minute' as const,
+                'address' as const,
+                'address_remark' as const,
               ]),
-              1: string(),
+              1: string({ trim: true, nonEmpty: false }),
             }).parse(context.args)
 
             let label: string
@@ -1352,7 +1292,7 @@ let routes: Routes = {
                 break
               case 'unit_price':
                 label = '費用 (單價)'
-                if (!+value) invalid()
+                if (!+value && +value != 0) invalid()
                 service[field] = +value
                 ok()
                 break
@@ -1373,8 +1313,18 @@ let routes: Routes = {
                 break
               case 'book_duration_minute':
                 label = '時長 (計算)'
-                if (!+value) invalid()
+                if (!(+value > 0)) invalid()
                 service[field] = +value
+                ok()
+                break
+              case 'address':
+                label = '地址 (街道)'
+                service[field] = value || null
+                ok()
+                break
+              case 'address_remark':
+                label = '地址 (備註)'
+                service[field] = value || null
                 ok()
                 break
               default:
