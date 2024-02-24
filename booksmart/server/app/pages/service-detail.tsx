@@ -188,7 +188,7 @@ function selectOption(button){
               min="1"
               max={service.quota}
               /* TODO avoid overbook */
-              oninput={`priceLabel.textContent='$'+${service.unit_price}*this.value+'/'+this.value+'${service.price_unit}'`}
+              oninput={`priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}'`}
             />
             <ion-label slot="end">{service.price_unit}</ion-label>
           </ion-item>
