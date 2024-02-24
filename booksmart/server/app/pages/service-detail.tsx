@@ -48,6 +48,7 @@ import { nodeToVNode } from '../jsx/vnode.js'
 import { client_config } from '../../../client/client-config.js'
 import { TimezoneDate } from 'timezone-date.ts'
 import { db } from '../../../db/db.js'
+import { MINUTE } from '@beenotung/tslib/time.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -251,6 +252,8 @@ function selectOption(button){
           </ion-item>
           {Script(/* javascript */ `
     var availableTimeslots = ${JSON.stringify(availableTimeslots)};
+    var book_duration_ms = ${service.book_duration_minute * MINUTE};
+    var book_time_step_ms = ${15 * MINUTE};
     datePicker.isDateEnabled = (${function (
       timeslots: typeof availableTimeslots,
     ) {
@@ -274,6 +277,8 @@ function selectOption(button){
     }})(availableTimeslots);
     datePicker.addEventListener('ionChange', (${function (
       timeslots: typeof availableTimeslots,
+      book_duration_ms: number,
+      book_time_step_ms: number,
     ) {
       return function onDateSelected(event: any) {
         let dateString = event.detail.value as string
@@ -295,20 +300,38 @@ function selectOption(button){
                 .querySelectorAll('ion-item')
                 .forEach(e => e.remove())
               for (let hour of hours) {
-                let item = document.createElement('ion-item')
-                let radio = document.createElement(
-                  'ion-radio',
-                ) as HTMLInputElement
-                radio.value = hour.start_time
-                radio.textContent = hour.start_time + ' - ' + hour.end_time
-                item.appendChild(radio)
-                timeRadioGroup.appendChild(item)
+                let [h, m] = hour.start_time.split(':')
+                let start = new Date()
+                start.setHours(+h, +m, 0, 0)
+
+                let d2 = (x: number) => (x < 10 ? '0' + x : x)
+
+                for (;;) {
+                  let start_time =
+                    d2(start.getHours()) + ':' + d2(start.getMinutes())
+
+                  let end = new Date(start.getTime() + book_duration_ms)
+                  let end_time = d2(end.getHours()) + ':' + d2(end.getMinutes())
+
+                  if (end_time > hour.end_time) break
+
+                  let item = document.createElement('ion-item')
+                  let radio = document.createElement(
+                    'ion-radio',
+                  ) as HTMLInputElement
+                  radio.value = start_time
+                  radio.textContent = start_time + ' - ' + end_time
+                  item.appendChild(radio)
+                  timeRadioGroup.appendChild(item)
+
+                  start.setTime(start.getTime() + book_time_step_ms)
+                }
               }
             }
           }
         }
       }
-    }})(availableTimeslots))
+    }})(availableTimeslots, book_duration_ms, book_time_step_ms))
     `)}
           <ion-accordion-group>
             <ion-accordion value="address">
