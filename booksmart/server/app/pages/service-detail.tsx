@@ -162,7 +162,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
             <Link
               tagName="ion-button"
               title={'管理' + locale.service}
-              href={context.url + '/admin'}
+              href={`${serviceUrl}/admin`}
             >
               <ion-icon slot="icon-only" name="create"></ion-icon>
             </Link>
