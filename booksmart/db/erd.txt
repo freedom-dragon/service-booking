@@ -172,8 +172,23 @@ start_time text
 end_time text
 
 
+booking
+-------
+id integer PK
+service_id integer FK >0- service.id
+submit_time integer
+appointment_time integer
+approve_time integer NULL
+reject_time integer NULL
+cancel_time integer NULL
+amount integer
+service_option_id fk
+tel text
+name text
+
+
 # zoom: 1.000
-# view: (993, 813)
+# view: (344, 653)
 # text-bg: #6495ed
 # text-color: #000000
 # diagram-bg: #f5f5f5
@@ -197,3 +212,4 @@ end_time text
 # service_option (1746, 917)
 # service_timeslot (1754, 1268)
 # timeslot_hour (1676, 1512)
+# booking (876, 1269)

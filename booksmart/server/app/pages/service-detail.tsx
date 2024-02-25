@@ -2,23 +2,26 @@ import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
 import { apiEndpointTitle, title } from '../../config.js'
 import Style from '../components/style.js'
-import { DynamicContext, getContextFormBody } from '../context.js'
+import { Context, DynamicContext, getContextFormBody } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import {
   date,
+  dateString,
   id,
   int,
   literal,
   object,
   optional,
   string,
+  timeString,
   values,
 } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
 import {
+  Booking,
   Service,
   ServiceTimeslot,
   TimeslotHour,
@@ -49,6 +52,9 @@ import { client_config } from '../../../client/client-config.js'
 import { TimezoneDate } from 'timezone-date.ts'
 import { db } from '../../../db/db.js'
 import { MINUTE } from '@beenotung/tslib/time.js'
+import DateTimeText, { toLocaleDateTimeString } from '../components/datetime.js'
+import { boolean } from 'cast.ts'
+import { digits } from '@beenotung/tslib/random.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -119,7 +125,13 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let address_remark = service.address_remark || shop.address_remark
   let options = filter(proxy.service_option, { service_id: service.id! })
   let locale = getShopLocale(shop.id!)
+  let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let images = getServiceImages(shop_slug, service_slug)
+
+  let booking = find(proxy.booking, {
+    service_id: service.id!,
+    cancel_time: null,
+  })
 
   let allImages = [images.cover, ...images.more, ...images.options]
   let optionImageOffset = 1 + images.more.length
@@ -172,32 +184,39 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
         <h2 class="ion-margin" hidden>
           {service.name}
         </h2>
-        <ion-list lines="full" inset="true">
-          <ion-item lines="none">
-            <div slot="start">
-              <ion-icon name="options-outline"></ion-icon> 款式
-            </div>
-          </ion-item>
-          <ion-item>
-            <div
-              class="service-options ion-margin-horizontal flex-wrap"
-              style="gap: 0.25rem; margin-bottom: 8px"
-            >
-              {mapArray(options, (option, index) => (
-                <ion-button
-                  size="small"
-                  fill={options.length == 1 ? 'solid' : 'outline'}
-                  onclick="selectOption(this)"
-                  data-id={option.id}
-                  data-index={index + optionImageOffset}
-                >
-                  {option.name}
-                </ion-button>
-              ))}
-            </div>
-          </ion-item>
-          {Script(/* javascript */ `
+        <form
+          id="bookingForm"
+          action={`${serviceUrl}/booking/submit`}
+          method="POST"
+        >
+          <ion-list lines="full" inset="true">
+            <ion-item lines="none">
+              <div slot="start">
+                <ion-icon name="options-outline"></ion-icon> 款式
+              </div>
+            </ion-item>
+            <ion-item>
+              <div
+                class="service-options ion-margin-horizontal flex-wrap"
+                style="gap: 0.25rem; margin-bottom: 8px"
+              >
+                <input hidden name="option_id" />
+                {mapArray(options, (option, index) => (
+                  <ion-button
+                    size="small"
+                    fill={options.length == 1 ? 'solid' : 'outline'}
+                    onclick="selectOption(this)"
+                    data-id={option.id}
+                    data-index={index + optionImageOffset}
+                  >
+                    {option.name}
+                  </ion-button>
+                ))}
+              </div>
+            </ion-item>
+            {Script(/* javascript */ `
 function selectOption(button){
+  bookingForm.option_id.value = button.dataset.id
   swiperSlide(ServiceImages, button.dataset.index);
   if (button.fill == 'solid') return
   let buttons = button.parentElement.children
@@ -206,42 +225,45 @@ function selectOption(button){
   }
 }
 `)}
-          <ion-item>
-            <div slot="start">
-              <ion-icon name="people-outline"></ion-icon> 人數
-            </div>
-            <ion-input
-              placeholder="1"
-              type="number"
-              min="1"
-              max="100"
-              /* TODO avoid overbook */
-              oninput={`priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}'`}
-            />
-            <ion-label slot="end">{service.price_unit}</ion-label>
-          </ion-item>
-          <ion-item>
-            <div slot="start">
-              <ion-icon name="hourglass-outline"></ion-icon> 時長
-            </div>
-            <ion-label>{service.hours}</ion-label>
-          </ion-item>
-          <ion-item>
-            <div slot="start">
-              <ion-icon name="calendar-outline"></ion-icon> 日期
-            </div>
-            <ion-datetime-button datetime="datePicker"></ion-datetime-button>
-            <ion-modal>
-              <ion-datetime
-                id="datePicker"
-                presentation="date"
-                show-default-buttons="true"
-              >
-                <span slot="title">預約日期</span>
-              </ion-datetime>
-            </ion-modal>
-          </ion-item>
-          {Script(/* javascript */ `
+            <ion-item>
+              <div slot="start">
+                <ion-icon name="people-outline"></ion-icon> 人數
+              </div>
+              <ion-input
+                placeholder="1"
+                type="number"
+                min="1"
+                max="100"
+                name="amount"
+                /* TODO avoid overbook */
+                oninput={`priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}'`}
+              />
+              <ion-label slot="end">{service.price_unit}</ion-label>
+            </ion-item>
+            <ion-item>
+              <div slot="start">
+                <ion-icon name="hourglass-outline"></ion-icon> 時長
+              </div>
+              <ion-label>{service.hours}</ion-label>
+            </ion-item>
+            <input name="appointment_time" hidden />
+            <ion-item>
+              <div slot="start">
+                <ion-icon name="calendar-outline"></ion-icon> 日期
+              </div>
+              <ion-datetime-button datetime="datePicker"></ion-datetime-button>
+              <ion-modal>
+                <ion-datetime
+                  id="datePicker"
+                  presentation="date"
+                  show-default-buttons="true"
+                  name="date"
+                >
+                  <span slot="title">預約日期</span>
+                </ion-datetime>
+              </ion-modal>
+            </ion-item>
+            {Script(/* javascript */ `
     var availableTimeslots = ${JSON.stringify(availableTimeslots)};
     var book_duration_ms = ${service.book_duration_minute * MINUTE};
     var book_time_step_ms = ${15 * MINUTE};
@@ -324,79 +346,94 @@ function selectOption(button){
       }
     }})(availableTimeslots, book_duration_ms, book_time_step_ms))
     `)}
-          <ion-accordion-group>
-            <ion-accordion value="address">
-              <ion-item slot="header">
-                <div slot="start">
-                  <ion-icon name="time-outline"></ion-icon> 時間
-                  <ion-button
-                    id="selectedTimeButton"
-                    color="light"
-                    class="ion-padding-horizontal"
-                  >
-                    未選擇
-                  </ion-button>
-                </div>
-              </ion-item>
-              <div class="ion-padding-horizontal" slot="content">
-                <ion-radio-group
-                  id="timeRadioGroup"
-                  allow-empty-selection="true"
-                >
-                  <ion-item>
-                    <ion-radio value="">請先選擇日期</ion-radio>
-                  </ion-item>
-                </ion-radio-group>
-              </div>
-            </ion-accordion>
-          </ion-accordion-group>
-          {Script(/* javascript */ `
-timeRadioGroup.addEventListener('ionChange', event => {
-  selectedTimeButton.textContent = event.detail.value || '未選擇'
-})
-`)}
-          <ion-item-divider style="min-height:2px"></ion-item-divider>
-          {!address ? null : address_remark ? (
             <ion-accordion-group>
               <ion-accordion value="address">
                 <ion-item slot="header">
                   <div slot="start">
-                    <ion-icon name="map-outline"></ion-icon> 地址
+                    <ion-icon name="time-outline"></ion-icon> 時間
+                    <ion-button
+                      id="selectedTimeButton"
+                      color="light"
+                      class="ion-padding-horizontal"
+                    >
+                      未選擇
+                    </ion-button>
                   </div>
-                  <ion-label>{address}</ion-label>
                 </ion-item>
-                <div class="ion-padding" slot="content">
-                  <p style="white-space: pre-wrap">{address_remark}</p>
-                  <ion-button
-                    fill="block"
-                    color="primary"
-                    href={
-                      'https://www.google.com/maps/search/' +
-                      encodeURIComponent(address)
-                    }
-                    target="_blank"
+                <div class="ion-padding-horizontal" slot="content">
+                  <ion-radio-group
+                    id="timeRadioGroup"
+                    allow-empty-selection="true"
+                    name="time"
                   >
-                    <ion-icon name="map-outline" slot="start"></ion-icon>
-                    View on Map
-                  </ion-button>
+                    <ion-item>
+                      <ion-radio value="">請先選擇日期</ion-radio>
+                    </ion-item>
+                  </ion-radio-group>
                 </div>
               </ion-accordion>
             </ion-accordion-group>
-          ) : (
-            <ion-item
-              href={
-                'https://www.google.com/maps/search/' +
-                encodeURIComponent(address)
-              }
-              target="_blank"
-            >
+            {Script(/* javascript */ `
+timeRadioGroup.addEventListener('ionChange', event => {
+  selectedTimeButton.textContent = event.detail.value || '未選擇'
+})
+`)}
+            <ion-item-divider style="min-height:2px"></ion-item-divider>
+            <ion-item>
               <div slot="start">
-                <ion-icon name="map-outline"></ion-icon> 地址
+                <ion-icon name="happy-outline"></ion-icon> 名稱
               </div>
-              <ion-label>{address}</ion-label>
+              <ion-input name="name" />
             </ion-item>
-          )}
-        </ion-list>
+            <ion-item>
+              <div slot="start">
+                <ion-icon name="call-outline"></ion-icon> 電話
+              </div>
+              <ion-input type="tel" name="tel" minlength="8" maxlength="8" />
+            </ion-item>
+            <ion-item-divider style="min-height:2px"></ion-item-divider>
+            {!address ? null : address_remark ? (
+              <ion-accordion-group>
+                <ion-accordion value="address">
+                  <ion-item slot="header">
+                    <div slot="start">
+                      <ion-icon name="map-outline"></ion-icon> 地址
+                    </div>
+                    <ion-label>{address}</ion-label>
+                  </ion-item>
+                  <div class="ion-padding" slot="content">
+                    <p style="white-space: pre-wrap">{address_remark}</p>
+                    <ion-button
+                      fill="block"
+                      color="primary"
+                      href={
+                        'https://www.google.com/maps/search/' +
+                        encodeURIComponent(address)
+                      }
+                      target="_blank"
+                    >
+                      <ion-icon name="map-outline" slot="start"></ion-icon>
+                      View on Map
+                    </ion-button>
+                  </div>
+                </ion-accordion>
+              </ion-accordion-group>
+            ) : (
+              <ion-item
+                href={
+                  'https://www.google.com/maps/search/' +
+                  encodeURIComponent(address)
+                }
+                target="_blank"
+              >
+                <div slot="start">
+                  <ion-icon name="map-outline"></ion-icon> 地址
+                </div>
+                <ion-label>{address}</ion-label>
+              </ion-item>
+            )}
+          </ion-list>
+        </form>
 
         {/* {wsStatus.safeArea} */}
       </ion-content>
@@ -417,12 +454,107 @@ timeRadioGroup.addEventListener('ionChange', event => {
               slot="end"
               class="ion-padding-horizontal"
               style="--ion-padding: 2rem;"
+              onclick="submitBooking()"
             >
               立即預訂
             </ion-button>
           </ion-item>
         </ion-list>
       </ion-footer>
+      <ion-modal id="submitModal">
+        {booking ? (
+          <>
+            <PaymentModal booking={booking} />
+            {Script('submitModal.present()')}
+          </>
+        ) : null}
+      </ion-modal>
+      {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
+      {Script(/* javascript */ `
+function submitBooking() {
+  if (!bookingForm.date.value) return showToast('missing date', 'error')
+  if (!bookingForm.time.value) return showToast('missing date', 'error')
+  if (!bookingForm.amount.value) bookingForm.amount.value = 1
+  bookingForm.appointment_time.value = new Date(
+    bookingForm.date.value.split('T')[0]
+    + ' ' +
+    bookingForm.time.value
+  ).toISOString()
+  submitForm(bookingForm)
+  // submitModal.present()
+}
+`)}
+    </>
+  )
+}
+
+function PaymentModal(attrs: { booking: Booking }, context: Context) {
+  let { booking } = attrs
+  let service = booking.service!
+  let service_slug = service.slug
+  let shop = service.shop!
+  let shop_slug = shop.slug
+  let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
+  return (
+    <>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button
+              onclick={`emit('${serviceUrl}/booking/${booking.id}/cancel')`}
+              // onclick="submitModal.dismiss()"
+            >
+              Cancel
+            </ion-button>
+          </ion-buttons>
+          <ion-title>確認付款</ion-title>
+          <ion-buttons slot="end" hidden>
+            <ion-button>Send</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <h1>預約選項</h1>
+        <div>{service.name}</div>
+        <div>
+          ({booking.amount} {service.price_unit})
+        </div>
+        <div>款式: {booking.service_option?.name}</div>
+        <div>
+          預約日期:{' '}
+          {toLocaleDateTimeString(booking.appointment_time, context, {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          })}
+        </div>
+        <div>
+          預約時間:{' '}
+          {toLocaleDateTimeString(booking.appointment_time, context, {
+            hour: '2-digit',
+            hour12: false,
+            minute: '2-digit',
+          })}
+        </div>
+        <div>時長: {service.hours}</div>
+        <h1>總共費用</h1>
+        <div id="totalPriceLabel"></div>
+        <div>${(booking.amount * service.unit_price).toLocaleString()}</div>
+        <h1>付款方法</h1>
+        <ion-item>
+          <ion-thumbnail slot="start">
+            <img src="/assets/payme.webp" />
+          </ion-thumbnail>
+          <ion-label>Payme / 98765432</ion-label>
+        </ion-item>
+        <div class="ion-margin">
+          <ion-button fill="block" color="primary">
+            <ion-icon name="cloud-upload" slot="start"></ion-icon>
+            上傳付款證明
+          </ion-button>
+        </div>
+      </ion-content>
     </>
   )
 }
@@ -1238,6 +1370,14 @@ function attachRoutes(app: Router) {
   )
 }
 
+let submitBookingParser = object({
+  appointment_time: date(),
+  amount: int({ min: 1 }),
+  option_id: id(),
+  name: string(),
+  tel: string(),
+})
+
 let routes: Routes = {
   '/shop/:shop_slug/service/:service_slug': {
     resolve(context) {
@@ -1250,6 +1390,60 @@ let routes: Routes = {
           node: <ServiceDetail service={service} />,
         }
       })
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/booking/submit': {
+    resolve(context) {
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, service_slug, shop_slug }) => {
+          let body = getContextFormBody(context)
+          let input = submitBookingParser.parse(body)
+          let booking_id = proxy.booking.push({
+            service_id: service.id!,
+            submit_time: Date.now(),
+            appointment_time: input.appointment_time.getTime(),
+            approve_time: null,
+            reject_time: null,
+            cancel_time: null,
+            amount: input.amount,
+            service_option_id: input.option_id,
+            tel: input.tel,
+            name: input.name,
+          })
+          let booking = proxy.booking[booking_id]
+          throw new MessageException([
+            'batch',
+            [
+              [
+                'update-in',
+                '#submitModal',
+                nodeToVNode(PaymentModal({ booking }, context), context),
+              ],
+              ['eval', 'submitModal.present()'],
+            ],
+          ])
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/booking/:booking_id/cancel': {
+    resolve(context) {
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, service_slug, shop_slug }) => {
+          let booking_id = context.routerMatch?.params.booking_id
+          let booking = proxy.booking[booking_id]
+          // TODO check user
+
+          booking.cancel_time = Date.now()
+
+          throw new MessageException([
+            'batch',
+            [['eval', 'submitModal.dismiss()']],
+          ])
+        },
+      )
     },
   },
   '/shop/:shop_slug/service/:service_slug/admin': {

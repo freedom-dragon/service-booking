@@ -155,6 +155,22 @@ export type TimeslotHour = {
   end_time: string
 }
 
+export type Booking = {
+  id?: null | number
+  service_id: number
+  service?: Service
+  submit_time: number
+  appointment_time: number
+  approve_time: null | number
+  reject_time: null | number
+  cancel_time: null | number
+  amount: number
+  service_option_id: number
+  service_option?: ServiceOption
+  tel: string
+  name: string
+}
+
 export type DBProxy = {
   method: Method[]
   url: Url[]
@@ -173,6 +189,7 @@ export type DBProxy = {
   service_option: ServiceOption[]
   service_timeslot: ServiceTimeslot[]
   timeslot_hour: TimeslotHour[]
+  booking: Booking[]
 }
 
 export let proxy = proxySchema<DBProxy>({
@@ -224,6 +241,11 @@ export let proxy = proxySchema<DBProxy>({
     timeslot_hour: [
       /* foreign references */
       ['service_timeslot', { field: 'service_timeslot_id', table: 'service_timeslot' }],
+    ],
+    booking: [
+      /* foreign references */
+      ['service', { field: 'service_id', table: 'service' }],
+      ['service_option', { field: 'service_option_id', table: 'service_option' }],
     ],
   },
 })
