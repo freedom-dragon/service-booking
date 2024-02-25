@@ -207,23 +207,13 @@ function selectOption(button){
 `)}
           <ion-item>
             <div slot="start">
-              <ion-icon name="cash-outline"></ion-icon> 費用
-            </div>
-            <ion-label id="priceLabel">
-              {service.unit_price
-                ? '$' + service.unit_price + '/' + service.price_unit
-                : service.price_unit}
-            </ion-label>
-          </ion-item>
-          <ion-item>
-            <div slot="start">
               <ion-icon name="people-outline"></ion-icon> 人數
             </div>
             <ion-input
               placeholder="1"
               type="number"
               min="1"
-              max={service.quota}
+              max="100"
               /* TODO avoid overbook */
               oninput={`priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}'`}
             />
@@ -406,13 +396,32 @@ timeRadioGroup.addEventListener('ionChange', event => {
             </ion-item>
           )}
         </ion-list>
-        <div class="ion-margin">
-          <ion-button fill="block" color="primary" class="ion-margin">
-            Submit
-          </ion-button>
-        </div>
-        {wsStatus.safeArea}
+
+        {/* {wsStatus.safeArea} */}
       </ion-content>
+      <ion-footer style="background-color: var(--ion-color-light);">
+        <ion-list inset="true" style="margin-top: 0.5rem">
+          <ion-item>
+            <ion-label>
+              費用{' '}
+              <span id="priceLabel">
+                {service.unit_price
+                  ? '$' + service.unit_price + '/' + service.price_unit
+                  : service.price_unit}
+              </span>
+            </ion-label>
+            <ion-button
+              size="normal"
+              color="primary"
+              slot="end"
+              class="ion-padding-horizontal"
+              style="--ion-padding: 2rem;"
+            >
+              立即預訂
+            </ion-button>
+          </ion-item>
+        </ion-list>
+      </ion-footer>
     </>
   )
 }
@@ -563,7 +572,6 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
   let shop_slug = shop!.slug
   let { slug: service_slug } = service
   let address = service.address || shop.address
-  let address_remark = service.address_remark || shop.address_remark
   let options = filter(proxy.service_option, { service_id: service.id! })
   let locale = getShopLocale(shop.id!)
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
@@ -626,13 +634,15 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           </ion-item>
           <ion-item>
             <div slot="start">
-              <ion-icon name="people-outline"></ion-icon> 人數
+              <ion-icon name="people-outline"></ion-icon> 人數 (上限)
             </div>
             <ion-input
               value={service.quota}
-              placeholder="如: 6人 / 2對情侶"
+              type="number"
+              min="1"
               onchange={`emit('${serviceUrl}/update','quota',this.value)`}
             />
+            <div slot="helper">如: 6人 / 2對情侶</div>
           </ion-item>
           <ion-item>
             <div slot="start">
@@ -693,16 +703,27 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               </div>
             ) : null}
           </ion-item>
+          {address ? (
+            <ion-item-divider
+              style="
+                min-height:2px;
+                margin:0.25rem 0;
+                width:100%;
+              "
+            ></ion-item-divider>
+          ) : null}
           <ion-item>
-            <div slot="start">
+            <div>
               <ion-icon name="map-outline"></ion-icon> 地址 (備註)
+              <div>
+                <ion-textarea
+                  value={service.address_remark}
+                  placeholder={shop.address_remark}
+                  auto-grow
+                  onchange={`emit('${serviceUrl}/update','address_remark',this.value)`}
+                />
+              </div>
             </div>
-            <ion-textarea
-              value={service.address_remark}
-              placeholder={shop.address_remark}
-              auto-grow
-              onchange={`emit('${serviceUrl}/update','address_remark',this.value)`}
-            />
           </ion-item>
         </ion-list>
 
