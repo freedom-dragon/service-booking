@@ -121,6 +121,9 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let locale = getShopLocale(shop.id!)
   let images = getServiceImages(shop_slug, service_slug)
 
+  let allImages = [images.cover, ...images.more, ...images.options]
+  let optionImageOffset = 1 + images.more.length
+
   let availableTimeslots = (
     select_service_timeslot.all({
       service_id: service.id,
@@ -159,11 +162,9 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
         <div class="ion-margin-horizontal">
           <Swiper
             id="ServiceImages"
-            images={[images.cover, ...images.more, ...images.options].map(
-              url => (
-                <img src={url} />
-              ),
-            )}
+            images={allImages.map(url => (
+              <img src={url} />
+            ))}
             showPagination
             showArrow
           />
@@ -188,7 +189,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
                   fill={options.length == 1 ? 'solid' : 'outline'}
                   onclick="selectOption(this)"
                   data-id={option.id}
-                  data-index={index + 1}
+                  data-index={index + optionImageOffset}
                 >
                   {option.name}
                 </ion-button>
