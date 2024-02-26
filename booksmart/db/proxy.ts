@@ -129,6 +129,15 @@ export type Service = {
   quota: string
   address: null | string
   address_remark: null | string
+  desc: null | string
+}
+
+export type ServiceRemark = {
+  id?: null | number
+  service_id: number
+  service?: Service
+  title: null | string
+  content: string
 }
 
 export type ServiceOption = {
@@ -186,6 +195,7 @@ export type DBProxy = {
   shop: Shop[]
   shop_locale: ShopLocale[]
   service: Service[]
+  service_remark: ServiceRemark[]
   service_option: ServiceOption[]
   service_timeslot: ServiceTimeslot[]
   timeslot_hour: TimeslotHour[]
@@ -229,6 +239,10 @@ export let proxy = proxySchema<DBProxy>({
     service: [
       /* foreign references */
       ['shop', { field: 'shop_id', table: 'shop' }],
+    ],
+    service_remark: [
+      /* foreign references */
+      ['service', { field: 'service_id', table: 'service' }],
     ],
     service_option: [
       /* foreign references */

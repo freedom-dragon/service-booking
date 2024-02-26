@@ -40,6 +40,7 @@ proxy.shop_locale[2] = {
 }
 
 let option_id = 0
+let remark_id = 0
 let timeslot_id = 0
 let hour_id = 0
 function seedService(
@@ -49,15 +50,24 @@ function seedService(
       /** @example '09:00-12:00,14:00-16:30,20:00-22:00' */
       hours: string
     })[]
+    remarks: { title: string | null; content: string }[]
   },
 ) {
-  let { id: service_id, options, timeslots, ...service } = data
+  let { id: service_id, options, timeslots, remarks, ...service } = data
   proxy.service[service_id!] = service
   for (let option of options) {
     option_id++
     proxy.service_option[option_id] = {
       service_id: service_id!,
       name: option,
+    }
+  }
+  for (let remark of remarks) {
+    remark_id++
+    proxy.service_remark[remark_id] = {
+      service_id: service_id!,
+      title: remark.title,
+      content: remark.content,
     }
   }
   for (let _timeslot of timeslots) {
@@ -93,6 +103,37 @@ seedService({
   quota: '6 ppl',
   address: null,
   address_remark: null,
+  desc: `加入我們的繪畫工作坊，享受獨特的藝術探險！ 我們的藝術家指導員將帶領您通過一系列的步驟，教導您不同的技術和技巧，幫助您創作出自己獨特的繪畫作品。
+
+在工作坊中，您將有機會運用各種高品質的材料和供應，包括精緻的畫板、筆和顏料。 您還將有機會嘗試不同的畫風和技巧，從傳統的風景畫到現代抽象藝術。
+
+我們的工作坊設計為所有技巧水平的人士，因此不要緊張，如果您之前未曾畫過。 我們的指導員將為您提供個性化的指導和支持，幫助您實現您的藝術目標。 您還將有機會與其他參與者合作，分享想法和靈感，創造一幅獨特的藝術作品。
+
+工作坊結束後，您將取得您的完成作品，準備好掛在牆上或贈予他人。 您還有選擇在我們的工作室美術館中展示您的藝術作品，讓更多人認識您的創造力。
+
+不要錯過這個獨特的機會，讓您的創造力發揮，創造出真正獨特的藝術作品。 請現在報名參加我們的繪畫工作坊！`,
+  remarks: [
+    {
+      title: '材料',
+      content: '提供高質量的顏料、筆和畫板。',
+    },
+    {
+      title: '指導',
+      content: '經驗豐富的藝術家指導員將帶領您透過一系列的步驟。',
+    },
+    {
+      title: '技巧',
+      content: '學習傳統的風景畫到現代抽象藝術的不同技巧和技術。',
+    },
+    {
+      title: '合作',
+      content: '與其他參加者合作，分享想法和靈感。',
+    },
+    {
+      title: '個性化指導',
+      content: '指導員將為您提供個性化的指導和支持，幫助您實現您的藝術目標。',
+    },
+  ],
   timeslots: [
     {
       start_date: '2024-02-11',
@@ -123,6 +164,8 @@ seedService({
   quota: '6 ppl',
   address: null,
   address_remark: null,
+  desc: null,
+  remarks: [],
   timeslots: [],
 })
 
@@ -140,6 +183,8 @@ seedService({
   quota: '2 pairs 情侶',
   address: null,
   address_remark: null,
+  desc: null,
+  remarks: [],
   timeslots: [],
 })
 
@@ -157,5 +202,7 @@ seedService({
   quota: '1 ppl',
   address: null,
   address_remark: null,
+  desc: null,
+  remarks: [],
   timeslots: [],
 })

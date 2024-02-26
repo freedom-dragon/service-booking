@@ -146,6 +146,15 @@ time text
 quota text
 address text NULL
 address_remark text NULL
+desc text NULL
+
+
+service_remark
+--------------
+id integer PK
+service_id integer FK >0- service.id
+title text NULL
+content text
 
 
 service_option
@@ -182,13 +191,13 @@ approve_time integer NULL
 reject_time integer NULL
 cancel_time integer NULL
 amount integer
-service_option_id fk
+service_option_id integer FK >0- service_option.id
 tel text
 name text
 
 
 # zoom: 1.000
-# view: (344, 653)
+# view: (975, 949)
 # text-bg: #6495ed
 # text-color: #000000
 # diagram-bg: #f5f5f5
@@ -209,6 +218,7 @@ name text
 # shop (879, 708)
 # shop_locale (1290, 614)
 # service (1280, 1041)
+# service_remark (1409, 1468)
 # service_option (1746, 917)
 # service_timeslot (1754, 1268)
 # timeslot_hour (1676, 1512)

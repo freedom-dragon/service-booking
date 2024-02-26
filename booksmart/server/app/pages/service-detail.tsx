@@ -40,6 +40,7 @@ import { wsStatus } from '../components/ws-status.js'
 import { Script } from '../components/script.js'
 import { resolveServiceRoute } from '../shop-route.js'
 import { concat_words } from '@beenotung/tslib/string.js'
+import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { Router } from 'express'
 import { HttpError } from '../../http-error.js'
@@ -91,6 +92,9 @@ ion-item [slot="start"] ion-icon {
   width: 1.25rem;
   height: 1.25rem;
 }
+.remark--list h3 {
+  font-size: 1rem;
+}
 `)
 
 type ServiceTimeslotRow = Record<
@@ -120,13 +124,17 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let { service } = attrs
   let shop = service.shop!
   let shop_slug = shop!.slug
-  let { slug: service_slug } = service
+  let { slug: service_slug, desc } = service
   let address = service.address || shop.address
   let address_remark = service.address_remark || shop.address_remark
   let options = filter(proxy.service_option, { service_id: service.id! })
+  let remarks = filter(proxy.service_remark, { service_id: service.id! })
   let locale = getShopLocale(shop.id!)
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let images = getServiceImages(shop_slug, service_slug)
+  let user = getAuthUser(context)
+
+  // address_remark = ''
 
   let booking = find(proxy.booking, {
     service_id: service.id!,
@@ -181,9 +189,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
             showArrow
           />
         </div>
-        <h2 class="ion-margin" hidden>
-          {service.name}
-        </h2>
+
         <form
           id="bookingForm"
           action={`${serviceUrl}/booking/submit`}
@@ -379,6 +385,45 @@ timeRadioGroup.addEventListener('ionChange', event => {
 })
 `)}
             <ion-item-divider style="min-height:2px"></ion-item-divider>
+            {/*
+            For guest: ask tel
+              if tel in DB, ask email and auth code
+              if tel is new, ask name, email and auth code
+            For user: show name, tel, email
+            */}
+            {!user ? (
+              <>
+                <ion-item>
+                  <div slot="start">
+                    <ion-icon name="call-outline"></ion-icon> 電話
+                  </div>
+                  <ion-input
+                    type="tel"
+                    name="tel"
+                    minlength="8"
+                    maxlength="8"
+                    oninput="this.value.length == 8 && emit('/check-tel', this.value)"
+                  />
+                </ion-item>
+                <div id="guestInfo">
+                  <ion-item>
+                    <div slot="start">
+                      <ion-icon name="at-outline"></ion-icon> 電郵
+                    </div>
+                    <ion-input type="email" name="email" />
+                  </ion-item>
+                  <ion-item>
+                    <div slot="start">
+                      <ion-icon name="at-outline"></ion-icon> 電郵
+                    </div>
+                    <ion-input type="email" name="email" />
+                  </ion-item>
+                </div>
+              </>
+            ) : (
+              <></>
+            )}
+            <ion-item-divider style="min-height:2px"></ion-item-divider>
             <ion-item>
               <div slot="start">
                 <ion-icon name="happy-outline"></ion-icon> 名稱
@@ -391,48 +436,76 @@ timeRadioGroup.addEventListener('ionChange', event => {
               </div>
               <ion-input type="tel" name="tel" minlength="8" maxlength="8" />
             </ion-item>
-            <ion-item-divider style="min-height:2px"></ion-item-divider>
-            {!address ? null : address_remark ? (
-              <ion-accordion-group>
-                <ion-accordion value="address">
-                  <ion-item slot="header">
+          </ion-list>
+
+          {desc || address ? (
+            <>
+              <h2 class="ion-margin">活動詳情</h2>
+              <ion-list lines="full" inset="true">
+                {desc ? (
+                  <ion-item>
+                    <p style="white-space: pre-wrap">{desc}</p>
+                  </ion-item>
+                ) : null}
+                {!address ? null : address_remark ? (
+                  <ion-accordion-group>
+                    <ion-accordion value="address">
+                      <ion-item slot="header">
+                        <div slot="start" style="margin-inline: 0 0.5rem">
+                          <ion-icon name="map-outline"></ion-icon> 地址
+                        </div>
+                        <ion-label>{address}</ion-label>
+                      </ion-item>
+                      <div class="ion-padding" slot="content">
+                        <p style="white-space: pre-wrap">{address_remark}</p>
+                        <ion-button
+                          fill="block"
+                          color="primary"
+                          href={
+                            'https://www.google.com/maps/search/' +
+                            encodeURIComponent(address)
+                          }
+                          target="_blank"
+                        >
+                          <ion-icon name="map-outline" slot="start"></ion-icon>
+                          View on Map
+                        </ion-button>
+                      </div>
+                    </ion-accordion>
+                  </ion-accordion-group>
+                ) : (
+                  <ion-item
+                    href={
+                      'https://www.google.com/maps/search/' +
+                      encodeURIComponent(address)
+                    }
+                    target="_blank"
+                  >
                     <div slot="start">
                       <ion-icon name="map-outline"></ion-icon> 地址
                     </div>
                     <ion-label>{address}</ion-label>
                   </ion-item>
-                  <div class="ion-padding" slot="content">
-                    <p style="white-space: pre-wrap">{address_remark}</p>
-                    <ion-button
-                      fill="block"
-                      color="primary"
-                      href={
-                        'https://www.google.com/maps/search/' +
-                        encodeURIComponent(address)
-                      }
-                      target="_blank"
-                    >
-                      <ion-icon name="map-outline" slot="start"></ion-icon>
-                      View on Map
-                    </ion-button>
-                  </div>
-                </ion-accordion>
-              </ion-accordion-group>
-            ) : (
-              <ion-item
-                href={
-                  'https://www.google.com/maps/search/' +
-                  encodeURIComponent(address)
-                }
-                target="_blank"
-              >
-                <div slot="start">
-                  <ion-icon name="map-outline"></ion-icon> 地址
-                </div>
-                <ion-label>{address}</ion-label>
-              </ion-item>
-            )}
-          </ion-list>
+                )}
+              </ion-list>
+            </>
+          ) : null}
+
+          {remarks.length > 0 ? (
+            <>
+              <h2 class="ion-margin">注意事項</h2>
+              <ion-list lines="full" inset="true" class="remark--list">
+                {mapArray(remarks, remark => (
+                  <ion-item>
+                    <div>
+                      <h3>{remark.title}</h3>
+                      <p>{remark.content}</p>
+                    </div>
+                  </ion-item>
+                ))}
+              </ion-list>
+            </>
+          ) : null}
         </form>
 
         {/* {wsStatus.safeArea} */}
@@ -1390,6 +1463,39 @@ let routes: Routes = {
           node: <ServiceDetail service={service} />,
         }
       })
+    },
+  },
+  '/check-tel': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'check if the tel is registered',
+          node: 'This api is only available over ws',
+        }
+      }
+      let tel = context.args?.[0] as string
+      tel = to_full_hk_mobile_phone(tel || '')
+      if (!tel) throw EarlyTerminate
+      let is_registered =
+        find(proxy.user, { tel }) || find(proxy.user, { tel: tel.slice(-8) })
+      console.log({ tel, is_registered })
+
+      if (is_registered) {
+        throw new MessageException([
+          'update-in',
+          '#guestInfo',
+          nodeToVNode(
+            <>
+              <ion-item></ion-item>
+            </>,
+            context,
+          ),
+        ])
+      } else {
+      }
+
+      throw EarlyTerminate
     },
   },
   '/shop/:shop_slug/service/:service_slug/booking/submit': {
