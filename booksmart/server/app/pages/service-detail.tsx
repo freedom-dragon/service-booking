@@ -304,6 +304,7 @@ function selectOption(button){
         dateString = dateString.split('T')[0]
         let date = new Date(dateString)
         let day = date.getDay()
+        let isTimeAllowed = false
         for (let { timeslot, hours } of timeslots) {
           if (
             timeslot.start_date <= dateString &&
@@ -339,6 +340,9 @@ function selectOption(button){
                     'ion-radio',
                   ) as HTMLInputElement
                   radio.value = start_time
+                  if (start_time == bookingForm.time.value) {
+                    isTimeAllowed = true
+                  }
                   radio.textContent = start_time + ' - ' + end_time
                   item.appendChild(radio)
                   timeRadioGroup.appendChild(item)
@@ -348,6 +352,10 @@ function selectOption(button){
               }
             }
           }
+        }
+        if (!isTimeAllowed) {
+          bookingForm.time.value = ''
+          selectedTimeButton.textContent = '未選擇'
         }
       }
     }})(availableTimeslots, book_duration_ms, book_time_step_ms))
@@ -2035,3 +2043,5 @@ let routes: Routes = {
 export default { routes, attachRoutes }
 
 declare var timeRadioGroup: HTMLElement
+declare var bookingForm: HTMLFormElement
+declare var selectedTimeButton: HTMLFormElement
