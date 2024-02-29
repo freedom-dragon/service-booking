@@ -105,7 +105,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           {name}
         </h1>
 
-        <h2 class="ion-margin">
+        <h2 class="ion-margin" style="margin-bottom: 0.25rem">
           {/* {owner_name} {locale.service} */}
           Booking
         </h2>
@@ -146,7 +146,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
 
         <h2 class="ion-margin">關於我們</h2>
         <img
-          class="ion-margin"
+          class="ion-margin-horizontal"
           style="
             border-radius: 1rem;
             width: calc(100% - 2rem);
