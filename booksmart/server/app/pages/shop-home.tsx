@@ -104,18 +104,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           />
           {name}
         </h1>
-        <img
-          class="ion-margin"
-          style="
-            border-radius: 1rem;
-            width: calc(100% - 2rem);
-          "
-          src={getShopCoverImage(shop_slug)}
-        />
-        <div class="ion-margin">
-          <b>{shop.bio}</b>
-          <p>{shop.desc}</p>
-        </div>
+
         <h2 class="ion-margin">
           {/* {owner_name} {locale.service} */}
           Booking
@@ -154,6 +143,21 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
             </Link>
           ))}
         </ion-list>
+
+        <h2 class="ion-margin">關於我們</h2>
+        <img
+          class="ion-margin"
+          style="
+            border-radius: 1rem;
+            width: calc(100% - 2rem);
+          "
+          src={getShopCoverImage(shop_slug)}
+        />
+        <div class="ion-margin">
+          <b>{shop.bio}</b>
+          <p>{shop.desc}</p>
+        </div>
+
         <h2 class="ion-margin">聯絡方法</h2>
         {ShopContactsStyle}
         <ShopContacts shop={shop} items={getShopContacts(shop)} />
