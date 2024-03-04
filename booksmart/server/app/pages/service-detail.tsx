@@ -532,7 +532,7 @@ timeRadioGroup.addEventListener('ionChange', event => {
               style="--ion-padding: 2rem;"
               onclick="submitBooking()"
             >
-              立即預訂
+              立即預約
             </ion-button>
           </ion-item>
         </ion-list>

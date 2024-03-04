@@ -37,8 +37,8 @@ let page = (
 )
 
 let items = [
-  { title: 'Katy 已確定了情侶班的預訂', timestamp: '2024-02-25 13:30' },
-  { title: 'Katy 已確定了體驗班的預訂', timestamp: '2024-02-20 11:15' },
+  { title: 'Katy 已確定了情侶班的預約', timestamp: '2024-02-25 13:30' },
+  { title: 'Katy 已確定了體驗班的預約', timestamp: '2024-02-20 11:15' },
 ]
 
 function Main(attrs: {}, context: Context) {
