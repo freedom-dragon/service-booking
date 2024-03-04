@@ -55,6 +55,10 @@ cat "$template_file" \
 echo "saved to $file"
 code "$file"
 
+if [ -d dist ]; then
+  touch dist/__dev_restart__
+fi
+
 file="server/app/routes.tsx"
 echo "import $id from './pages/$url.js'" > "$file.tmp"
 cat "$file" >> "$file.tmp"
