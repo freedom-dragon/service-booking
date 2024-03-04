@@ -193,8 +193,7 @@ reject_time integer NULL
 cancel_time integer NULL
 amount integer
 service_option_id integer FK >0- service_option.id
-tel text
-name text
+user_id integer FK >0- user.id
 
 
 # zoom: 1.000

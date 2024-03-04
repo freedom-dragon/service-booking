@@ -1,6 +1,6 @@
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
-import { apiEndpointTitle, title } from '../../config.js'
+import { apiEndpointTitle, config, title } from '../../config.js'
 import Style from '../components/style.js'
 import { Context, DynamicContext, getContextFormBody } from '../context.js'
 import { mapArray } from '../components/fragment.js'
@@ -58,6 +58,9 @@ import { MINUTE } from '@beenotung/tslib/time.js'
 import DateTimeText, { toLocaleDateTimeString } from '../components/datetime.js'
 import { boolean } from 'cast.ts'
 import { digits } from '@beenotung/tslib/random.js'
+import { maskEmailForHint } from '../email-mask.js'
+import { generatePasscode, verificationCodeEmail } from './verification-code.js'
+import { sendEmail } from '../../email.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -138,10 +141,13 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
 
   // address_remark = ''
 
-  let booking = find(proxy.booking, {
-    service_id: service.id!,
-    cancel_time: null,
-  })
+  let booking =
+    user &&
+    find(proxy.booking, {
+      user_id: user.id!,
+      service_id: service.id!,
+      cancel_time: null,
+    })
 
   let allImages = [images.cover, ...images.more, ...images.options]
   let optionImageOffset = 1 + images.more.length
@@ -423,7 +429,7 @@ timeRadioGroup.addEventListener('ionChange', event => {
                   <div slot="start">
                     <ion-icon name="happy-outline"></ion-icon> 名稱
                   </div>
-                  <ion-input name="name" value={user.nickname} />
+                  <ion-input name="nickname" value={user.nickname} />
                 </ion-item>
                 <ion-item>
                   <div slot="start">
@@ -1457,7 +1463,6 @@ let submitBookingParser = object({
   appointment_time: date(),
   amount: int({ min: 1 }),
   option_id: id(),
-  name: string(),
   tel: string(),
 })
 
@@ -1489,8 +1494,6 @@ let routes: Routes = {
       if (!tel) throw EarlyTerminate
       let is_registered =
         find(proxy.user, { tel }) || find(proxy.user, { tel: tel.slice(-8) })
-      console.log({ tel, is_registered })
-
       if (is_registered) {
         throw new MessageException([
           'update-in',
@@ -1499,7 +1502,10 @@ let routes: Routes = {
             <>
               <ion-note color="dark" class="ion-margin">
                 這個電話號碼已經註冊了，歡迎再次預約！
+                <br />
+                （請按「立即預約」繼續）
               </ion-note>
+              <div class="guestInfo--message"></div>
             </>,
             context,
           ),
@@ -1523,8 +1529,9 @@ let routes: Routes = {
                 <div slot="start">
                   <ion-icon name="happy-outline"></ion-icon> 名稱
                 </div>
-                <ion-input name="name" />
+                <ion-input name="nickname" />
               </ion-item>
+              <div class="guestInfo--message"></div>
             </>,
             context,
           ),
@@ -1548,6 +1555,7 @@ let routes: Routes = {
           }
           let user = getAuthUser(context)
           let should_verify_email = !user
+          console.log({ should_verify_email })
           if (!user) {
             user = find(proxy.user, { tel }) || null
           }
@@ -1578,36 +1586,71 @@ let routes: Routes = {
             cancel_time: null,
             amount: input.amount,
             service_option_id: input.option_id,
-            tel: input.tel,
-            name: input.name,
+            user_id: user.id!,
           })
           let booking = proxy.booking[booking_id]
           if (should_verify_email) {
-            let [username, domain] = user.email!.split('@')
-            let hint = ''
-            if (username.length <= 1) {
-              hint = domain
-            } else if (username.length < 4) {
-              hint =
-                username.slice(0, 1) +
-                'x'.repeat(username.length - 1) +
-                '@' +
-                domain
-            } else {
-              hint =
-                username.slice(0, 1) +
-                'x'.repeat(username.length - 2) +
-                username.slice(-1) +
-                '@' +
-                domain
-            }
-            if (username.length <= 4) {
-              username.slice(1).replace(/.*/, s => 'x'.repeat(s.length))
-            }
-            throw new MessageException([
-              'eval',
-              `showToast('請查看 ${hint} 郵箱，並點擊確認連接，以確認你的預約。','info')`,
-            ])
+            let email = user.email!
+            let hint = maskEmailForHint(email)
+            let mailboxUrl = 'https://' + email.split('@').pop()
+            let passcode = generatePasscode()
+            proxy.verification_code.push({
+              passcode,
+              email,
+              request_time: Date.now(),
+              revoke_time: null,
+              match_id: null,
+              user_id: user.id!,
+            })
+            let { html, text } = verificationCodeEmail(
+              { passcode, email },
+              context,
+            )
+            sendEmail({
+              from: config.email.auth.user,
+              to: email,
+              subject: title('Email'),
+              html,
+              text,
+            })
+              .then(info => {
+                if (context.type === 'ws') {
+                  context.ws.send([
+                    'batch',
+                    [
+                      [
+                        'eval',
+                        `showToast('請查看 ${hint} 郵箱，並點擊確認連接，以確認你的預約。','info')`,
+                      ],
+                      [
+                        'update-in',
+                        '#guestInfo .guestInfo--message',
+                        nodeToVNode(
+                          <p>
+                            請查看{' '}
+                            <a href={mailboxUrl} target="_blank">
+                              {hint}
+                            </a>{' '}
+                            郵箱，並點擊確認連接，以確認你的預約。
+                          </p>,
+                          context,
+                        ),
+                      ],
+                    ],
+                  ])
+                }
+              })
+              .catch(error => {
+                console.error('Failed to send email', error)
+                if (context.type === 'ws') {
+                  context.ws.send([
+                    'update-in',
+                    '#guestInfo .guestInfo--message',
+                    renderError(error, context),
+                  ])
+                }
+              })
+            throw EarlyTerminate
           }
           throw new MessageException([
             'batch',

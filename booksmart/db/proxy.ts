@@ -177,8 +177,8 @@ export type Booking = {
   amount: number
   service_option_id: number
   service_option?: ServiceOption
-  tel: string
-  name: string
+  user_id: number
+  user?: User
 }
 
 export type DBProxy = {
@@ -261,6 +261,7 @@ export let proxy = proxySchema<DBProxy>({
       /* foreign references */
       ['service', { field: 'service_id', table: 'service' }],
       ['service_option', { field: 'service_option_id', table: 'service_option' }],
+      ['user', { field: 'user_id', table: 'user' }],
     ],
   },
 })

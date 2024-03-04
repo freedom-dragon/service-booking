@@ -48,7 +48,7 @@ where request_time > :request_time
   )
   .pluck()
 
-function generatePasscode(): string {
+export function generatePasscode(): string {
   for (let i = 0; i < MaxPasscodeGenerationAttempt; i++) {
     let passcode = Random.nextString(PasscodeLength, digits)
 
@@ -138,7 +138,7 @@ async function requestEmailVerification(
   }
 }
 
-function verificationCodeEmail(
+export function verificationCodeEmail(
   attrs: { passcode: string; email: string | null },
   context: Context,
 ) {
@@ -208,10 +208,8 @@ function VerifyEmailPage(attrs: {}, context: DynamicContext) {
   let params = new URLSearchParams(context.routerMatch?.search)
   let error = params.get('error')
   let title = params.get('title')
-  return (
+  let node = (
     <div id="verifyEmailPage">
-      {style}
-      <h1>Email Verification</h1>
       {error ? (
         <>
           <p>{title || 'Failed to send verification code to your email'}.</p>
@@ -238,6 +236,19 @@ function VerifyEmailPage(attrs: {}, context: DynamicContext) {
       )}
     </div>
   )
+  return (
+    <>
+      {style}
+      <ion-header>
+        <ion-toolbar>
+          <ion-title role="heading" aria-level="1">
+            Email Verification
+          </ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">{node}</ion-content>
+    </>
+  )
 }
 function VerifyEmailForm(attrs: { params: URLSearchParams }) {
   let { params } = attrs
@@ -254,7 +265,7 @@ function VerifyEmailForm(attrs: { params: URLSearchParams }) {
             name="email"
             value={email}
             readonly
-            style={email ? `width: ${email.length}ch` : undefined}
+            style={email ? `width: ${email.length + 2}ch` : undefined}
           />
         }
       />
@@ -262,7 +273,7 @@ function VerifyEmailForm(attrs: { params: URLSearchParams }) {
         label="Verification code"
         input={
           <input
-            style="font-family: monospace; width: 6ch; padding: 0.5ch"
+            style={`font-family: monospace; width: ${PasscodeLength + 2}ch; padding: 0.5ch`}
             minlength={PasscodeLength}
             maxlength={PasscodeLength}
             inputmode="numeric"
@@ -383,6 +394,7 @@ async function checkEmailVerificationCode(
             password_hash: null,
             tel: null,
             avatar: null,
+            nickname: null,
           })
         break
       }
