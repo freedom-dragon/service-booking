@@ -76,18 +76,6 @@ export type VerificationAttempt = {
   email: string
 }
 
-export type VerificationCode = {
-  id?: null | number
-  passcode: string // char(6)
-  email: string
-  request_time: number
-  revoke_time: null | number
-  match_id: null | number
-  match?: VerificationAttempt
-  user_id: null | number
-  user?: User
-}
-
 export type Shop = {
   id?: null | number
   slug: string
@@ -106,6 +94,20 @@ export type Shop = {
   whatsapp: null | string
   telegram: null | string
   twitter: null | string
+}
+
+export type VerificationCode = {
+  id?: null | number
+  passcode: string // char(6)
+  email: string
+  request_time: number
+  revoke_time: null | number
+  match_id: null | number
+  match?: VerificationAttempt
+  user_id: null | number
+  user?: User
+  shop_id: null | number
+  shop?: Shop
 }
 
 export type ShopLocale = {
@@ -192,8 +194,8 @@ export type DBProxy = {
   user: User[]
   request_log: RequestLog[]
   verification_attempt: VerificationAttempt[]
-  verification_code: VerificationCode[]
   shop: Shop[]
+  verification_code: VerificationCode[]
   shop_locale: ShopLocale[]
   service: Service[]
   service_remark: ServiceRemark[]
@@ -227,12 +229,13 @@ export let proxy = proxySchema<DBProxy>({
       ['user', { field: 'user_id', table: 'user' }],
     ],
     verification_attempt: [],
+    shop: [],
     verification_code: [
       /* foreign references */
       ['match', { field: 'match_id', table: 'verification_attempt' }],
       ['user', { field: 'user_id', table: 'user' }],
+      ['shop', { field: 'shop_id', table: 'shop' }],
     ],
-    shop: [],
     shop_locale: [
       /* foreign references */
       ['shop', { field: 'shop_id', table: 'shop' }],

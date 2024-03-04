@@ -88,6 +88,7 @@ async function requestEmailVerification(
       revoke_time: null,
       match_id: null,
       user_id: find(proxy.user, { email: input.email })?.id || null,
+      shop_id: null,
     })
     let { html, text } = verificationCodeEmail(
       { passcode, email: input.include_link ? input.email : null },

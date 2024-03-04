@@ -11,10 +11,15 @@ import { find } from 'better-sqlite3-proxy'
 import { getStringCasual } from '../helpers.js'
 import { comparePassword } from '../../hash.js'
 import { UserMessageInGuestView } from './profile.js'
-import { getAuthUserId, writeUserIdToCookie } from '../auth/user.js'
+import {
+  getAuthUser,
+  getAuthUserId,
+  writeUserIdToCookie,
+} from '../auth/user.js'
 import Style from '../components/style.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { wsStatus } from '../components/ws-status.js'
+import { db } from '../../../db/db.js'
 
 let style = Style(/* css */ `
 #login .field {
@@ -27,7 +32,7 @@ let LoginPage = (
   <div id="login">
     {style}
     <h1>Login to {config.short_site_name}</h1>
-    <p>{commonTemplatePageText}</p>
+    {/* <p>{commonTemplatePageText}</p> */}
     <Main />
   </div>
 )
@@ -35,26 +40,49 @@ if (config.layout_type === LayoutType.ionic) {
   LoginPage = (
     <>
       {style}
-      <ion-header>
-        <ion-toolbar color="primary">
-          <IonBackButton
-            href={'/shop/' + config.shop_slug}
-            backText="Home"
-            color="light"
-          />
-          <ion-title>Login</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content class="ion-padding">
-        <div id="login">
-          <h1>Welcome back to {config.short_site_name}</h1>
-          <p>{commonTemplatePageText}</p>
-          <Main />
-        </div>
-        {wsStatus.safeArea}
-      </ion-content>
+      <Page />
     </>
   )
+  let select_shop_id = db
+    .prepare(
+      /* sql */ `
+select shop_id
+from verification_code
+where user_id = :user_id
+  and match_id is not null
+order by id desc
+`,
+    )
+    .pluck()
+  function Page(attrs: {}, context: Context) {
+    let user = getAuthUser(context)
+    let shop_id = user
+      ? (select_shop_id.get({ user_id: user.id }) as number)
+      : null
+    let shop = shop_id ? proxy.shop[shop_id] : null
+    return (
+      <>
+        <ion-header>
+          <ion-toolbar color="primary">
+            <IonBackButton
+              href={shop ? '/shop/' + shop.slug : '/'}
+              backText="Home"
+              color="light"
+            />
+            <ion-title>Login</ion-title>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <div id="login">
+            <h1>Welcome back to {config.short_site_name}</h1>
+            {/* <p>{commonTemplatePageText}</p> */}
+            <Main />
+          </div>
+          {wsStatus.safeArea}
+        </ion-content>
+      </>
+    )
+  }
 }
 
 function Main(_attrs: {}, context: Context) {

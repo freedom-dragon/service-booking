@@ -131,7 +131,7 @@ export function UserMessageInGuestView(attrs: { user_id: number }) {
       </p>
       <p>
         You can go to <Link href="/profile">profile page</Link> to manage your
-        public profile and exclusive content.
+        public profile and bookings.
       </p>
     </>
   )

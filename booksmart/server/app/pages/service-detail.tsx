@@ -1601,6 +1601,7 @@ let routes: Routes = {
               revoke_time: null,
               match_id: null,
               user_id: user.id!,
+              shop_id: shop.id!,
             })
             let { html, text } = verificationCodeEmail(
               { passcode, email },
