@@ -8,6 +8,7 @@ import { IonBackButton } from '../components/ion-back-button.js'
 import {
   date,
   dateString,
+  email,
   id,
   int,
   literal,
@@ -25,6 +26,7 @@ import {
   Service,
   ServiceTimeslot,
   TimeslotHour,
+  User,
   proxy,
 } from '../../../db/proxy.js'
 import { count, del, filter, find } from 'better-sqlite3-proxy'
@@ -413,37 +415,30 @@ timeRadioGroup.addEventListener('ionChange', event => {
                     oninput="this.value.length == 8 && emit('/check-tel', this.value)"
                   />
                 </ion-item>
-                <div id="guestInfo">
-                  <ion-item>
-                    <div slot="start">
-                      <ion-icon name="at-outline"></ion-icon> 電郵
-                    </div>
-                    <ion-input type="email" name="email" />
-                  </ion-item>
-                  <ion-item>
-                    <div slot="start">
-                      <ion-icon name="at-outline"></ion-icon> 電郵
-                    </div>
-                    <ion-input type="email" name="email" />
-                  </ion-item>
-                </div>
+                <div id="guestInfo"></div>
               </>
             ) : (
-              <></>
+              <>
+                <ion-item>
+                  <div slot="start">
+                    <ion-icon name="happy-outline"></ion-icon> 名稱
+                  </div>
+                  <ion-input name="name" value={user.nickname} />
+                </ion-item>
+                <ion-item>
+                  <div slot="start">
+                    <ion-icon name="call-outline"></ion-icon> 電話
+                  </div>
+                  <ion-input type="tel" name="tel" readonly value={user.tel} />
+                </ion-item>
+                <ion-item>
+                  <div slot="start">
+                    <ion-icon name="at-outline"></ion-icon> 電郵
+                  </div>
+                  <ion-input type="email" name="email" value={user.email} />
+                </ion-item>
+              </>
             )}
-            <ion-item-divider style="min-height:2px"></ion-item-divider>
-            <ion-item>
-              <div slot="start">
-                <ion-icon name="happy-outline"></ion-icon> 名稱
-              </div>
-              <ion-input name="name" />
-            </ion-item>
-            <ion-item>
-              <div slot="start">
-                <ion-icon name="call-outline"></ion-icon> 電話
-              </div>
-              <ion-input type="tel" name="tel" minlength="8" maxlength="8" />
-            </ion-item>
           </ion-list>
 
           {desc || address ? (
@@ -557,6 +552,7 @@ function submitBooking() {
   if (!bookingForm.amount.value) bookingForm.amount.value = 1
   if (!bookingForm.date.value) return showToast('請選擇日期', 'error')
   if (!bookingForm.time.value) return showToast('請選擇時間', 'error')
+  if (!bookingForm.tel.value) return showToast('請提供電話號碼', 'error')
   bookingForm.appointment_time.value = new Date(
     bookingForm.date.value.split('T')[0]
     + ' ' +
@@ -1452,6 +1448,11 @@ function attachRoutes(app: Router) {
   )
 }
 
+let registerParser = object({
+  nickname: string({ nonEmpty: true }),
+  email: email(),
+})
+
 let submitBookingParser = object({
   appointment_time: date(),
   amount: int({ min: 1 }),
@@ -1496,15 +1497,39 @@ let routes: Routes = {
           '#guestInfo',
           nodeToVNode(
             <>
-              <ion-item></ion-item>
+              <ion-note color="dark" class="ion-margin">
+                這個電話號碼已經註冊了，歡迎再次預約！
+              </ion-note>
             </>,
             context,
           ),
         ])
       } else {
+        throw new MessageException([
+          'update-in',
+          '#guestInfo',
+          nodeToVNode(
+            <>
+              <ion-note color="dark" class="ion-margin">
+                這個電話號碼未登記，請提供更多聯繫資料。
+              </ion-note>
+              <ion-item>
+                <div slot="start">
+                  <ion-icon name="at-outline"></ion-icon> 電郵
+                </div>
+                <ion-input type="email" name="email" />
+              </ion-item>
+              <ion-item>
+                <div slot="start">
+                  <ion-icon name="happy-outline"></ion-icon> 名稱
+                </div>
+                <ion-input name="name" />
+              </ion-item>
+            </>,
+            context,
+          ),
+        ])
       }
-
-      throw EarlyTerminate
     },
   },
   '/shop/:shop_slug/service/:service_slug/booking/submit': {
@@ -1514,6 +1539,36 @@ let routes: Routes = {
         ({ service, shop, service_slug, shop_slug }) => {
           let body = getContextFormBody(context)
           let input = submitBookingParser.parse(body)
+          let tel = to_full_hk_mobile_phone(input.tel)
+          if (!tel) {
+            throw new MessageException([
+              'eval',
+              `showToast('請輸入香港的手提電話號碼','error')`,
+            ])
+          }
+          let user = getAuthUser(context)
+          let should_verify_email = !user
+          if (!user) {
+            user = find(proxy.user, { tel }) || null
+          }
+          if (!user) {
+            let input = registerParser.parse(body)
+            if (find(proxy.user, { email: input.email })) {
+              throw new MessageException([
+                'eval',
+                `showToast('這個電郵已經註冊過了，請檢查您的電話號碼和電郵是否正確。','error')`,
+              ])
+            }
+            let user_id = proxy.user.push({
+              username: null,
+              nickname: input.nickname,
+              password_hash: null,
+              email: input.email,
+              tel: tel,
+              avatar: null,
+            })
+            user = proxy.user[user_id]
+          }
           let booking_id = proxy.booking.push({
             service_id: service.id!,
             submit_time: Date.now(),
@@ -1527,6 +1582,33 @@ let routes: Routes = {
             name: input.name,
           })
           let booking = proxy.booking[booking_id]
+          if (should_verify_email) {
+            let [username, domain] = user.email!.split('@')
+            let hint = ''
+            if (username.length <= 1) {
+              hint = domain
+            } else if (username.length < 4) {
+              hint =
+                username.slice(0, 1) +
+                'x'.repeat(username.length - 1) +
+                '@' +
+                domain
+            } else {
+              hint =
+                username.slice(0, 1) +
+                'x'.repeat(username.length - 2) +
+                username.slice(-1) +
+                '@' +
+                domain
+            }
+            if (username.length <= 4) {
+              username.slice(1).replace(/.*/, s => 'x'.repeat(s.length))
+            }
+            throw new MessageException([
+              'eval',
+              `showToast('請查看 ${hint} 郵箱，並點擊確認連接，以確認你的預約。','info')`,
+            ])
+          }
           throw new MessageException([
             'batch',
             [

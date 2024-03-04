@@ -48,6 +48,7 @@ export type UaStat = {
 export type User = {
   id?: null | number
   username: null | string
+  nickname: null | string
   password_hash: null | string // char(60)
   email: null | string
   tel: null | string
