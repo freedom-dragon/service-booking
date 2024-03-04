@@ -553,9 +553,10 @@ timeRadioGroup.addEventListener('ionChange', event => {
       {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
       {Script(/* javascript */ `
 function submitBooking() {
+  if (!bookingForm.option_id.value) return showToast('請選擇款式', 'error')
+  if (!bookingForm.amount.value) bookingForm.amount.value = 1
   if (!bookingForm.date.value) return showToast('請選擇日期', 'error')
   if (!bookingForm.time.value) return showToast('請選擇時間', 'error')
-  if (!bookingForm.amount.value) bookingForm.amount.value = 1
   bookingForm.appointment_time.value = new Date(
     bookingForm.date.value.split('T')[0]
     + ' ' +
