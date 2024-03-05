@@ -37,8 +37,26 @@ async function selectServiceImage() {
   return { dataUrl, file }
 }
 
+async function selectReceiptImages() {
+  let files = await selectImage({
+    accept: 'image/*',
+    multiple: true,
+  })
+  return Promise.all(
+    files.map(async file => {
+      let image = await toImage(file)
+      let size = 360
+      let quality = 0.5
+      let dataUrl = resizeImage(image, size, size, 'image/webp', quality)
+      file = dataURItoFile(dataUrl, file)
+      return { dataUrl, file }
+    }),
+  )
+}
+
 Object.assign(window, {
   compressPhotos,
   format_byte,
   selectServiceImage,
+  selectReceiptImages,
 })

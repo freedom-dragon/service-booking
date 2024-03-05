@@ -197,8 +197,16 @@ service_option_id integer FK >0- service_option.id
 user_id integer FK >0- user.id
 
 
+receipt
+-------
+id integer PK
+booking_id integer FK >0- booking.id
+filename text
+upload_time integer
+
+
 # zoom: 1.000
-# view: (975, 949)
+# view: (575, 904)
 # text-bg: #6495ed
 # text-color: #000000
 # diagram-bg: #f5f5f5
@@ -224,3 +232,4 @@ user_id integer FK >0- user.id
 # service_timeslot (1754, 1268)
 # timeslot_hour (1676, 1512)
 # booking (876, 1269)
+# receipt (875, 1617)

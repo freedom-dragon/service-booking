@@ -2,7 +2,12 @@ import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
 import { apiEndpointTitle, config, title } from '../../config.js'
 import Style from '../components/style.js'
-import { Context, DynamicContext, getContextFormBody } from '../context.js'
+import {
+  Context,
+  DynamicContext,
+  ExpressContext,
+  getContextFormBody,
+} from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import {
@@ -23,6 +28,7 @@ import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
 import {
   Booking,
+  Receipt,
   Service,
   ServiceTimeslot,
   TimeslotHour,
@@ -48,7 +54,7 @@ import { Router } from 'express'
 import { HttpError } from '../../http-error.js'
 import { join } from 'path'
 import { Formidable } from 'formidable'
-import { renameSync } from 'fs'
+import { mkdirSync, renameSync, unlinkSync } from 'fs'
 import { EarlyTerminate, MessageException } from '../helpers.js'
 import { nodeToVNode } from '../jsx/vnode.js'
 import { client_config } from '../../../client/client-config.js'
@@ -61,6 +67,10 @@ import { digits } from '@beenotung/tslib/random.js'
 import { maskEmailForHint } from '../email-mask.js'
 import { generatePasscode, verificationCodeEmail } from './verification-code.js'
 import { sendEmail } from '../../email.js'
+import { Raw } from '../components/raw.js'
+import { randomUUID } from 'crypto'
+import { Node } from '../jsx/types.js'
+import { nodeToHTML } from '../jsx/html.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -99,6 +109,22 @@ ion-item [slot="start"] ion-icon {
 }
 .remark--list h3 {
   font-size: 1rem;
+}
+.receipt--item {
+  border: 1px solid black;
+  border-radius: 1rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.receipt--item figcaption {
+  display: flex;
+  justify-content: space-between;
+}
+.receipt--status {
+  flex-grow: 1;
+  text-align: center;
+  padding: 0.25rem;
 }
 `)
 
@@ -547,7 +573,8 @@ timeRadioGroup.addEventListener('ionChange', event => {
         {booking ? (
           <>
             <PaymentModal booking={booking} />
-            {Script(/* javascript */ `
+            {context.type == 'ws'
+              ? Script(/* javascript */ `
 function showSubmitModal() {
   if (submitModal.present) {
     submitModal.present()
@@ -556,12 +583,24 @@ function showSubmitModal() {
   }
 }
 setTimeout(showSubmitModal, 50)
-`)}
+`)
+              : null}
           </>
         ) : null}
       </ion-modal>
-      {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
-      {Script(/* javascript */ `
+      {ServiceDetailScripts}
+    </>
+  )
+}
+let ServiceDetailScripts = (
+  <>
+    {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
+    {
+      loadClientPlugin({
+        entryFile: 'dist/client/image.js',
+      }).node
+    }
+    {Script(/* javascript */ `
 function submitBooking() {
   if (!bookingForm.option_id.value) return showToast('請選擇款式', 'error')
   if (!bookingForm.amount.value) bookingForm.amount.value = 1
@@ -574,12 +613,33 @@ function submitBooking() {
     bookingForm.time.value
   ).toISOString()
   submitForm(bookingForm)
-  // submitModal.present()
+}
+async function uploadReceipt(url) {
+  let images = await selectReceiptImages()
+  let formData = new FormData()
+  for (let image of images) {
+    formData.append('file', image.file)
+  }
+  let res = await fetch(url, {
+    method: 'POST',
+    body: formData,
+  })
+  let json = await res.json()
+  if (json.error) {
+    showToast(json.error, 'error')
+    return
+  }
+  if (json.fragment) {
+    let fragment = document.createRange().createContextualFragment(json.fragment)
+    receiptImageList.appendChild(fragment)
+    let buttons = submitModal.querySelector('ion-header ion-buttons')
+    buttons.innerHTML = 
+    '<ion-button onclick="submitModal.dismiss()">返回</ion-button>'
+  }
 }
 `)}
-    </>
-  )
-}
+  </>
+)
 
 function PaymentModal(attrs: { booking: Booking }, context: Context) {
   let { booking } = attrs
@@ -588,23 +648,24 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
   let shop = service.shop!
   let shop_slug = shop.slug
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
+  let receipts = filter(proxy.receipt, { booking_id: booking.id! })
   return (
     <>
       <ion-header>
         <ion-toolbar>
           <ion-buttons slot="start">
-            <ion-button
-              onclick={`emit('${serviceUrl}/booking/${booking.id}/cancel')`}
-              // onclick="submitModal.dismiss()"
-              color="danger"
-            >
-              取消預約
-            </ion-button>
+            {receipts.length == 0 ? (
+              <ion-button
+                onclick={`emit('${serviceUrl}/booking/${booking.id}/cancel')`}
+                color="danger"
+              >
+                取消預約
+              </ion-button>
+            ) : (
+              <ion-button onclick="submitModal.dismiss()">返回</ion-button>
+            )}
           </ion-buttons>
           <ion-title>確認付款</ion-title>
-          <ion-buttons slot="end" hidden>
-            <ion-button>Send</ion-button>
-          </ion-buttons>
         </ion-toolbar>
       </ion-header>
       <ion-content class="ion-padding">
@@ -643,13 +704,64 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
           <ion-label>Payme / 98765432</ion-label>
         </ion-item>
         <div class="ion-margin">
-          <ion-button fill="block" color="primary">
+          <ion-button
+            fill="block"
+            color="primary"
+            onclick={`uploadReceipt('${serviceUrl}/receipt?booking_id=${booking.id}')`}
+          >
             <ion-icon name="cloud-upload" slot="start"></ion-icon>
             上傳付款證明
           </ion-button>
         </div>
+        <div id="receiptImageList">
+          {mapArray(receipts, receipt => ReceiptFigure({ receipt }, context))}
+        </div>
       </ion-content>
     </>
+  )
+}
+function ReceiptFigure(
+  attrs: {
+    receipt: Receipt
+  },
+  context: Context,
+) {
+  let { receipt } = attrs
+  let service = receipt.booking!.service!
+  let service_slug = service.slug
+  let shop_slug = service.shop!.slug
+  let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
+  return (
+    <figure class="receipt--item" data-receipt-id={receipt.id}>
+      <img
+        src={
+          `/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`
+          // "https://picsum.photos/seed/600/600"
+        }
+      />
+      <figcaption>
+        <span class="receipt--status">
+          上載於{' '}
+          {toLocaleDateTimeString(receipt.upload_time, context, {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </span>
+        <ion-buttons>
+          <ion-button
+            color="danger"
+            title="刪除收據相片"
+            onclick={`emit('${serviceUrl}/receipt/${receipt.id}/delete')`}
+          >
+            <ion-icon name="trash" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </figcaption>
+    </figure>
   )
 }
 
@@ -1462,6 +1574,80 @@ function attachRoutes(app: Router) {
       }
     },
   )
+  app.post(
+    '/shop/:shop_slug/service/:service_slug/receipt',
+    async (req, res, next) => {
+      try {
+        let {
+          params: { shop_slug, service_slug },
+          query: { booking_id },
+        } = object({
+          params: object({
+            shop_slug: string({ nonEmpty: true }),
+            service_slug: string({ nonEmpty: true }),
+          }),
+          query: object({
+            booking_id: id(),
+          }),
+        }).parse(req)
+        let shop = find(proxy.shop, { slug: shop_slug })
+        if (!shop) throw new HttpError(404, 'shop not found')
+        let service = find(proxy.service, {
+          shop_id: shop.id!,
+          slug: service_slug,
+        })
+        if (!service) throw new HttpError(404, 'service not found')
+        let booking = proxy.booking[booking_id]
+        if (!booking) throw new HttpError(404, 'booking not found')
+
+        let context: ExpressContext = {
+          type: 'express',
+          req,
+          res,
+          next,
+          url: req.url,
+        }
+
+        let user = getAuthUser(context)
+        if (!user) throw new HttpError(401, 'need to login as user')
+        if (booking.user_id != user.id)
+          throw new HttpError(403, 'not your own booking')
+
+        let dir = join(
+          'public',
+          'assets',
+          'shops',
+          shop_slug,
+          service_slug,
+          'receipts',
+        )
+        mkdirSync(dir, { recursive: true })
+
+        let form = new Formidable({
+          uploadDir: dir,
+          filename: () => randomUUID() + '.webp',
+          filter: part => part.mimetype == 'image/webp',
+          maxFiles: 10,
+          maxFileSize: client_config.max_image_size,
+        })
+        let [fields, files] = await form.parse(req)
+        let nodes: Node[] = []
+        for (let file of files.file || []) {
+          let id = proxy.receipt.push({
+            booking_id,
+            filename: file.newFilename,
+            upload_time: Date.now(),
+          })
+          nodes.push(ReceiptFigure({ receipt: proxy.receipt[id] }, context))
+        }
+        res.json({
+          fragment: nodes.length == 0 ? '' : nodeToHTML([nodes], context),
+        })
+      } catch (error) {
+        next(error)
+      }
+    },
+  )
 }
 
 let registerParser = object({
@@ -1699,6 +1885,41 @@ let routes: Routes = {
 document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
 `,
               ],
+            ],
+          ])
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/receipt/:receipt_id/delete': {
+    resolve(context) {
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, service_slug, shop_slug }) => {
+          let user = getAuthUser(context)
+
+          let receipt_id = context.routerMatch?.params.receipt_id
+          let receipt = proxy.receipt[receipt_id]
+
+          if (receipt && user && receipt.booking?.user_id == user.id) {
+            let dir = join(
+              'public',
+              'assets',
+              'shops',
+              shop_slug,
+              service_slug,
+              'receipts',
+            )
+            let file = join(dir, receipt.filename)
+            unlinkSync(file)
+            delete proxy.receipt[receipt_id]
+          }
+
+          throw new MessageException([
+            'batch',
+            [
+              ['eval', 'showToast("已刪除收據相片","info")'],
+              ['remove', `.receipt--item[data-receipt-id="${receipt_id}"]`],
             ],
           ])
         },

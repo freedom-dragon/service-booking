@@ -183,6 +183,14 @@ export type Booking = {
   user?: User
 }
 
+export type Receipt = {
+  id?: null | number
+  booking_id: number
+  booking?: Booking
+  filename: string
+  upload_time: number
+}
+
 export type DBProxy = {
   method: Method[]
   url: Url[]
@@ -203,6 +211,7 @@ export type DBProxy = {
   service_timeslot: ServiceTimeslot[]
   timeslot_hour: TimeslotHour[]
   booking: Booking[]
+  receipt: Receipt[]
 }
 
 export let proxy = proxySchema<DBProxy>({
@@ -265,6 +274,10 @@ export let proxy = proxySchema<DBProxy>({
       ['service', { field: 'service_id', table: 'service' }],
       ['service_option', { field: 'service_option_id', table: 'service_option' }],
       ['user', { field: 'user_id', table: 'user' }],
+    ],
+    receipt: [
+      /* foreign references */
+      ['booking', { field: 'booking_id', table: 'booking' }],
     ],
   },
 })
