@@ -1691,7 +1691,15 @@ let routes: Routes = {
 
           throw new MessageException([
             'batch',
-            [['eval', 'submitModal.dismiss()']],
+            [
+              ['eval', 'showToast("已取消預約","info")'],
+              [
+                'eval',
+                /* javascript */ `
+document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
+`,
+              ],
+            ],
           ])
         },
       )
