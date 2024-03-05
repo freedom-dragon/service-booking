@@ -596,8 +596,9 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
             <ion-button
               onclick={`emit('${serviceUrl}/booking/${booking.id}/cancel')`}
               // onclick="submitModal.dismiss()"
+              color="danger"
             >
-              Cancel
+              取消預約
             </ion-button>
           </ion-buttons>
           <ion-title>確認付款</ion-title>
