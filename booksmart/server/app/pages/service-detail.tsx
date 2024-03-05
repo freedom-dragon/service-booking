@@ -547,7 +547,16 @@ timeRadioGroup.addEventListener('ionChange', event => {
         {booking ? (
           <>
             <PaymentModal booking={booking} />
-            {Script('submitModal.present()')}
+            {Script(/* javascript */ `
+function showSubmitModal() {
+  if (submitModal.present) {
+    submitModal.present()
+  } else {
+    setTimeout(showSubmitModal, 50)
+  }
+}
+setTimeout(showSubmitModal, 50)
+`)}
           </>
         ) : null}
       </ion-modal>
