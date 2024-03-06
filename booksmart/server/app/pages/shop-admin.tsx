@@ -123,9 +123,9 @@ function ShopAdmin(attrs: { shop: Shop }) {
         <ion-list-header>聯絡方法</ion-list-header>
         <ion-note color="dark">
           <div class="ion-margin-horizontal">
-            這些聯繫方法會在商户主頁顯示。
+            這些聯絡方法會在商户主頁顯示。
           </div>
-          <div class="ion-margin-horizontal">請提供至少一種聯繫方法。</div>
+          <div class="ion-margin-horizontal">請提供至少一種聯絡方法。</div>
         </ion-note>
         {mapArray(contacts, item => {
           let slug = item.value

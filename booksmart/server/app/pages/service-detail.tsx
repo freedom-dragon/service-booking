@@ -1713,7 +1713,7 @@ let routes: Routes = {
           nodeToVNode(
             <>
               <ion-note color="dark" class="ion-margin">
-                這個電話號碼未登記，請提供更多聯繫資料。
+                這個電話號碼未登記，請提供更多聯絡資料。
               </ion-note>
               <ion-item>
                 <div slot="start">

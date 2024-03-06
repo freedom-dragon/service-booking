@@ -15,7 +15,7 @@ import { Raw } from '../components/raw.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { client_config } from '../../../client/client-config.js'
 
-let pageTitle = '聯繫資料'
+let pageTitle = '聯絡資料'
 
 let style = Style(/* css */ `
 #profile .avatar {

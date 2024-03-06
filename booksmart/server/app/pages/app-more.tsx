@@ -111,7 +111,7 @@ function ProfileItems(attrs: {}, context: Context) {
   return (
     <Link tagName="ion-item" href="/profile">
       <ion-icon slot="start" name="person-outline" />
-      <ion-label>聯繫資料</ion-label>
+      <ion-label>聯絡資料</ion-label>
     </Link>
   )
 }
