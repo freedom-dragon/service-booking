@@ -55,6 +55,16 @@ function saveContact(button) {
 function ShopAdmin(attrs: { shop: Shop }) {
   let { shop } = attrs
   let urlPrefix = `/shop/${shop.slug}/admin`
+  let contacts = getShopContacts(shop)
+    .map(item => ({
+      ...item,
+      value: shop[item.field],
+    }))
+    .sort((a, b) => {
+      if (a.value && !b.value) return -1
+      if (!a.value && b.value) return +1
+      return 0
+    })
   return (
     <>
       {style}
@@ -75,8 +85,8 @@ function ShopAdmin(attrs: { shop: Shop }) {
           </div>
           <div class="ion-margin-horizontal">請提供至少一種類聯繫方法。</div>
         </ion-note>
-        {mapArray(getShopContacts(shop), item => {
-          let slug = shop[item.field]
+        {mapArray(contacts, item => {
+          let slug = item.value
           return (
             <ion-list
               inset="true"
