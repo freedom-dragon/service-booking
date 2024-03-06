@@ -83,7 +83,7 @@ function ShopAdmin(attrs: { shop: Shop }) {
           <div class="ion-margin-horizontal">
             這些聯繫方法會在商户主頁顯示。
           </div>
-          <div class="ion-margin-horizontal">請提供至少一種類聯繫方法。</div>
+          <div class="ion-margin-horizontal">請提供至少一種聯繫方法。</div>
         </ion-note>
         {mapArray(contacts, item => {
           let slug = item.value
