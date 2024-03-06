@@ -15,6 +15,8 @@ import { Raw } from '../components/raw.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { client_config } from '../../../client/client-config.js'
 
+let pageTitle = '聯繫資料'
+
 let style = Style(/* css */ `
 #profile .avatar {
   max-width: 128px;
@@ -34,23 +36,32 @@ let ProfilePage = (_attrs: {}, context: DynamicContext) => {
   let user_id = getAuthUserId(context)
 
   return (
-    <div id="profile">
-      {style}
-      <h1>Profile Page</h1>
-      <p>{commonTemplatePageText}</p>
-      {user_id ? (
-        renderProfile(user_id, context)
-      ) : (
-        <>
-          <p>You are viewing this page as guest.</p>
-          <p>
-            You can <Link href="/login">login</Link> or{' '}
-            <Link href="/register">register</Link> to manage your public profile
-            and exclusive content.
-          </p>
-        </>
-      )}
-    </div>
+    <>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>{pageTitle}</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <div id="profile">
+          {style}
+          <h1>Profile Page</h1>
+          <p>{commonTemplatePageText}</p>
+          {user_id ? (
+            renderProfile(user_id, context)
+          ) : (
+            <>
+              <p>You are viewing this page as guest.</p>
+              <p>
+                You can <Link href="/login">login</Link> or{' '}
+                <Link href="/register">register</Link> to manage your public
+                profile and exclusive content.
+              </p>
+            </>
+          )}
+        </div>
+      </ion-content>
+    </>
   )
 }
 

@@ -6,6 +6,8 @@ import { Link } from '../components/router.js'
 import { appIonTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { readFileSync } from 'fs'
+import { Context } from '../context.js'
+import { getAuthUser } from '../auth/user.js'
 
 let pageTitle = '更多'
 
@@ -26,29 +28,10 @@ let page = (
       </ion-toolbar>
     </ion-header>
     <ion-content id="More" class="ion-padding">
-      <ion-avatar
-        style="
-          margin:auto;
-          height:128px;
-          width :128px;
-        "
-      >
-        <img src="https://picsum.photos/seed/logo/128/128" />
-      </ion-avatar>
-      <h2
-        style="
-          margin-top:0.25rem;
-          text-align:center;
-        "
-      >
-        BookSmart
-      </h2>
+      <ProfileHeader />
       <ion-list>
-        <Link tagName="ion-item" href="/login" disabled>
-          <ion-icon slot="start" name="log-in" />
-          <ion-label>Login / Sign up</ion-label>
-        </Link>
-        <Link tagName="ion-item" href="/app/about">
+        <ProfileItems />
+        <Link tagName="ion-item" href="/app/about" hidden>
           <ion-icon slot="start" name="information" />
           <ion-label>關於我們</ion-label>
         </Link>
@@ -56,7 +39,7 @@ let page = (
           <ion-icon slot="start" ios="cog" md="settings" />
           <ion-label>商戶管理</ion-label>
         </Link>
-        <Link tagName="ion-item" href="/settings">
+        <Link tagName="ion-item" href="/settings" hidden>
           <ion-icon slot="start" ios="cog" md="settings" />
           <ion-label>Settings</ion-label>
         </Link>
@@ -84,6 +67,54 @@ let page = (
     {fitIonFooter}
   </>
 )
+
+function ProfileHeader(attrs: {}, context: Context) {
+  let user = getAuthUser(context)
+  let name = user?.nickname || '訪客'
+  let avatar = user?.avatar
+  avatar = avatar
+    ? `/uploads/${avatar}`
+    : 'https://picsum.photos/seed/logo/128/128'
+  return (
+    <>
+      <ion-avatar
+        style="
+          margin:auto;
+          height:128px;
+          width :128px;
+        "
+      >
+        <img src={avatar} />
+      </ion-avatar>
+      <h2
+        style="
+          margin-top:0.25rem;
+          text-align:center;
+        "
+      >
+        {name}
+      </h2>
+    </>
+  )
+}
+
+function ProfileItems(attrs: {}, context: Context) {
+  let user = getAuthUser(context)
+  if (!user) {
+    return (
+      <Link tagName="ion-item" href="/login" disabled>
+        <ion-icon slot="start" name="log-in" />
+        <ion-label>Login / Sign up</ion-label>
+      </Link>
+    )
+  }
+  return (
+    <Link tagName="ion-item" href="/profile">
+      <ion-icon slot="start" name="person-outline" />
+      <ion-label>聯繫資料</ion-label>
+    </Link>
+  )
+}
 
 let routes: Routes = {
   '/app/more': {
