@@ -26,6 +26,14 @@ proxy.shop[1] = {
   whatsapp: '98765432',
   telegram: 'beenotung',
   twitter: 'beenotung',
+  payme_tel: null,
+  payme_link: null,
+  fps_tel: null,
+  fps_email: null,
+  fps_id: null,
+  bank_name: null,
+  bank_account_num: null,
+  bank_account_name: null,
 }
 
 proxy.shop_locale[1] = {
