@@ -1,18 +1,17 @@
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
-import { apiEndpointTitle, title } from '../../config.js'
+import { title } from '../../config.js'
 import Style from '../components/style.js'
-import { Context, DynamicContext, getContextFormBody } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { object, string, optional, values } from 'cast.ts'
-import { Link, Redirect } from '../components/router.js'
-import { renderError } from '../components/error.js'
-import { getAuthUser } from '../auth/user.js'
+import { object, string } from 'cast.ts'
+import { Redirect } from '../components/router.js'
 import {
-  contactFields,
-  contactFieldsParser,
+  shopFieldsParser,
   getShopContacts,
+  paymentMethodGroups,
+  ShopPaymentMethod,
+  contactFields,
 } from '../shop-store.js'
 import { find } from 'better-sqlite3-proxy'
 import { Shop, proxy } from '../../../db/proxy.js'
@@ -21,6 +20,7 @@ import { Script } from '../components/script.js'
 import { MessageException } from '../helpers.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { nodeToVNode } from '../jsx/vnode.js'
+import { ServerMessage } from '../../../client/types.js'
 
 let pageTitle = '商戶管理'
 
@@ -34,14 +34,14 @@ let ShopAdminScripts = (
   <>
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     {Script(/* javascript */ `
-function clearContact(button) {
+function clearField(button) {
   let url = button.dataset.saveUrl
   let item = button.closest('ion-item')
   let input = item.querySelector('ion-input')
   input.value = ''
   emit(url, '', input.label)
 }
-function saveContact(button) {
+function saveField(button) {
   let url = button.dataset.saveUrl
   let item = button.closest('ion-item')
   let input = item.querySelector('ion-input')
@@ -77,6 +77,49 @@ function ShopAdmin(attrs: { shop: Shop }) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="ShopAdmin" class="ion-padding" color="light">
+        <ion-list-header>付款方法</ion-list-header>
+        <ion-note color="dark">
+          <div class="ion-margin-horizontal">
+            這些付款方法會在確認預約的頁面顯示。
+          </div>
+          <div class="ion-margin-horizontal">請提供至少一種付款方法方法。</div>
+        </ion-note>
+        {mapArray(paymentMethodGroups, group => (
+          <ion-list inset="true">
+            {mapArray(group.items as ShopPaymentMethod[], item => {
+              let value = shop[item.field]
+              let saveUrl = `${urlPrefix}/save/${item.field}`
+              return (
+                <ion-item>
+                  <ion-input
+                    label={item.label}
+                    label-placement="floating"
+                    type={item.type}
+                    value={value}
+                    placeholder={item.placeholder}
+                  />
+                  <ion-buttons slot="end">
+                    <ion-button
+                      color="success"
+                      data-save-url={saveUrl}
+                      onclick="saveField(this)"
+                    >
+                      <ion-icon name="save" slot="icon-only"></ion-icon>
+                    </ion-button>
+                    <ion-button
+                      color="danger"
+                      data-save-url={saveUrl}
+                      onclick="clearField(this)"
+                    >
+                      <ion-icon name="close" slot="icon-only"></ion-icon>
+                    </ion-button>
+                  </ion-buttons>
+                </ion-item>
+              )
+            })}
+          </ion-list>
+        ))}
+
         <ion-list-header>聯絡方法</ion-list-header>
         <ion-note color="dark">
           <div class="ion-margin-horizontal">
@@ -86,6 +129,7 @@ function ShopAdmin(attrs: { shop: Shop }) {
         </ion-note>
         {mapArray(contacts, item => {
           let slug = item.value
+          let saveUrl = `${urlPrefix}/save/${item.field}`
           return (
             <ion-list
               inset="true"
@@ -102,15 +146,15 @@ function ShopAdmin(attrs: { shop: Shop }) {
                 <ion-buttons slot="end">
                   <ion-button
                     color="success"
-                    data-save-url={`${urlPrefix}/save/${item.field}`}
-                    onclick="saveContact(this)"
+                    data-save-url={saveUrl}
+                    onclick="saveField(this)"
                   >
                     <ion-icon name="save" slot="icon-only"></ion-icon>
                   </ion-button>
                   <ion-button
                     color="danger"
-                    data-save-url={`${urlPrefix}/save/${item.field}`}
-                    onclick="clearContact(this)"
+                    data-save-url={saveUrl}
+                    onclick="clearField(this)"
                   >
                     <ion-icon name="close" slot="icon-only"></ion-icon>
                   </ion-button>
@@ -174,38 +218,15 @@ let routes: Routes = {
         1: string({ nonEmpty: true }),
       }).parse(context.args)
 
-      let field = contactFieldsParser.parse(context.routerMatch?.params.field)
+      let field = shopFieldsParser.parse(context.routerMatch?.params.field)
 
       if (value.length == 0) {
         shop[field] = null
-        throw new MessageException([
-          'batch',
-          [
-            ['eval', `showToast('除去了${label}','info')`],
-            [
-              'update-in',
-              `.contact--item[data-field="${field}"] .contact--preview`,
-              nodeToVNode(
-                <>
-                  <ion-note color="dark" class="ion-margin-horizontal">
-                    預覽
-                  </ion-note>
-                  (無)
-                </>,
-                context,
-              ),
-            ],
-          ],
-        ])
-      }
-
-      shop[field] = value
-
-      throw new MessageException([
-        'batch',
-        [
-          ['eval', `showToast('更新了${field}','info')`],
-          [
+        let messages: ServerMessage[] = [
+          ['eval', `showToast('除去了${label}','info')`],
+        ]
+        if (contactFields.includes(field as any)) {
+          messages.push([
             'update-in',
             `.contact--item[data-field="${field}"] .contact--preview`,
             nodeToVNode(
@@ -213,18 +234,41 @@ let routes: Routes = {
                 <ion-note color="dark" class="ion-margin-horizontal">
                   預覽
                 </ion-note>
-                <ShopContacts
-                  shop={shop}
-                  items={getShopContacts(shop).filter(
-                    item => item.field == field,
-                  )}
-                />
+                (無)
               </>,
               context,
             ),
-          ],
-        ],
-      ])
+          ])
+        }
+        throw new MessageException(['batch', messages])
+      }
+
+      shop[field] = value
+
+      let messages: ServerMessage[] = [
+        ['eval', `showToast('更新了${label}','info')`],
+      ]
+      if (contactFields.includes(field as any)) {
+        messages.push([
+          'update-in',
+          `.contact--item[data-field="${field}"] .contact--preview`,
+          nodeToVNode(
+            <>
+              <ion-note color="dark" class="ion-margin-horizontal">
+                預覽
+              </ion-note>
+              <ShopContacts
+                shop={shop}
+                items={getShopContacts(shop).filter(
+                  item => item.field == field,
+                )}
+              />
+            </>,
+            context,
+          ),
+        ])
+      }
+      throw new MessageException(['batch', messages])
     },
   },
 }

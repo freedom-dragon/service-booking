@@ -699,7 +699,7 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
         <h1>付款方法</h1>
         <ion-item>
           <ion-thumbnail slot="start">
-            <img src="/assets/payme.webp" />
+            <img src="/assets/payment-methods/payme.webp" />
           </ion-thumbnail>
           <ion-label>Payme / 98765432</ion-label>
         </ion-item>

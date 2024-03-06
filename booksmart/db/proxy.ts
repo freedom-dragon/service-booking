@@ -94,6 +94,14 @@ export type Shop = {
   whatsapp: null | string
   telegram: null | string
   twitter: null | string
+  payme_tel: null | string
+  payme_link: null | string
+  fps_tel: null | string
+  fps_email: null | string
+  fps_id: null | string
+  bank_name: null | string
+  bank_account_num: null | string
+  bank_account_name: null | string
 }
 
 export type VerificationCode = {

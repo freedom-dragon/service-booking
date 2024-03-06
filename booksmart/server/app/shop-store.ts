@@ -56,6 +56,82 @@ export function getServiceImages(shop_slug: string, service_slug: string) {
   return { cover, more, options }
 }
 
+export let paymentMethodGroups = [
+  {
+    items: [
+      {
+        label: 'Payme 電話號碼',
+        field: 'payme_tel',
+        type: 'tel',
+        placeholder: 'e.g. 9876 5432',
+      },
+      {
+        label: 'PayLink',
+        field: 'payme_link',
+        type: 'url',
+        placeholder:
+          'e.g. https://qr.payme.hsbc.com.hk/1/Sdbp9aVY7PFEwLpUXWKHeG',
+      },
+    ],
+  },
+  {
+    items: [
+      {
+        label: 'FPS 電話號碼',
+        field: 'fps_tel',
+        type: 'tel',
+        placeholder: 'e.g. 9876 5432',
+      },
+      {
+        label: 'FPS 電郵地址',
+        field: 'fps_email',
+        type: 'email',
+        placeholder: 'e.g. info@booksmart.hk',
+      },
+      {
+        label: 'FPS ID',
+        field: 'fps_id',
+        type: 'number',
+        placeholder: 'e.g. 123456789',
+      },
+    ],
+  },
+  {
+    items: [
+      {
+        label: '銀行名稱',
+        field: 'fps_tel',
+        type: 'tel',
+        placeholder: 'e.g. 恒生銀行',
+      },
+      {
+        label: '銀行戶口號碼',
+        field: 'fps_email',
+        type: 'email',
+        placeholder: 'e.g. 371 3333336 668',
+      },
+      {
+        label: '銀行戶口名稱',
+        field: 'fps_id',
+        type: 'number',
+        placeholder: 'e.g. BookSmart Limited',
+      },
+    ],
+  },
+] satisfies {
+  items: {
+    field: keyof Shop
+    [key: string]: string
+  }[]
+}[]
+
+export type ShopPaymentMethod =
+  (typeof paymentMethodGroups)[number]['items'][number]
+
+export let paymentFields = paymentMethodGroups.flatMap(group =>
+  group.items.map(item => item.field),
+)
+
 export function getShopContacts(shop: Shop) {
   return [
     {
@@ -157,7 +233,8 @@ export function getShopContacts(shop: Shop) {
 export type ShopContact = ReturnType<typeof getShopContacts>[number]
 
 export let contactFields = getShopContacts({} as Shop).map(item => item.field)
-export let contactFieldsParser = values(contactFields)
+
+export let shopFieldsParser = values([...paymentFields, ...contactFields])
 
 export function toDatePart(date: TimezoneDate) {
   date.timezone = +8
