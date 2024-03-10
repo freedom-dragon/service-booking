@@ -19,6 +19,7 @@ import { Raw } from '../components/raw.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { client_config } from '../../../client/client-config.js'
 import { IonBackButton } from '../components/ion-back-button.js'
+import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 
 let pageTitle = '聯絡資料'
 
@@ -85,8 +86,50 @@ function Main(attrs: {}, context: DynamicContext) {
         enctype="multipart/form-data"
         style="margin-bottom: 1rem"
       >
-        <div>
-          頭像相片:
+        <ion-list>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="happy-outline"></ion-icon> 名稱
+            </div>
+            <ion-input name="nickname" value={user.nickname} />
+          </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="call-outline"></ion-icon> 電話
+            </div>
+            <ion-input
+              type="tel"
+              name="tel"
+              minlength="8"
+              maxlength="8"
+              value={user.tel?.replace('+852', '')}
+            />
+          </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="at-outline"></ion-icon> 電郵
+            </div>
+            <ion-input
+              type="email"
+              name="email"
+              value={user.email}
+              readonly
+              disabled
+            />
+          </ion-item>
+          <ion-item lines="none">
+            <div slot="start">
+              <ion-icon name="at-outline"></ion-icon> 頭像相片
+            </div>
+          </ion-item>
+        </ion-list>
+        <div
+          class="ion-margin-horizontal d-flex w-100"
+          style="
+            justify-content: center;
+            align-items: end;
+          "
+        >
           {user.avatar ? (
             <div>
               <img class="avatar" src={'/uploads/' + user.avatar} />
@@ -94,22 +137,30 @@ function Main(attrs: {}, context: DynamicContext) {
           ) : (
             ' (none)'
           )}
+          <ion-buttons>
+            <ion-button onclick="fileInput.click()" title="更改頭像">
+              <ion-icon name="create" slot="icon-only" />
+            </ion-button>
+          </ion-buttons>
         </div>
-        <label>
-          更改頭像:{' '}
-          <input
-            type="file"
-            name="avatar"
-            accept="image/*"
-            onchange="previewAvatar(this)"
-          />
-        </label>
-        <div id="previewContainer" hidden>
+        <input
+          hidden
+          id="fileInput"
+          type="file"
+          name="avatar"
+          accept="image/*"
+          onchange="previewAvatar(this)"
+        />
+        <div id="previewContainer" hidden class="ion-margin-horizontal">
           <div id="previewMessage"></div>
-          <img id="previewImg" />
-          <br />
-          <input type="submit" value="上傳頭像" />
+          <div class="d-flex">
+            <img id="previewImg" style="margin:auto" />
+          </div>
         </div>
+        {/* <input type="submit" value="上傳頭像" /> */}
+        <ion-button expand="block" type="submit" class="ion-margin">
+          更新資料
+        </ion-button>
         {error ? renderError(error, context) : null}
         {Raw(/* html */ `
 ${imagePlugin.script}
@@ -134,7 +185,7 @@ async function previewAvatar(input) {
         color="dark"
         expand="block"
         class="ion-margin"
-        style="margin-top: 3rem"
+        style="margin-top: 2rem"
       >
         登出
       </ion-button>
@@ -181,12 +232,29 @@ function attachRoutes(app: Router) {
         mimeTypeRegex: /^image\/.+/,
         maxFileSize: client_config.max_image_size,
       })
-      let [_fields, files] = await form.parse(req)
+      let [fields, files] = await form.parse(req)
 
       let file = files.avatar?.[0]
-      if (!file) throw 'missing avatar file'
+      if (file) {
+        user.avatar = file.newFilename
+      }
 
-      user.avatar = file.newFilename
+      let nickname = fields.nickname?.[0] || ''
+      let tel = fields.tel?.[0] || ''
+
+      if (nickname && user.nickname != nickname) {
+        user.nickname = nickname
+      }
+
+      if (tel) {
+        tel = to_full_hk_mobile_phone(tel)
+        if (!tel) {
+          throw 'invalid phone number'
+        }
+        if (user.tel != tel) {
+          user.tel = tel
+        }
+      }
 
       res.redirect('/profile')
     } catch (error) {
