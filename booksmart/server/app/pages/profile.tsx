@@ -5,7 +5,11 @@ import { DynamicContext, ExpressContext } from '../context.js'
 import { o } from '../jsx/jsx.js'
 import { Routes, getContextSearchParams } from '../routes.js'
 import { proxy } from '../../../db/proxy.js'
-import { eraseUserIdFromCookie, getAuthUserId } from '../auth/user.js'
+import {
+  eraseUserIdFromCookie,
+  getAuthUser,
+  getAuthUserId,
+} from '../auth/user.js'
 import { Router } from 'express'
 import { createUploadForm } from '../upload.js'
 import { HttpError } from '../../http-error.js'
@@ -14,17 +18,22 @@ import { renderError } from '../components/error.js'
 import { Raw } from '../components/raw.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { client_config } from '../../../client/client-config.js'
+import { IonBackButton } from '../components/ion-back-button.js'
 
 let pageTitle = '聯絡資料'
 
 let style = Style(/* css */ `
 #profile .avatar {
-  max-width: 128px;
-  max-height: 128px;
+  width: 128px;
+  height: 128px;
+  border-radius: 100%;
+  object-fit: cover;
 }
 #profile #previewImg {
-  max-width: 160px;
-  max-height: 160px;
+  width: 160px;
+  height: 160px;
+  border-radius: 100%;
+  object-fit: cover;
 }
 `)
 
@@ -32,46 +41,44 @@ let imagePlugin = loadClientPlugin({
   entryFile: 'dist/client/image.js',
 })
 
-let ProfilePage = (_attrs: {}, context: DynamicContext) => {
-  let user_id = getAuthUserId(context)
+let profilePage = (
+  <>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <IonBackButton href="/app/more" backText="更多" color="light" />
+        <ion-title role="heading" aria-level="1">
+          {pageTitle}
+        </ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div id="profile">
+        {style}
+        <Main />
+      </div>
+    </ion-content>
+  </>
+)
 
-  return (
-    <>
-      <ion-header>
-        <ion-toolbar>
-          <ion-title>{pageTitle}</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content class="ion-padding">
-        <div id="profile">
-          {style}
-          <h1>Profile Page</h1>
-          <p>{commonTemplatePageText}</p>
-          {user_id ? (
-            renderProfile(user_id, context)
-          ) : (
-            <>
-              <p>You are viewing this page as guest.</p>
-              <p>
-                You can <Link href="/login">login</Link> or{' '}
-                <Link href="/register">register</Link> to manage your public
-                profile and exclusive content.
-              </p>
-            </>
-          )}
-        </div>
-      </ion-content>
-    </>
-  )
-}
-
-function renderProfile(user_id: number, context: DynamicContext) {
-  let user = proxy.user[user_id]
+function Main(attrs: {}, context: DynamicContext) {
+  let user = getAuthUser(context)
+  if (!user) {
+    return (
+      <>
+        <p>正在以訪客身份瀏覽此頁。</p>
+        <p>
+          你可以<Link href="/login">登入</Link>以管理你的聯絡資料。
+        </p>
+      </>
+    )
+  }
   let params = getContextSearchParams(context)
   let error = params.get('error')
   return (
     <>
-      <p>Welcome back, {user.username || user.email}</p>
+      <p>
+        商家可以看到您的聯絡資料，包括您的頭像、名稱、電話號碼和電郵地址，以便了解你的需要和安排預約。
+      </p>
       <form
         method="POST"
         action="/avatar"
@@ -79,7 +86,7 @@ function renderProfile(user_id: number, context: DynamicContext) {
         style="margin-bottom: 1rem"
       >
         <div>
-          Avatar:
+          頭像相片:
           {user.avatar ? (
             <div>
               <img class="avatar" src={'/uploads/' + user.avatar} />
@@ -89,7 +96,7 @@ function renderProfile(user_id: number, context: DynamicContext) {
           )}
         </div>
         <label>
-          Change avatar:{' '}
+          更改頭像:{' '}
           <input
             type="file"
             name="avatar"
@@ -101,7 +108,7 @@ function renderProfile(user_id: number, context: DynamicContext) {
           <div id="previewMessage"></div>
           <img id="previewImg" />
           <br />
-          <input type="submit" value="Upload Avatar" />
+          <input type="submit" value="上傳頭像" />
         </div>
         {error ? renderError(error, context) : null}
         {Raw(/* html */ `
@@ -112,7 +119,7 @@ async function previewAvatar(input) {
   if (!image) return
   previewImg.src = image.dataUrl
   let kb = Math.ceil(image.file.size / 1024)
-  previewMessage.textContent = 'Image Preview (' + kb + ' KB)'
+  previewMessage.textContent = '預覽 (' + kb + ' KB)'
   let list = new DataTransfer()
   list.items.add(image.file)
   input.files = list.files
@@ -121,9 +128,16 @@ async function previewAvatar(input) {
 </script>
 `)}
       </form>
-      <a href="/logout" rel="nofollow">
-        Logout
-      </a>
+      <ion-button
+        href="/logout"
+        rel="nofollow"
+        color="dark"
+        expand="block"
+        class="ion-margin"
+        style="margin-top: 3rem"
+      >
+        登出
+      </ion-button>
     </>
   )
 }
@@ -186,11 +200,11 @@ function attachRoutes(app: Router) {
 
 let routes: Routes = {
   '/profile': {
-    title: title('Profile Page'),
+    title: title(pageTitle),
     description: `Manage your public profile and exclusive content`,
     menuText: 'Profile',
     userOnly: true,
-    node: <ProfilePage />,
+    node: profilePage,
   },
   '/logout': {
     title: apiEndpointTitle,
