@@ -25,7 +25,9 @@ function compressPhotos(files: FileList | File[]) {
 
 async function selectServiceImage() {
   let [file] = await selectImage({
-    accept: 'image/*',
+    // TODO support video
+    // accept: 'image/*',
+    accept: '.jpg,.png,.webp,.heic,.gif',
     multiple: false,
   })
   if (!file) return
@@ -39,7 +41,8 @@ async function selectServiceImage() {
 
 async function selectReceiptImages() {
   let files = await selectImage({
-    accept: 'image/*',
+    // accept: 'image/*',
+    accept: '.jpg,.png,.webp,.heic',
     multiple: true,
   })
   return Promise.all(
