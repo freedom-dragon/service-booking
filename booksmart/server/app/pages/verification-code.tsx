@@ -20,7 +20,7 @@ import Style from '../components/style.js'
 import { Node } from '../jsx/types.js'
 import { renderError } from '../components/error.js'
 import { debugLog } from '../../debug.js'
-import { filter, find } from 'better-sqlite3-proxy'
+import { filter, find, unProxy } from 'better-sqlite3-proxy'
 import { writeUserIdToCookie } from '../auth/user.js'
 
 let log = debugLog('app:verification-code')
@@ -338,6 +338,22 @@ let checkEmailVerificationCodeParser = object({
   }),
 })
 
+type LastBookingRow = {
+  shop_slug: string
+  service_slug: string
+}
+let select_last_booking_by_user_id = db.prepare(/* sql */ `
+select
+  shop.slug as shop_slug
+, service.slug as service_slug
+from booking
+inner join service on service.id = booking.service_id
+inner join shop on shop.id = service.shop_id
+where booking.user_id = :user_id
+order by booking.id desc
+limit 1
+`)
+
 async function checkEmailVerificationCode(
   context: DynamicContext,
 ): Promise<StaticPageRoute> {
@@ -411,11 +427,23 @@ async function checkEmailVerificationCode(
       )
     }
     writeUserIdToCookie(res, user_id)
+    // FIXME what if the user want to login another shop?
+    let lastBooking =
+      (select_last_booking_by_user_id.get({ user_id }) as LastBookingRow) ||
+      null
     return {
       title: apiEndpointTitle,
       description:
         'API Endpoint to submit email verification code for authentication',
-      node: <Redirect href="/login?code=ok" />,
+      node: (
+        <Redirect
+          href={
+            lastBooking
+              ? `/shop/${lastBooking.shop_slug}/service/${lastBooking.service_slug}`
+              : '/login?code=ok'
+          }
+        />
+      ),
     }
   } catch (error) {
     let params = new URLSearchParams({
