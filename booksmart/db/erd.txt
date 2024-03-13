@@ -194,15 +194,15 @@ end_time text
 booking
 -------
 id integer PK
+user_id integer FK >0- user.id
 service_id integer FK >0- service.id
+service_option_id integer FK >0- service_option.id
 submit_time integer
 appointment_time integer
 approve_time integer NULL
 reject_time integer NULL
 cancel_time integer NULL
 amount integer
-service_option_id integer FK >0- service_option.id
-user_id integer FK >0- user.id
 
 
 receipt
@@ -214,7 +214,7 @@ upload_time integer
 
 
 # zoom: 1.000
-# view: (575, 904)
+# view: (-159, 734)
 # text-bg: #6495ed
 # text-color: #000000
 # diagram-bg: #f5f5f5
@@ -229,15 +229,15 @@ upload_time integer
 # ua_bot (845, 410)
 # ua_stat (715, 60)
 # request_session (450, 445)
-# user (450, 680)
+# user (461, 633)
 # verification_code (50, 550)
 # verification_attempt (50, 400)
-# shop (879, 708)
-# shop_locale (1290, 614)
-# service (1280, 1041)
-# service_remark (1409, 1468)
-# service_option (1746, 917)
-# service_timeslot (1754, 1268)
-# timeslot_hour (1676, 1512)
-# booking (876, 1269)
-# receipt (875, 1617)
+# shop (143, 930)
+# shop_locale (-128, 1026)
+# service (603, 1030)
+# service_remark (1070, 1648)
+# service_option (1079, 1171)
+# service_timeslot (1081, 1399)
+# timeslot_hour (1424, 1434)
+# booking (1073, 787)
+# receipt (1513, 776)
