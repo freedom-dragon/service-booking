@@ -11,7 +11,6 @@ import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
 import { TimezoneDate } from 'timezone-date.ts'
 import { DAY } from '@beenotung/tslib/time.js'
-import { commonTemplatePageText } from '../components/common-template.js'
 import { appIonTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 
