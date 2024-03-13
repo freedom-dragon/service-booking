@@ -108,6 +108,7 @@ email varchar(320)
 shop
 ----
 id integer PK
+owner_id integer NULL FK >- user.id
 slug text unique
 name text
 bio text NULL
@@ -229,12 +230,12 @@ upload_time integer
 # ua_bot (845, 410)
 # ua_stat (715, 60)
 # request_session (450, 445)
-# user (461, 633)
+# user (429, 672)
 # verification_code (50, 550)
 # verification_attempt (50, 400)
-# shop (143, 930)
-# shop_locale (-128, 1026)
-# service (603, 1030)
+# shop (43, 946)
+# shop_locale (-239, 1002)
+# service (518, 1019)
 # service_remark (1070, 1648)
 # service_option (1079, 1171)
 # service_timeslot (1081, 1399)

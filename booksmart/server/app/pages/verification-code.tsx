@@ -431,6 +431,10 @@ async function checkEmailVerificationCode(
     let lastBooking =
       (select_last_booking_by_user_id.get({ user_id }) as LastBookingRow) ||
       null
+    let shop = !lastBooking ? find(proxy.shop, { owner_id: user_id }) : null
+    console.log('login user:', user_id)
+    console.log('last booking:', lastBooking?.shop_slug)
+    console.log('shop:', shop?.slug)
     return {
       title: apiEndpointTitle,
       description:
@@ -440,7 +444,9 @@ async function checkEmailVerificationCode(
           href={
             lastBooking
               ? `/shop/${lastBooking.shop_slug}/service/${lastBooking.service_slug}`
-              : '/login?code=ok'
+              : shop
+                ? `/shop/${shop.slug}`
+                : '/login?code=ok'
           }
         />
       ),

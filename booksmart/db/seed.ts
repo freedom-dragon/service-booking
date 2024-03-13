@@ -5,7 +5,35 @@ import { Service, ServiceTimeslot, proxy } from './proxy'
 //
 // You can setup the database with initial config and sample data via the db proxy.
 
+proxy.user[1] = {
+  username: null,
+  nickname: 'BookSmart Admin',
+  password_hash: null,
+  email: 'admin@booksmart.com',
+  tel: '+85296385274',
+  avatar: null,
+}
+
+proxy.user[2] = {
+  username: null,
+  nickname: 'Katy 榆',
+  password_hash: null,
+  email: 'the.balconi.artstudio@gmail.com',
+  tel: '+85262787635',
+  avatar: null,
+}
+
+proxy.user[3] = {
+  username: null,
+  nickname: 'Beeno',
+  password_hash: null,
+  email: 'beeno@gmail.com',
+  tel: '+85298765432',
+  avatar: null,
+}
+
 proxy.shop[1] = {
+  owner_id: 2,
   name: 'The Balconi ARTLAB 香港',
   slug: 'lab.on.the.balconi',
   bio: 'Affordable art for all',
@@ -17,13 +45,13 @@ proxy.shop[1] = {
 - 泊車方便，亦可乘搭巴士2E/18/44/E21/914等，
   或太子/南昌/奧運站步行15分鐘
 `.trim(),
-  tel: '98765432',
-  email: 'lab.on.the.balconi@gmail.com',
+  tel: '62787635',
+  email: 'the.balconi.artstudio@gmail.com',
   facebook: 'beenotung',
   messenger: 'beenotung',
   instagram: 'lab.on.the.balconi',
   youtube: 'luoluopipa',
-  whatsapp: '98765432',
+  whatsapp: '62787635',
   telegram: 'beenotung',
   twitter: 'beenotung',
   payme_tel: null,

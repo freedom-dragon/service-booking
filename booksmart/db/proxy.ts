@@ -78,6 +78,8 @@ export type VerificationAttempt = {
 
 export type Shop = {
   id?: null | number
+  owner_id: null | number
+  owner?: User
   slug: string
   name: string
   bio: null | string
@@ -177,18 +179,18 @@ export type TimeslotHour = {
 
 export type Booking = {
   id?: null | number
+  user_id: number
+  user?: User
   service_id: number
   service?: Service
+  service_option_id: number
+  service_option?: ServiceOption
   submit_time: number
   appointment_time: number
   approve_time: null | number
   reject_time: null | number
   cancel_time: null | number
   amount: number
-  service_option_id: number
-  service_option?: ServiceOption
-  user_id: number
-  user?: User
 }
 
 export type Receipt = {
@@ -246,7 +248,10 @@ export let proxy = proxySchema<DBProxy>({
       ['user', { field: 'user_id', table: 'user' }],
     ],
     verification_attempt: [],
-    shop: [],
+    shop: [
+      /* foreign references */
+      ['owner', { field: 'owner_id', table: 'user' }],
+    ],
     verification_code: [
       /* foreign references */
       ['match', { field: 'match_id', table: 'verification_attempt' }],
@@ -279,9 +284,9 @@ export let proxy = proxySchema<DBProxy>({
     ],
     booking: [
       /* foreign references */
+      ['user', { field: 'user_id', table: 'user' }],
       ['service', { field: 'service_id', table: 'service' }],
       ['service_option', { field: 'service_option_id', table: 'service_option' }],
-      ['user', { field: 'user_id', table: 'user' }],
     ],
     receipt: [
       /* foreign references */
