@@ -12,6 +12,7 @@ import { proxy } from '../../../db/proxy.js'
 import { db } from '../../../db/db.js'
 import DateTimeText, { formatDateTimeText } from '../components/datetime.js'
 import { WEEK } from '@beenotung/tslib/time.js'
+import { timestamp } from '../components/timestamp.js'
 
 let pageTitle = '通知'
 
@@ -105,14 +106,6 @@ function Main(attrs: {}, context: Context) {
         ))}
       </ion-list>
     </>
-  )
-}
-
-function timestamp(time: number) {
-  return (
-    <time datetime={new Date(time).toISOString()}>
-      <DateTimeText time={time} relativeTimeThreshold={2 * WEEK} />
-    </time>
   )
 }
 
