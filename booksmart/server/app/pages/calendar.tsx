@@ -26,8 +26,13 @@ let style = Style(/* css */ `
 hr {
   border-bottom: 1px solid var(--ion-color-dark);
 }
-#Calendar {
-
+.booking--header {
+  display: flex;
+  justify-content: space-between;
+}
+.booking--buttons {
+  display: flex;
+  justify-content: space-around;
 }
 `)
 
@@ -49,6 +54,7 @@ function Page(attrs: {}, context: DynamicContext) {
 }
 
 function AdminPage(shop: Shop, context: DynamicContext) {
+  let shop_slug = shop.slug
   let services = filter(proxy.service, { shop_id: shop.id! })
   let submitted = services
     .map(service => ({
@@ -115,25 +121,25 @@ function AdminPage(shop: Shop, context: DynamicContext) {
             value="submitted"
             onclick="swiperSlide(bookingSwiper,'0')"
           >
-            未確認
+            未確認 ({submitted.length})
           </ion-segment-button>
           <ion-segment-button
             value="confirmed"
             onclick="swiperSlide(bookingSwiper,'1')"
           >
-            未開始
+            未開始 ({notCompleted.length})
           </ion-segment-button>
           <ion-segment-button
             value="completed"
             onclick="swiperSlide(bookingSwiper,'2')"
           >
-            已完成
+            已完成 ({completed.length})
           </ion-segment-button>
           <ion-segment-button
             value="cancelled"
             onclick="swiperSlide(bookingSwiper,'3')"
           >
-            已取消
+            已取消 ({cancelled.length})
           </ion-segment-button>
         </ion-segment>
         {services.length == 0 ? (
@@ -146,19 +152,56 @@ function AdminPage(shop: Shop, context: DynamicContext) {
               {submitted.length == 0 ? (
                 <p class="ion-margin-start">未有</p>
               ) : (
-                mapArray(submitted, ({ service, bookings }) => (
-                  <>
-                    <ion-list-header>{service.name}</ion-list-header>
-                    {mapArray(bookings, booking => (
-                      <ion-item>
-                        <ion-label>{booking.user!.nickname}</ion-label>
-                        <ion-note>
-                          提交時間：{timestamp(booking.submit_time)}
-                        </ion-note>
-                      </ion-item>
-                    ))}
-                  </>
-                ))
+                mapArray(submitted, ({ service, bookings }) => {
+                  let service_slug = service.slug
+                  return (
+                    <>
+                      <ion-list-header>{service.name}</ion-list-header>
+                      <p class="ion-margin-start">
+                        {bookings.length} 個未確認預約
+                      </p>
+                      {mapArray(bookings, booking => {
+                        let receipts = filter(proxy.receipt, {
+                          booking_id: booking.id!,
+                        })
+                        return (
+                          <ion-card>
+                            <ion-card-content class="booking--header">
+                              <span>{booking.user!.nickname}</span>
+                              <span>
+                                提交時間：{timestamp(booking.submit_time)}
+                              </span>
+                            </ion-card-content>
+                            <div class="ion-margin-horizontal">
+                              {receipts.length == 0 ? (
+                                <div class="ion-margin-bottom">
+                                  未有上載收據
+                                </div>
+                              ) : (
+                                <div class="ion-margin-bottom">
+                                  上載了 {receipts.length} 張收據
+                                </div>
+                              )}
+                              {mapArray(receipts, receipt => (
+                                <div>
+                                  <img
+                                    src={`/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`}
+                                    loading="lazy"
+                                  />
+                                </div>
+                              ))}
+                              <div class="booking--buttons">
+                                <ion-button color="primary">確認</ion-button>
+                                <ion-button color="warning">改期</ion-button>
+                                <ion-button color="dark">取消</ion-button>
+                              </div>
+                            </div>
+                          </ion-card>
+                        )
+                      })}
+                    </>
+                  )
+                })
               )}
             </ion-list>,
             <ion-list data-segment="confirmed">
