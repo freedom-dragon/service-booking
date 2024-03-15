@@ -312,6 +312,11 @@ function selectOption(button){
     ) {
       return function isDateEnabled(dateString: string) {
         let date = new Date(dateString)
+        let today = new Date()
+        today.setHours(0, 0, 0, 0)
+        if (date.getTime() < today.getTime()) {
+          return false
+        }
         let day = date.getDay()
         for (let { timeslot, hours } of timeslots) {
           if (
