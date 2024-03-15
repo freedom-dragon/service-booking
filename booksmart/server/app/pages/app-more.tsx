@@ -8,6 +8,7 @@ import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { readFileSync } from 'fs'
 import { Context } from '../context.js'
 import { getAuthUser } from '../auth/user.js'
+import { toUploadedUrl } from '../upload.js'
 
 let pageTitle = '更多'
 
@@ -71,10 +72,9 @@ let page = (
 function ProfileHeader(attrs: {}, context: Context) {
   let user = getAuthUser(context)
   let name = user?.nickname || '訪客'
-  let avatar = user?.avatar
-  avatar = avatar
-    ? `/uploads/${avatar}`
-    : 'https://picsum.photos/seed/logo/128/128'
+  let avatar = toUploadedUrl(
+    user?.avatar || 'https://picsum.photos/seed/logo/128/128',
+  )
   return (
     <>
       <ion-avatar
