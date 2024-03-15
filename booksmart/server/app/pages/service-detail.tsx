@@ -189,6 +189,8 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
     return { timeslot, hours }
   })
 
+  let quota = service.quota
+
   return (
     <>
       {ServiceDetailStyle}
@@ -273,18 +275,19 @@ function selectOption(button){
                 placeholder="1"
                 type="number"
                 min="1"
-                max={service.quota}
+                max={quota}
                 name="amount"
                 /* TODO avoid overbook */
                 oninput={
-                  +service.unit_price!
-                    ? `priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}'`
-                    : undefined
+                  `this.value>${quota}&&(this.value=${quota});` +
+                  (+service.unit_price!
+                    ? `priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}';`
+                    : '')
                 }
               />
               <ion-label slot="end">{service.price_unit}</ion-label>
               <div slot="helper">
-                上限: {service.quota} {service.price_unit}
+                上限: {quota} {service.price_unit}
               </div>
             </ion-item>
             <ion-item>
@@ -565,7 +568,7 @@ timeRadioGroup.addEventListener('ionChange', event => {
               <span id="priceLabel">
                 {+service.unit_price!
                   ? '$' + service.unit_price + '/' + service.price_unit
-                  : service.price_unit}
+                  : service.unit_price}
               </span>
             </ion-label>
             <ion-button
@@ -1768,6 +1771,13 @@ let routes: Routes = {
             throw new MessageException([
               'eval',
               `showToast('請輸入香港的手提電話號碼','error')`,
+            ])
+          }
+          // TODO check confirmed booking to see if amount is too big
+          if (input.amount > service.quota!) {
+            throw new MessageException([
+              'eval',
+              `showToast('人數不可超過${service.quota}${service.price_unit}','error')`,
             ])
           }
           let user = getAuthUser(context)
