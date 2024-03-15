@@ -13,10 +13,10 @@ export let appIonTabBar = (
         href: '/shop/' + config.shop_slug,
       },
       {
-        tab: 'calendar',
+        tab: 'booking',
         icon: 'calendar',
         label: '預約',
-        href: '/calendar',
+        href: '/booking',
       },
       // {
       //   tab: 'shopping',

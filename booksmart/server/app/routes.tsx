@@ -1,6 +1,6 @@
 import ShopAdmin from './pages/shop-admin.js'
 import ServiceDetail from './pages/service-detail.js'
-import Calendar from './pages/calendar.js'
+import Calendar from './pages/booking.js'
 import ShopHome from './pages/shop-home.js'
 import AppNotice from './pages/app-notice.js'
 import AppChat from './pages/app-chat.js'

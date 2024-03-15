@@ -18,6 +18,8 @@ import { Shop, User, proxy } from '../../../db/proxy.js'
 import { filter, notNull } from 'better-sqlite3-proxy'
 import { timestamp } from '../components/timestamp.js'
 import { Swiper } from '../components/swiper.js'
+import DateTimeText from '../components/datetime.js'
+import { toUploadedUrl } from '../upload.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -42,7 +44,7 @@ let page = (
     <Page />
     <ion-footer>
       {appIonTabBar}
-      {selectIonTab('calendar')}
+      {selectIonTab('booking')}
     </ion-footer>
     {fitIonFooter}
   </>
@@ -164,13 +166,27 @@ function AdminPage(shop: Shop, context: DynamicContext) {
                         let receipts = filter(proxy.receipt, {
                           booking_id: booking.id!,
                         })
+                        let avatar_url = toUploadedUrl(booking.user!.avatar)
                         return (
                           <ion-card>
-                            <ion-card-content class="booking--header">
-                              <span>{booking.user!.nickname}</span>
-                              <span>
-                                提交時間：{timestamp(booking.submit_time)}
-                              </span>
+                            <ion-card-content>
+                              <div class="booking--header">
+                                <div>
+                                  {avatar_url ? (
+                                    <ion-avatar>
+                                      <img src={avatar_url} loading="lazy" />
+                                    </ion-avatar>
+                                  ) : null}
+                                  <div>{booking.user!.nickname}</div>
+                                </div>
+                                <div>
+                                  提交時間：{timestamp(booking.submit_time)}
+                                </div>
+                              </div>
+                              <div class="ion-margin-top">
+                                預約時間：
+                                <DateTimeText time={booking.appointment_time} />
+                              </div>
                             </ion-card-content>
                             <div class="ion-margin-horizontal">
                               {receipts.length == 0 ? (
@@ -191,7 +207,12 @@ function AdminPage(shop: Shop, context: DynamicContext) {
                                 </div>
                               ))}
                               <div class="booking--buttons">
-                                <ion-button color="primary">確認</ion-button>
+                                <ion-button
+                                  color="primary"
+                                  onclick={`emit('/booking/confirm/${booking.id}')`}
+                                >
+                                  確認
+                                </ion-button>
                                 <ion-button color="warning">改期</ion-button>
                                 <ion-button color="dark">取消</ion-button>
                               </div>
@@ -401,7 +422,7 @@ function Main(attrs: {}, context: Context) {
         <ion-item>9am - 12nn</ion-item>
       </ion-list>
       {user ? (
-        <Link href="/calendar/add" tagName="ion-button">
+        <Link href="/booking/add" tagName="ion-button">
           {addPageTitle}
         </Link>
       ) : (
@@ -424,7 +445,7 @@ let addPage = (
 `)}
     <ion-header>
       <ion-toolbar>
-        <IonBackButton href="/calendar" backText={pageTitle} />
+        <IonBackButton href="/booking" backText={pageTitle} />
         <ion-title role="heading" aria-level="1">
           {addPageTitle}
         </ion-title>
@@ -433,7 +454,7 @@ let addPage = (
     <ion-content id="AddCalendar" class="ion-padding">
       <form
         method="POST"
-        action="/calendar/add/submit"
+        action="/booking/add/submit"
         onsubmit="emitForm(event)"
       >
         <ion-list>
@@ -495,12 +516,12 @@ function Submit(attrs: {}, context: DynamicContext) {
       title: input.title,
       slug: input.slug,
     })
-    return <Redirect href={`/calendar/result?id=${id}`} />
+    return <Redirect href={`/booking/result?id=${id}`} />
   } catch (error) {
     return (
       <Redirect
         href={
-          '/calendar/result?' + new URLSearchParams({ error: String(error) })
+          '/booking/result?' + new URLSearchParams({ error: String(error) })
         }
       />
     )
@@ -515,7 +536,7 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
     <>
       <ion-header>
         <ion-toolbar>
-          <IonBackButton href="/calendar/add" backText="Form" />
+          <IonBackButton href="/booking/add" backText="Form" />
           <ion-title role="heading" aria-level="1">
             Submitted {pageTitle}
           </ion-title>
@@ -527,7 +548,7 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
         ) : (
           <>
             <p>Your submission is received (#{id}).</p>
-            <Link href="/calendar" tagName="ion-button">
+            <Link href="/booking" tagName="ion-button">
               Back to {pageTitle}
             </Link>
           </>
@@ -538,26 +559,26 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
 }
 
 let routes: Routes = {
-  '/calendar': {
+  '/booking': {
     title: title(pageTitle),
     description: 'TODO',
     menuText: pageTitle,
     menuFullNavigate: true,
     node: page,
   },
-  '/calendar/add': {
+  '/booking/add': {
     title: title(addPageTitle),
     description: 'TODO',
     node: <AddPage />,
     streaming: false,
   },
-  '/calendar/add/submit': {
+  '/booking/add/submit': {
     title: apiEndpointTitle,
     description: 'TODO',
     node: <Submit />,
     streaming: false,
   },
-  '/calendar/result': {
+  '/booking/result': {
     title: apiEndpointTitle,
     description: 'TODO',
     node: <SubmitResult />,
