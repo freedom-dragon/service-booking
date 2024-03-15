@@ -1,11 +1,16 @@
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
-import { apiEndpointTitle, title } from '../../config.js'
+import { apiEndpointTitle, config, title } from '../../config.js'
 import Style from '../components/style.js'
-import { Context, DynamicContext, getContextFormBody } from '../context.js'
+import {
+  Context,
+  DynamicContext,
+  WsContext,
+  getContextFormBody,
+} from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { object, string } from 'cast.ts'
+import { id, object, string } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
@@ -18,8 +23,13 @@ import { Shop, User, proxy } from '../../../db/proxy.js'
 import { filter, notNull } from 'better-sqlite3-proxy'
 import { timestamp } from '../components/timestamp.js'
 import { Swiper } from '../components/swiper.js'
-import DateTimeText from '../components/datetime.js'
+import DateTimeText, { formatDateTimeText } from '../components/datetime.js'
 import { toUploadedUrl } from '../upload.js'
+import { MessageException } from '../helpers.js'
+import { loadClientPlugin } from '../../client-plugin.js'
+import { sendEmail } from '../../email.js'
+import { toServiceUrl, toShopUrl } from '../app-url.js'
+import { getShopLocale } from '../shop-store.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -82,13 +92,13 @@ function AdminPage(shop: Shop, context: DynamicContext) {
   let notCompleted = confirmed
     .map(({ service, bookings }) => ({
       service,
-      bookings: bookings.filter(booking => booking.appointment_time <= now),
+      bookings: bookings.filter(booking => booking.appointment_time > now),
     }))
     .filter(item => item.bookings.length > 0)
   let completed = confirmed
     .map(({ service, bookings }) => ({
       service,
-      bookings: bookings.filter(booking => booking.appointment_time > now),
+      bookings: bookings.filter(booking => booking.appointment_time <= now),
     }))
     .filter(item => item.bookings.length > 0)
   let cancelled = services
@@ -157,10 +167,11 @@ function AdminPage(shop: Shop, context: DynamicContext) {
                 mapArray(submitted, ({ service, bookings }) => {
                   let service_slug = service.slug
                   return (
-                    <>
+                    <div data-service-id={service.id}>
                       <ion-list-header>{service.name}</ion-list-header>
                       <p class="ion-margin-start">
-                        {bookings.length} 個未確認預約
+                        <span class="booking-count">{bookings.length}</span>{' '}
+                        個未確認預約
                       </p>
                       {mapArray(bookings, booking => {
                         let receipts = filter(proxy.receipt, {
@@ -168,7 +179,7 @@ function AdminPage(shop: Shop, context: DynamicContext) {
                         })
                         let avatar_url = toUploadedUrl(booking.user!.avatar)
                         return (
-                          <ion-card>
+                          <ion-card data-booking-id={booking.id}>
                             <ion-card-content>
                               <div class="booking--header">
                                 <div>
@@ -209,18 +220,29 @@ function AdminPage(shop: Shop, context: DynamicContext) {
                               <div class="booking--buttons">
                                 <ion-button
                                   color="primary"
-                                  onclick={`emit('/booking/confirm/${booking.id}')`}
+                                  onclick={`emit('/booking/approve/${booking.id}')`}
                                 >
                                   確認
                                 </ion-button>
-                                <ion-button color="warning">改期</ion-button>
-                                <ion-button color="dark">取消</ion-button>
+                                <ion-button
+                                  color="warning"
+                                  // onclick={`emit('/booking/re/${booking.id}')`}
+                                  disabled
+                                >
+                                  改期
+                                </ion-button>
+                                <ion-button
+                                  color="dark"
+                                  onclick={`emit('/booking/reject/${booking.id}')`}
+                                >
+                                  取消
+                                </ion-button>
                               </div>
                             </div>
                           </ion-card>
                         )
                       })}
-                    </>
+                    </div>
                   )
                 })
               )}
@@ -236,7 +258,7 @@ function AdminPage(shop: Shop, context: DynamicContext) {
                       <ion-item>
                         <ion-label>{booking.user!.nickname}</ion-label>
                         <ion-note>
-                          預約時間：{timestamp(booking.approve_time!)}
+                          預約時間：{timestamp(booking.appointment_time!)}
                         </ion-note>
                       </ion-item>
                     ))}
@@ -255,7 +277,7 @@ function AdminPage(shop: Shop, context: DynamicContext) {
                       <ion-item>
                         <ion-label>{booking.user!.nickname}</ion-label>
                         <ion-note>
-                          預約時間：{timestamp(booking.approve_time!)}
+                          預約時間：{timestamp(booking.appointment_time!)}
                         </ion-note>
                       </ion-item>
                     ))}
@@ -288,6 +310,7 @@ function AdminPage(shop: Shop, context: DynamicContext) {
           ],
         })}
       </ion-content>
+      {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     </>
   )
 }
@@ -501,6 +524,162 @@ function AddPage(attrs: {}, context: DynamicContext) {
   return addPage
 }
 
+let approveParser = object({
+  params: object({ booking_id: id() }),
+})
+
+function ApproveBooking(attrs: {}, context: WsContext) {
+  try {
+    let { user, shop } = getAuthRole(context)
+    if (!user) throw 'You must be logged in to approve booking'
+    if (!shop) throw 'You must be merchant to approve booking'
+
+    let input = approveParser.parse(context.routerMatch)
+
+    let booking = proxy.booking[input.params.booking_id]
+    if (!booking) throw 'Booking not found, id: ' + input.params.booking_id
+
+    if (booking.service!.shop_id != shop.id)
+      throw 'You cannot approve booking of another shop'
+
+    let service = booking.service!
+
+    // TODO check quota
+
+    booking.approve_time = Date.now()
+
+    let service_url = toServiceUrl(service)
+
+    sendEmail({
+      from: config.email.auth.user,
+      to: booking.user!.email!,
+      cc: user.email!,
+      subject: title(`${service!.name}預約確認`),
+      html: /* html */ `
+<p>
+${booking.user!.nickname} 你好，
+<b>${user.nickname}</b>
+確認了你在
+<b>${formatDateTimeText({ time: booking.appointment_time }, context)}</b>
+的
+<b>${booking.service!.name}</b>
+預約。
+</p>
+<p>
+到時見！
+</p>
+<p>
+按此查看詳情：<a href="${service_url}">${service_url}</a>
+</p>
+`,
+      text: `${user.nickname} 取消了原定在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。期待下次再見！`,
+    }).catch(error => {
+      context.ws.send([
+        'eval',
+        `showToast(${JSON.stringify('Failed to send email notice: ' + error)},'error');`,
+      ])
+    })
+
+    throw new MessageException([
+      'batch',
+      [
+        [
+          'eval',
+          `showToast('確認了${booking.user!.nickname}的${booking.service!.name}預約','success');` +
+            `document.querySelector('[data-service-id="${booking.service_id}"] .booking-count').textContent--`,
+        ],
+        ['remove', `[data-booking-id="${booking.id}"]`],
+      ],
+    ])
+  } catch (error) {
+    if (error instanceof MessageException) {
+      throw error
+    }
+    throw new MessageException([
+      'eval',
+      `showToast(${JSON.stringify(String(error))},'error')`,
+    ])
+  }
+}
+
+let rejectParser = object({
+  params: object({ booking_id: id() }),
+})
+
+function RejectBooking(attrs: {}, context: WsContext) {
+  try {
+    let { user, shop } = getAuthRole(context)
+    if (!user) throw 'You must be logged in to reject booking'
+    if (!shop) throw 'You must be merchant to reject booking'
+
+    let input = rejectParser.parse(context.routerMatch)
+
+    let booking = proxy.booking[input.params.booking_id]
+    if (!booking) throw 'Booking not found, id: ' + input.params.booking_id
+
+    if (booking.service!.shop_id != shop.id)
+      throw 'You cannot reject booking of another shop'
+
+    let service = booking.service!
+
+    booking.reject_time = Date.now()
+
+    let locale = getShopLocale(shop.id!)
+
+    let shop_url = toShopUrl(shop)
+
+    sendEmail({
+      from: config.email.auth.user,
+      to: booking.user!.email!,
+      cc: user.email!,
+      subject: title(`${service!.name}預約取消`),
+      html: /* html */ `
+<p>
+${booking.user!.nickname} 你好，
+<b>${user.nickname}</b>
+取消了原定在
+<b>${formatDateTimeText({ time: booking.appointment_time }, context)}</b>
+的
+<b>${booking.service!.name}</b>
+預約。
+</p>
+<p>
+期待下次再見！
+</p>
+<p>
+按此預約其他${locale.service}：<a href="${shop_url}">${shop_url}</a>
+</p>
+`,
+      text: `${user.nickname} 取消了原定在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。期待下次再見！`,
+    }).catch(error => {
+      context.ws.send([
+        'eval',
+        `showToast(${JSON.stringify('Failed to send email notice: ' + error)},'error');`,
+      ])
+    })
+
+    throw new MessageException([
+      'batch',
+      [
+        [
+          'eval',
+          `showToast('取消了${booking.user!.nickname}的${booking.service!.name}預約','info');` +
+            `document.querySelector('[data-service-id="${booking.service_id}"] .booking-count').textContent--`,
+        ],
+        ['remove', `[data-booking-id="${booking.id}"]`],
+      ],
+    ])
+  } catch (error) {
+    if (error instanceof MessageException) {
+      throw error
+    }
+    throw new MessageException([
+      'eval',
+      `showToast(${JSON.stringify(String(error))},'error')`,
+    ])
+  }
+}
+
 let submitParser = object({
   title: string({ minLength: 3, maxLength: 50 }),
   slug: string({ match: /^[\w-]{1,32}$/ }),
@@ -561,10 +740,22 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
 let routes: Routes = {
   '/booking': {
     title: title(pageTitle),
-    description: 'TODO',
+    description: 'manage your service booking',
     menuText: pageTitle,
     menuFullNavigate: true,
     node: page,
+  },
+  '/booking/approve/:booking_id': {
+    title: apiEndpointTitle,
+    description: 'approve a booking by merchant',
+    node: <ApproveBooking />,
+    streaming: false,
+  },
+  '/booking/reject/:booking_id': {
+    title: apiEndpointTitle,
+    description: 'reject a booking by merchant',
+    node: <RejectBooking />,
+    streaming: false,
   },
   '/booking/add': {
     title: title(addPageTitle),

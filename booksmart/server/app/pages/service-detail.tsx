@@ -585,7 +585,10 @@ timeRadioGroup.addEventListener('ionChange', event => {
         </ion-list>
       </ion-footer>
       <ion-modal id="submitModal">
-        {booking ? (
+        {booking &&
+        !booking.approve_time &&
+        !booking.reject_time &&
+        !booking.cancel_time ? (
           <>
             <PaymentModal booking={booking} />
             {context.type == 'ws'
@@ -669,7 +672,10 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
       <ion-header>
         <ion-toolbar>
           <ion-buttons slot="start">
-            {receipts.length == 0 ? (
+            {receipts.length == 0 &&
+            !booking.approve_time &&
+            !booking.reject_time &&
+            !booking.cancel_time ? (
               <ion-button
                 onclick={`emit('${serviceUrl}/booking/${booking.id}/cancel')`}
                 color="danger"
