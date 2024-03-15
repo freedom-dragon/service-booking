@@ -72,7 +72,10 @@ import { Raw } from '../components/raw.js'
 import { randomUUID } from 'crypto'
 import { Node } from '../jsx/types.js'
 import { nodeToHTML } from '../jsx/html.js'
-import { noticeBookingSubmit } from '../app-email.js'
+import {
+  noticeBookingReceiptSubmit,
+  noticeBookingSubmit,
+} from '../app-email.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -1668,6 +1671,9 @@ function attachRoutes(app: Router) {
             upload_time: Date.now(),
           })
           nodes.push(ReceiptFigure({ receipt: proxy.receipt[id] }, context))
+        }
+        if (nodes.length > 0) {
+          noticeBookingReceiptSubmit(booking, context)
         }
         res.json({
           fragment: nodes.length == 0 ? '' : nodeToHTML([nodes], context),
