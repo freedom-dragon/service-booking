@@ -273,12 +273,19 @@ function selectOption(button){
                 placeholder="1"
                 type="number"
                 min="1"
-                max="100"
+                max={service.quota}
                 name="amount"
                 /* TODO avoid overbook */
-                oninput={`priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}'`}
+                oninput={
+                  +service.unit_price!
+                    ? `priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}'`
+                    : undefined
+                }
               />
               <ion-label slot="end">{service.price_unit}</ion-label>
+              <div slot="helper">
+                上限: {service.quota} {service.price_unit}
+              </div>
             </ion-item>
             <ion-item>
               <div slot="start">
@@ -556,7 +563,7 @@ timeRadioGroup.addEventListener('ionChange', event => {
             <ion-label>
               費用{' '}
               <span id="priceLabel">
-                {service.unit_price
+                {+service.unit_price!
                   ? '$' + service.unit_price + '/' + service.price_unit
                   : service.price_unit}
               </span>
@@ -923,6 +930,14 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
   let service_timeslot_rows = filter(proxy.service_timeslot, {
     service_id: service.id!,
   })
+  let unit_price = (() => {
+    let str = service.unit_price
+    let val = +str!
+    if (val == 0 || val) {
+      return '$' + val
+    }
+    return str
+  })()
   return (
     <>
       {ServiceDetailStyle}
@@ -957,12 +972,10 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               <ion-icon name="cash-outline"></ion-icon> 費用
             </div>
             <div class="d-flex" style="align-items: center; gap: 0.25rem">
-              <span>$</span>
               <ion-input
-                value={service.unit_price}
+                value={unit_price}
                 placeholder="單價"
-                type="number"
-                min="0"
+                type="text"
                 onchange={`emit('${serviceUrl}/update','unit_price',this.value)`}
               />
               <span>/</span>
@@ -973,20 +986,23 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               />
             </div>
             <div slot="helper">
-              如: $100/人 、 $150/對情侶 、 $0/📐 量身訂做
+              如: $100/人 、 $150/對情侶 、 📐 量身訂做/位
             </div>
           </ion-item>
           <ion-item>
             <div slot="start">
-              <ion-icon name="people-outline"></ion-icon> 人數 (上限)
+              <ion-icon name="people-outline"></ion-icon> 人數
             </div>
-            <ion-input
-              value={service.quota}
-              type="number"
-              min="1"
-              onchange={`emit('${serviceUrl}/update','quota',this.value)`}
-            />
-            <div slot="helper">如: 6人 / 2對情侶</div>
+            <div class="d-flex" style="align-items: center; gap: 0.25rem">
+              <ion-input
+                value={service.quota}
+                placeholder="上限"
+                type="number"
+                min="1"
+                onchange={`emit('${serviceUrl}/update','quota',this.value)`}
+              />
+            </div>
+            <div slot="helper">如: 6(人) / 2(對情侶)</div>
           </ion-item>
           <ion-item>
             <div slot="start">
@@ -1993,8 +2009,12 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 break
               case 'unit_price':
                 label = '費用 (單價)'
-                if (!+value && +value != 0) invalid()
-                service[field] = +value
+                if (value.startsWith('$')) {
+                  let val = +value.substring(1)
+                  if (!val && val != 0) invalid()
+                  value = val.toString()
+                }
+                service[field] = value
                 ok()
                 break
               case 'price_unit':
@@ -2003,8 +2023,9 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 ok()
                 break
               case 'quota':
-                label = '人數'
-                service[field] = value
+                label = '人數上限'
+                if (!Number.isInteger(+value) || +value < 1) invalid()
+                service[field] = +value
                 ok()
                 break
               case 'hours':

@@ -151,10 +151,10 @@ slug text
 name text
 hours text
 book_duration_minute integer
-unit_price integer
+unit_price text NULL
 price_unit text
 time text
-quota text
+quota integer NULL
 address text NULL
 address_remark text NULL
 desc text NULL
