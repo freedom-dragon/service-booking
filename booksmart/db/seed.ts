@@ -9,7 +9,9 @@ proxy.user[1] = {
   username: null,
   nickname: 'BookSmart Admin',
   password_hash: null,
-  email: 'admin@booksmart.com',
+  email:
+    // 'admin@booksmart.com',
+    'booksmart@mailinator.com',
   tel: '+85296385274',
   avatar: null,
 }
@@ -18,7 +20,9 @@ proxy.user[2] = {
   username: null,
   nickname: 'Katy 榆',
   password_hash: null,
-  email: 'the.balconi.artstudio@gmail.com',
+  email:
+    //  'the.balconi.artstudio@gmail.com',
+    'the.balconi.artstudio@mailinator.com',
   tel: '+85262787635',
   avatar: null,
 }
@@ -27,7 +31,9 @@ proxy.user[3] = {
   username: null,
   nickname: 'Beeno',
   password_hash: null,
-  email: 'beeno@gmail.com',
+  email:
+    // 'beeno@gmail.com',
+    'beeno@mailinator.com',
   tel: '+85298765432',
   avatar: null,
 }
