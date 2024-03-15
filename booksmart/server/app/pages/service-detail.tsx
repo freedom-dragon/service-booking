@@ -71,6 +71,7 @@ import { Raw } from '../components/raw.js'
 import { randomUUID } from 'crypto'
 import { Node } from '../jsx/types.js'
 import { nodeToHTML } from '../jsx/html.js'
+import { noticeBookingSubmit } from '../app-email.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -667,12 +668,14 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
   let shop_slug = shop.slug
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let receipts = filter(proxy.receipt, { booking_id: booking.id! })
+  let price = +service.unit_price! || 0
   return (
     <>
       <ion-header>
         <ion-toolbar>
           <ion-buttons slot="start">
             {receipts.length == 0 &&
+            price != 0 &&
             !booking.approve_time &&
             !booking.reject_time &&
             !booking.cancel_time ? (
@@ -1788,7 +1791,6 @@ let routes: Routes = {
           }
           let user = getAuthUser(context)
           let should_verify_email = !user
-          console.log({ should_verify_email })
           if (!user) {
             user = find(proxy.user, { tel }) || null
           }
@@ -1822,6 +1824,10 @@ let routes: Routes = {
             user_id: user.id!,
           })
           let booking = proxy.booking[booking_id]
+          let price = +service.unit_price! || 0
+          if (price == 0) {
+            noticeBookingSubmit(booking, context)
+          }
           if (should_verify_email) {
             let email = user.email!
             let hint = maskEmailForHint(email)
@@ -1843,7 +1849,7 @@ let routes: Routes = {
             sendEmail({
               from: config.email.auth.user,
               to: email,
-              subject: title('Email'),
+              subject: title(`${service.name} 預約確認`),
               html,
               text,
             })
