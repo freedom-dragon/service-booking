@@ -37,6 +37,7 @@ import {
 } from '../../../db/proxy.js'
 import { count, del, filter, find } from 'better-sqlite3-proxy'
 import {
+  getReceiptImage,
   getServiceCoverImage,
   getServiceImages,
   getServiceOptionImage,
@@ -757,12 +758,7 @@ function ReceiptFigure(
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   return (
     <figure class="receipt--item" data-receipt-id={receipt.id}>
-      <img
-        src={
-          `/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`
-          // "https://picsum.photos/seed/600/600"
-        }
-      />
+      <img src={getReceiptImage(shop_slug, service_slug, receipt.filename)} />
       <figcaption>
         <span class="receipt--status">
           上載於{' '}

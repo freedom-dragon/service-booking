@@ -56,6 +56,14 @@ export function getServiceImages(shop_slug: string, service_slug: string) {
   return { cover, more, options }
 }
 
+export function getReceiptImage(
+  shop_slug: string,
+  service_slug: string,
+  receipt_filename: string,
+) {
+  return `/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt_filename}`
+}
+
 export let paymentMethodGroups = [
   {
     items: [
