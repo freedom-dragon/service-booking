@@ -65,6 +65,14 @@ function Page(attrs: {}, context: DynamicContext) {
   return shop ? AdminPage(shop, context) : UserPage(user, context)
 }
 
+function countBookings(list: { bookings: any[] }[]) {
+  let count = 0
+  for (let { bookings } of list) {
+    count += bookings.length
+  }
+  return ' (' + count + ')'
+}
+
 function AdminPage(shop: Shop, context: DynamicContext) {
   let shop_slug = shop.slug
   let services = filter(proxy.service, { shop_id: shop.id! })
@@ -133,25 +141,29 @@ function AdminPage(shop: Shop, context: DynamicContext) {
             value="submitted"
             onclick="swiperSlide(bookingSwiper,'0')"
           >
-            未確認 ({submitted.length})
+            未確認
+            {countBookings(submitted)}
           </ion-segment-button>
           <ion-segment-button
             value="confirmed"
             onclick="swiperSlide(bookingSwiper,'1')"
           >
-            未開始 ({notCompleted.length})
+            未開始
+            {countBookings(notCompleted)}
           </ion-segment-button>
           <ion-segment-button
             value="completed"
             onclick="swiperSlide(bookingSwiper,'2')"
           >
-            已完成 ({completed.length})
+            已完成
+            {countBookings(completed)}
           </ion-segment-button>
           <ion-segment-button
             value="cancelled"
             onclick="swiperSlide(bookingSwiper,'3')"
           >
-            已取消 ({cancelled.length})
+            已取消
+            {countBookings(cancelled)}
           </ion-segment-button>
         </ion-segment>
         {services.length == 0 ? (
