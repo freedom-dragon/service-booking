@@ -139,6 +139,8 @@ async function requestEmailVerification(
   }
 }
 
+// TODO translate to zh-hk
+
 export function verificationCodeEmail(
   attrs: { passcode: string; email: string | null },
   context: Context,
