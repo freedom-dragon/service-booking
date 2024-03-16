@@ -1657,8 +1657,12 @@ function attachRoutes(app: Router) {
 
         let form = new Formidable({
           uploadDir: dir,
-          filename: () => randomUUID() + '.webp',
-          filter: part => part.mimetype == 'image/webp',
+          filename: (_name, _ext, part) => {
+            let ext = part.mimetype?.split('/').pop()
+            return randomUUID() + '.' + ext
+          },
+          filter: part =>
+            part.mimetype == 'image/webp' || part.mimetype == 'image/jpeg',
           maxFiles: 10,
           maxFileSize: client_config.max_image_size,
         })
