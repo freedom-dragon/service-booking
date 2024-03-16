@@ -51,6 +51,9 @@ async function selectReceiptImages() {
       let size = 360
       let quality = 0.5
       let dataUrl = resizeImage(image, size, size, 'image/webp', quality)
+      if (!dataUrl.startsWith('data:image/webp')) {
+        dataUrl = resizeImage(image, size, size, 'image/jpeg', quality)
+      }
       file = dataURItoFile(dataUrl, file)
       return { dataUrl, file }
     }),
