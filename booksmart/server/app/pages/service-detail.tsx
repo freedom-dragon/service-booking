@@ -177,6 +177,8 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
     find(proxy.booking, {
       user_id: user.id!,
       service_id: service.id!,
+      approve_time: null,
+      reject_time: null,
       cancel_time: null,
     })
 
@@ -672,14 +674,21 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
   let shop_slug = shop.slug
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let receipts = filter(proxy.receipt, { booking_id: booking.id! })
-  let price = +service.unit_price! || 0
+  let { unit_price } = service
+  let { amount } = booking
+  let fee_val = +unit_price!
+  let need_pay: boolean = !!fee_val
+  let fee_str: string =
+    fee_val || fee_val == 0
+      ? '$' + (fee_val * amount).toLocaleString()
+      : unit_price! // e.g. '📐 量身訂做'
   return (
     <>
       <ion-header>
         <ion-toolbar>
           <ion-buttons slot="start">
             {receipts.length == 0 &&
-            price != 0 &&
+            need_pay &&
             !booking.approve_time &&
             !booking.reject_time &&
             !booking.cancel_time ? (
@@ -723,7 +732,7 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
         <div>時長: {service.hours}</div>
         <h1>總共費用</h1>
         <div id="totalPriceLabel"></div>
-        <div>${(booking.amount * service.unit_price).toLocaleString()}</div>
+        <div>{fee_str}</div>
         <h1>付款方法</h1>
         <ion-item>
           <ion-thumbnail slot="start">
@@ -744,6 +753,18 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
         <div id="receiptImageList">
           {mapArray(receipts, receipt => ReceiptFigure({ receipt }, context))}
         </div>
+        {/* TODO show this message after upload receipt (send ws message) */}
+        <p class="receiptMessage ion-text-center">
+          {need_pay && receipts.length == 0 ? (
+            <>
+              請注意，你的預約在上載付款證明之後才會生效。在此之前，這個時段可能會被其他人預約。
+            </>
+          ) : need_pay && receipts.length > 0 ? (
+            <>已上載付款證明，請等待 {shop.owner!.nickname} 確認</>
+          ) : (
+            <>提交預約申請，請等待 {shop.owner!.nickname} 確認</>
+          )}
+        </p>
       </ion-content>
     </>
   )
