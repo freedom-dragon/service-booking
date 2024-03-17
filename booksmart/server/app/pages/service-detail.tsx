@@ -31,6 +31,7 @@ import {
   Receipt,
   Service,
   ServiceTimeslot,
+  Shop,
   TimeslotHour,
   User,
   proxy,
@@ -749,16 +750,15 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
         </div>
         {/* TODO show this message after upload receipt (send ws message) */}
         <p class="receiptMessage ion-text-center">
-          {need_pay && receipts.length == 0 ? (
-            <>
-              請注意，你的預約在上載付款證明之後才會生效。在此之前，這個時段可能會被其他人預約。
-            </>
-          ) : need_pay && receipts.length > 0 ? (
-            <>已上載付款證明，請等待 {shop.owner!.nickname} 確認</>
-          ) : (
-            <>提交預約申請，請等待 {shop.owner!.nickname} 確認</>
-          )}
+          {need_pay && receipts.length == 0
+            ? ReceiptMessage.not_paid
+            : need_pay && receipts.length > 0
+              ? ReceiptMessage.paid(shop)
+              : ReceiptMessage.free(shop)}
         </p>
+        <div id="receiptNavButtons">
+          {!need_pay || receipts.length > 0 ? receiptNavButton : null}
+        </div>
       </ion-content>
     </>
   )
@@ -802,6 +802,18 @@ function ReceiptFigure(
     </figure>
   )
 }
+let ReceiptMessage = {
+  not_paid:
+    '請注意，你的預約在上載付款證明之後才會生效。在此之前，這個時段可能會被其他人預約。',
+  paid: (shop: Shop) => `已上載付款證明，請等待 ${shop.owner!.nickname} 確認`,
+  free: (shop: Shop) => `已提交預約申請，請等待 ${shop.owner!.nickname} 確認`,
+}
+let receiptNavButton = nodeToVNode(
+  <Link tagName="ion-button" expand="block" href="/booking" class="ion-margin">
+    查看我的預約
+  </Link>,
+  { type: 'static' },
+)
 
 let ManageServiceStyle = Style(/* css */ `
 #ManageService h2,
@@ -1682,18 +1694,18 @@ function attachRoutes(app: Router) {
           maxFileSize: client_config.max_image_size,
         })
         let [fields, files] = await form.parse(req)
-        let nodes: Node[] = []
-        for (let file of files.file || []) {
+        let nodes: Node[] = (files.file || []).map(file => {
           let id = proxy.receipt.push({
             booking_id,
             filename: file.newFilename,
             upload_time: Date.now(),
           })
-          nodes.push(ReceiptFigure({ receipt: proxy.receipt[id] }, context))
-        }
+          return ReceiptFigure({ receipt: proxy.receipt[id] }, context)
+        })
         let messages: ServerMessage[] = []
         if (nodes.length > 0) {
           noticeBookingReceiptSubmit(booking, context)
+          let receiptMessage = ReceiptMessage.paid(shop)
           messages.push(
             ['append', '#receiptImageList', nodeToVNode([nodes], context)],
             [
@@ -1701,6 +1713,9 @@ function attachRoutes(app: Router) {
               '#submitModal ion-header ion-buttons',
               <ion-button onclick="submitModal.dismiss()">返回</ion-button>,
             ],
+            ['update-text', '.receiptMessage', receiptMessage],
+            ['eval', `showToast(${JSON.stringify(receiptMessage)},'info')`],
+            ['update-in', '#receiptNavButtons', receiptNavButton],
           )
         }
         let message: ServerMessage = ['batch', messages]
@@ -1974,8 +1989,10 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
 
           let receipt_id = context.routerMatch?.params.receipt_id
           let receipt = proxy.receipt[receipt_id]
+          let has_receipt = true
 
           if (receipt && user && receipt.booking?.user_id == user.id) {
+            let booking_id = receipt.booking_id!
             let dir = join(
               'public',
               'assets',
@@ -1987,15 +2004,25 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
             let file = join(dir, receipt.filename)
             unlinkSync(file)
             delete proxy.receipt[receipt_id]
+            has_receipt = count(proxy.receipt, { booking_id }) > 0
           }
 
-          throw new MessageException([
-            'batch',
-            [
-              ['eval', 'showToast("已刪除收據相片","info")'],
-              ['remove', `.receipt--item[data-receipt-id="${receipt_id}"]`],
-            ],
-          ])
+          let receiptMessage = has_receipt
+            ? '已刪除收據相片'
+            : ReceiptMessage.not_paid
+          let messages: ServerMessage[] = [
+            ['remove', `.receipt--item[data-receipt-id="${receipt_id}"]`],
+            ['eval', `showToast(${JSON.stringify(receiptMessage)},"info")`],
+          ]
+          if (has_receipt) {
+            messages.push(['update-in', '#receiptNavButtons', receiptNavButton])
+          } else {
+            messages.push(
+              ['update-text', '.receiptMessage', receiptMessage],
+              ['update-text', '#receiptNavButtons', ''],
+            )
+          }
+          throw new MessageException(['batch', messages])
         },
       )
     },
