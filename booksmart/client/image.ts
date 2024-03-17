@@ -4,6 +4,7 @@ import {
   dataURItoFile,
   resizeImage,
   resizeWithRatio,
+  rotateImage,
   toImage,
 } from '@beenotung/tslib/image.js'
 import { selectImage } from '@beenotung/tslib/file.js'
@@ -48,12 +49,15 @@ async function selectReceiptImages() {
   return Promise.all(
     files.map(async file => {
       let image = await toImage(file)
-      let size = 360
-      let quality = 0.5
-      let dataUrl = resizeImage(image, size, size, 'image/webp', quality)
-      if (!dataUrl.startsWith('data:image/webp')) {
-        dataUrl = resizeImage(image, size, size, 'image/jpeg', quality)
+      if (image.width > image.height) {
+        let canvas = rotateImage(image)
+        let dataUrl = canvas.toDataURL('image/webp')
+        image = await toImage(dataUrl)
       }
+      let quality = 0.5
+      let w = 360
+      let h = (360 * 16) / 9
+      let dataUrl = resizeImage(image, w, h, 'image/webp', quality)
       file = dataURItoFile(dataUrl, file)
       return { dataUrl, file }
     }),

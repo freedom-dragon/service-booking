@@ -56,7 +56,7 @@ import { Router } from 'express'
 import { HttpError } from '../../http-error.js'
 import { join } from 'path'
 import { Formidable } from 'formidable'
-import { mkdirSync, renameSync, unlinkSync } from 'fs'
+import { existsSync, mkdirSync, renameSync, unlinkSync } from 'fs'
 import { EarlyTerminate, MessageException } from '../helpers.js'
 import { nodeToVNode } from '../jsx/vnode.js'
 import { client_config } from '../../../client/client-config.js'
@@ -78,6 +78,7 @@ import {
   noticeBookingSubmit,
 } from '../app-email.js'
 import { ServerMessage } from '../../../client/types.js'
+import { createUploadForm, MimeTypeRegex } from '../upload.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -1680,18 +1681,10 @@ function attachRoutes(app: Router) {
           service_slug,
           'receipts',
         )
-        mkdirSync(dir, { recursive: true })
 
-        let form = new Formidable({
+        let form = createUploadForm({
           uploadDir: dir,
-          filename: (_name, _ext, part) => {
-            let ext = part.mimetype?.split('/').pop()
-            return randomUUID() + '.' + ext
-          },
-          filter: part =>
-            part.mimetype == 'image/webp' || part.mimetype == 'image/jpeg',
           maxFiles: 10,
-          maxFileSize: client_config.max_image_size,
         })
         let [fields, files] = await form.parse(req)
         let nodes: Node[] = (files.file || []).map(file => {
@@ -2002,7 +1995,9 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               'receipts',
             )
             let file = join(dir, receipt.filename)
-            unlinkSync(file)
+            if (existsSync(file)) {
+              unlinkSync(file)
+            }
             delete proxy.receipt[receipt_id]
             has_receipt = count(proxy.receipt, { booking_id }) > 0
           }
