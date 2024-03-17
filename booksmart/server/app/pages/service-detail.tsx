@@ -76,6 +76,7 @@ import {
   noticeBookingReceiptSubmit,
   noticeBookingSubmit,
 } from '../app-email.js'
+import { ServerMessage } from '../../../client/types.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -645,21 +646,14 @@ async function uploadReceipt(url) {
   for (let image of images) {
     formData.append('file', image.file)
   }
-  let res = await fetch(url, {
-    method: 'POST',
-    body: formData,
-  })
+  let res = await upload(url, formData)
   let json = await res.json()
   if (json.error) {
     showToast(json.error, 'error')
     return
   }
-  if (json.fragment) {
-    let fragment = document.createRange().createContextualFragment(json.fragment)
-    receiptImageList.appendChild(fragment)
-    let buttons = submitModal.querySelector('ion-header ion-buttons')
-    buttons.innerHTML = 
-    '<ion-button onclick="submitModal.dismiss()">返回</ion-button>'
+  if (json.message) {
+    onServerMessage(json.message)
   }
 }
 `)}
@@ -1697,11 +1691,21 @@ function attachRoutes(app: Router) {
           })
           nodes.push(ReceiptFigure({ receipt: proxy.receipt[id] }, context))
         }
+        let messages: ServerMessage[] = []
         if (nodes.length > 0) {
           noticeBookingReceiptSubmit(booking, context)
+          messages.push(
+            ['append', '#receiptImageList', nodeToVNode([nodes], context)],
+            [
+              'update-in',
+              '#submitModal ion-header ion-buttons',
+              <ion-button onclick="submitModal.dismiss()">返回</ion-button>,
+            ],
+          )
         }
+        let message: ServerMessage = ['batch', messages]
         res.json({
-          fragment: nodes.length == 0 ? '' : nodeToHTML([nodes], context),
+          message,
         })
       } catch (error) {
         next(error)
