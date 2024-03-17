@@ -31,6 +31,10 @@ import { sendEmail } from '../../email.js'
 import { toServiceUrl, toShopUrl } from '../app-url.js'
 import { getShopLocale } from '../shop-store.js'
 import { nodeToVNode } from '../jsx/vnode.js'
+import {
+  BookingPreview,
+  bookingPreviewStyle,
+} from '../components/booking-preview.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -52,6 +56,7 @@ hr {
 let page = (
   <>
     {style}
+    {bookingPreviewStyle}
     <Page />
     <ion-footer>
       {appIonTabBar}
@@ -94,6 +99,7 @@ function AdminPage(shop: Shop, context: DynamicContext) {
 
 function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
   let { shop } = attrs
+  let locale = getShopLocale(shop.id!)
   let shop_slug = shop.slug
   let services = filter(proxy.service, { shop_id: shop.id! })
   let submitted = services
@@ -218,10 +224,11 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
                                 提交時間：{timestamp(booking.submit_time)}
                               </div>
                             </div>
-                            <div class="ion-margin-top">
-                              預約時間：
-                              <DateTimeText time={booking.appointment_time} />
-                            </div>
+                            {BookingPreview(
+                              { locale, service, booking },
+                              context,
+                            )}
+                            {/* TODO show total fee */}
                           </ion-card-content>
                           <div class="ion-margin-horizontal">
                             {receipts.length == 0 ? (

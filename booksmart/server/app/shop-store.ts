@@ -20,6 +20,8 @@ export function getShopLocale(shop_id: number) {
   return locale
 }
 
+export type ShopLocales = ReturnType<typeof getShopLocale>
+
 export function getShopLogoImage(shop_slug: string) {
   return `/assets/shops/${shop_slug}/logo.webp`
 }

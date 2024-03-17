@@ -79,6 +79,10 @@ import {
 } from '../app-email.js'
 import { ServerMessage } from '../../../client/types.js'
 import { createUploadForm, MimeTypeRegex } from '../upload.js'
+import {
+  BookingPreview,
+  bookingPreviewStyle,
+} from '../components/booking-preview.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -678,6 +682,7 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
     fee_val || fee_val == 0
       ? '$' + (fee_val * amount).toLocaleString()
       : unit_price! // e.g. '📐 量身訂做'
+  let locale = getShopLocale(shop.id!)
   return (
     <>
       <ion-header>
@@ -703,29 +708,9 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
       </ion-header>
       <ion-content class="ion-padding">
         <h1>預約選項</h1>
-        <div>{service.name}</div>
-        <div>
-          ({booking.amount} {service.price_unit})
-        </div>
-        <div>款式: {booking.service_option?.name}</div>
-        <div>
-          預約日期:{' '}
-          {toLocaleDateTimeString(booking.appointment_time, context, {
-            weekday: 'short',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          })}
-        </div>
-        <div>
-          預約時間:{' '}
-          {toLocaleDateTimeString(booking.appointment_time, context, {
-            hour: '2-digit',
-            hour12: false,
-            minute: '2-digit',
-          })}
-        </div>
-        <div>時長: {service.hours}</div>
+        {bookingPreviewStyle}
+        {BookingPreview({ locale, service, booking }, context)}
+
         <h1>總共費用</h1>
         <div id="totalPriceLabel"></div>
         <div>{fee_str}</div>
