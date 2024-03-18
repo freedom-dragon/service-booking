@@ -1602,12 +1602,9 @@ function attachRoutes(app: Router) {
         let dir = join('public', 'assets', 'shops', shop_slug, service_slug)
         let filename =
           field_name == 'cover' ? 'cover.webp' : `option-${option_id}.webp`
-        let form = new Formidable({
+        let form = createUploadForm({
           uploadDir: dir,
-          filename: () => filename + '.tmp',
-          filter: part => part.mimetype == 'image/webp',
-          maxFiles: 1,
-          maxFileSize: client_config.max_image_size,
+          filename: filename + '.tmp',
         })
         let [fields, files] = await form.parse(req)
         let file = files.file?.[0].filepath
