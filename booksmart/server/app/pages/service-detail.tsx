@@ -83,6 +83,7 @@ import {
   BookingPreview,
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
+import { getBookingTotalFee, isFree } from '../fee.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -674,22 +675,16 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
   let shop_slug = shop.slug
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let receipts = filter(proxy.receipt, { booking_id: booking.id! })
-  let { unit_price } = service
-  let { amount } = booking
-  let fee_val = +unit_price!
-  let need_pay: boolean = !!fee_val
-  let fee_str: string =
-    fee_val || fee_val == 0
-      ? '$' + (fee_val * amount).toLocaleString()
-      : unit_price! // e.g. '📐 量身訂做'
+  let fee = getBookingTotalFee(booking)
+  let has_paid = receipts.length > 0
   let locale = getShopLocale(shop.id!)
   return (
     <>
       <ion-header>
         <ion-toolbar>
           <ion-buttons slot="start">
-            {receipts.length == 0 &&
-            need_pay &&
+            {!has_paid &&
+            !fee.is_free &&
             !booking.approve_time &&
             !booking.reject_time &&
             !booking.cancel_time ? (
@@ -713,7 +708,7 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
 
         <h1>總共費用</h1>
         <div id="totalPriceLabel"></div>
-        <div>{fee_str}</div>
+        <div>{fee.str}</div>
         <h1>付款方法</h1>
         <ion-item>
           <ion-thumbnail slot="start">
@@ -736,14 +731,14 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
         </div>
         {/* TODO show this message after upload receipt (send ws message) */}
         <p class="receiptMessage ion-text-center">
-          {need_pay && receipts.length == 0
-            ? ReceiptMessage.not_paid
-            : need_pay && receipts.length > 0
+          {fee.is_free
+            ? ReceiptMessage.free(shop)
+            : has_paid
               ? ReceiptMessage.paid(shop)
-              : ReceiptMessage.free(shop)}
+              : ReceiptMessage.not_paid}
         </p>
         <div id="receiptNavButtons">
-          {!need_pay || receipts.length > 0 ? receiptNavButton : null}
+          {fee.is_free || has_paid ? receiptNavButton : null}
         </div>
       </ion-content>
     </>
