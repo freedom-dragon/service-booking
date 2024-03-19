@@ -104,6 +104,14 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           />
           {name}
         </h1>
+        <img
+          class="ion-margin-horizontal"
+          style="
+            border-radius: 1rem;
+            width: calc(100% - 2rem);
+          "
+          src={getShopCoverImage(shop_slug)}
+        />
 
         <h2 class="ion-margin" style="margin-bottom: 0.25rem">
           {/* {owner_name} {locale.service} */}
@@ -145,14 +153,6 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         </ion-list>
 
         <h2 class="ion-margin">關於我們</h2>
-        <img
-          class="ion-margin-horizontal"
-          style="
-            border-radius: 1rem;
-            width: calc(100% - 2rem);
-          "
-          src={getShopCoverImage(shop_slug)}
-        />
         <div class="ion-margin">
           <b>{shop.bio}</b>
           <p>{shop.desc}</p>
