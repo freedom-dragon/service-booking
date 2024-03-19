@@ -35,6 +35,7 @@ import {
   BookingPreview,
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
+import { getBookingTotalFee } from '../fee.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -208,6 +209,7 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
                         booking_id: booking.id!,
                       })
                       let avatar_url = toUploadedUrl(booking.user!.avatar)
+                      let fee = getBookingTotalFee(booking)
                       return (
                         <ion-card data-booking-id={booking.id}>
                           <ion-card-content>
@@ -224,11 +226,15 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
                                 提交時間：{timestamp(booking.submit_time)}
                               </div>
                             </div>
-                            {BookingPreview(
-                              { locale, service, booking },
-                              context,
-                            )}
-                            {/* TODO show total fee */}
+                            <div style="color: black">
+                              {BookingPreview(
+                                { locale, service, booking },
+                                context,
+                              )}
+                              <div class="ion-margin-top">
+                                <b>總共費用: {fee.str}</b>
+                              </div>
+                            </div>
                           </ion-card-content>
                           <div class="ion-margin-horizontal">
                             {receipts.length == 0 ? (
