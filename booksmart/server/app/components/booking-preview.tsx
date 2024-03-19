@@ -19,9 +19,6 @@ export function BookingPreview(booking: Booking, context: Context) {
   let service = booking.service!
   let service_option = booking.service_option
   let locale = getShopLocale(service.shop_id)
-  if (!booking.appointment_time) {
-    return renderError('failed to load booking.appointment_time', context)
-  }
   return (
     <>
       <table class="booking-preview">
