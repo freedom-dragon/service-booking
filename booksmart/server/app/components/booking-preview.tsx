@@ -3,6 +3,7 @@ import { Context } from '../context.js'
 import { o } from '../jsx/jsx.js'
 import { ShopLocales, getShopLocale } from '../shop-store.js'
 import { toLocaleDateTimeString } from './datetime.js'
+import { renderError } from './error.js'
 import Style from './style.js'
 
 export let bookingPreviewStyle = Style(/* css */ `
@@ -18,6 +19,9 @@ export function BookingPreview(booking: Booking, context: Context) {
   let service = booking.service!
   let service_option = booking.service_option
   let locale = getShopLocale(service.shop_id)
+  if (!booking.appointment_time) {
+    return renderError('failed to load booking.appointment_time', context)
+  }
   return (
     <>
       <table class="booking-preview">
