@@ -200,6 +200,7 @@ service_id integer FK >0- service.id
 service_option_id integer FK >0- service_option.id
 submit_time integer
 appointment_time integer
+arrive_time integer NULL
 approve_time integer NULL
 reject_time integer NULL
 cancel_time integer NULL

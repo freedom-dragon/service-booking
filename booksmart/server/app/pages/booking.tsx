@@ -20,7 +20,7 @@ import { appIonTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { getAuthRole } from '../auth/role.js'
 import { Booking, Shop, User, proxy } from '../../../db/proxy.js'
-import { filter, notNull } from 'better-sqlite3-proxy'
+import { count, filter, notNull } from 'better-sqlite3-proxy'
 import { timestamp } from '../components/timestamp.js'
 import { Swiper } from '../components/swiper.js'
 import DateTimeText, { formatDateTimeText } from '../components/datetime.js'
@@ -37,6 +37,9 @@ import {
 } from '../components/booking-preview.js'
 import { getBookingTotalFee } from '../fee.js'
 import { env } from '../../env.js'
+import { db } from '../../../db/db.js'
+import { format_relative_time } from '@beenotung/tslib'
+import { Node } from '../jsx/types.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -73,15 +76,15 @@ function Page(attrs: {}, context: DynamicContext) {
   return shop ? AdminPage(shop, context) : UserPage(user, context)
 }
 
-function countBookings(list: { bookings: any[] }[]) {
-  let count = 0
-  for (let { bookings } of list) {
-    count += bookings.length
-  }
-  return ' (' + count + ')'
-}
-
-function BookingDetails(booking: Booking, context: Context) {
+function BookingDetails(
+  attrs: {
+    booking: Booking
+    timestamp: Node
+    open_receipt?: ''
+  },
+  context: Context,
+) {
+  let { booking } = attrs
   let receipts = filter(proxy.receipt, {
     booking_id: booking.id!,
   })
@@ -91,7 +94,7 @@ function BookingDetails(booking: Booking, context: Context) {
   let shop_slug = service.shop!.slug
   let service_slug = service.slug
   return (
-    <ion-card data-booking-id={booking.id}>
+    <ion-card>
       <ion-card-content>
         <div class="booking--header">
           <div>
@@ -102,7 +105,7 @@ function BookingDetails(booking: Booking, context: Context) {
             ) : null}
             <div>{booking.user!.nickname}</div>
           </div>
-          <div>提交時間：{timestamp(booking.submit_time)}</div>
+          {attrs.timestamp}
         </div>
         <div style="color: black">
           {BookingPreview(booking, context)}
@@ -112,20 +115,26 @@ function BookingDetails(booking: Booking, context: Context) {
         </div>
       </ion-card-content>
       <div class="ion-margin-horizontal">
-        {receipts.length == 0 ? (
-          <div class="ion-margin-bottom">未有上載收據</div>
-        ) : (
-          <div class="ion-margin-bottom">上載了 {receipts.length} 張收據</div>
-        )}
-        {mapArray(receipts, receipt => (
-          <div>
-            <img
-              src={`/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`}
-              loading="lazy"
-            />
-          </div>
-        ))}
-        <div class="booking--buttons">
+        <details open={attrs.open_receipt}>
+          <summary>
+            {receipts.length == 0 ? (
+              <span class="ion-margin-bottom">未有上載收據</span>
+            ) : (
+              <span class="ion-margin-bottom">
+                上載了 {receipts.length} 張收據
+              </span>
+            )}
+          </summary>
+          {mapArray(receipts, receipt => (
+            <div>
+              <img
+                src={`/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`}
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </details>
+        <div class="booking--buttons ion-margin-top">
           <ion-button
             color="primary"
             onclick={`emit('/booking/approve/${booking.id}')`}
@@ -169,59 +178,45 @@ function AdminPage(shop: Shop, context: DynamicContext) {
   )
 }
 
+let select_booking_id_by_shop = db
+  .prepare(
+    /* sql */ `
+select booking.id
+from booking
+inner join service on service.id = booking.service_id
+where service.shop_id = :shop_id
+`,
+  )
+  .pluck()
+
 function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
   let { shop } = attrs
-  let services = filter(proxy.service, { shop_id: shop.id! })
-  let submitted = services
-    .map(service => ({
-      service,
-      bookings: filter(proxy.booking, {
-        service_id: service.id!,
-        cancel_time: null,
-        approve_time: null,
-        reject_time: null,
-      }),
-    }))
-    .filter(item => item.bookings.length > 0)
-  let confirmed = services.map(service => ({
-    service,
-    bookings: filter(proxy.booking, {
-      service_id: service.id!,
-      cancel_time: null,
-      approve_time: notNull,
-      reject_time: null,
-    }),
-  }))
-  let now = Date.now()
-  let notCompleted = confirmed
-    .map(({ service, bookings }) => ({
-      service,
-      bookings: bookings.filter(booking => booking.appointment_time > now),
-    }))
-    .filter(item => item.bookings.length > 0)
-  let completed = confirmed
-    .map(({ service, bookings }) => ({
-      service,
-      bookings: bookings.filter(booking => booking.appointment_time <= now),
-    }))
-    .filter(item => item.bookings.length > 0)
-  let cancelled = services
-    .map(service => ({
-      service,
-      bookings: Array.from(
-        new Set([
-          ...filter(proxy.booking, {
-            service_id: service.id!,
-            cancel_time: notNull,
-          }),
-          ...filter(proxy.booking, {
-            service_id: service.id!,
-            reject_time: notNull,
-          }),
-        ]),
-      ),
-    }))
-    .filter(item => item.bookings.length > 0)
+
+  let booking_ids: number[] = []
+  let submitted: Booking[] = []
+  let confirmed: Booking[] = []
+  let completed: Booking[] = []
+  let cancelled: Booking[] = []
+
+  let service_count = count(proxy.service, { shop_id: shop.id! })
+  if (service_count > 0) {
+    booking_ids = select_booking_id_by_shop.all({
+      shop_id: shop.id,
+    }) as number[]
+    for (let id of booking_ids) {
+      let booking = proxy.booking[id]
+      if (booking.cancel_time || booking.reject_time) {
+        cancelled.push(booking)
+      } else if (booking.arrive_time) {
+        completed.push(booking)
+      } else if (booking.approve_time) {
+        confirmed.push(booking)
+      } else {
+        submitted.push(booking)
+      }
+    }
+  }
+
   return (
     <>
       <ion-segment value="submitted">
@@ -229,113 +224,98 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
           value="submitted"
           onclick="swiperSlide(bookingSwiper,'0')"
         >
-          未確認
-          {countBookings(submitted)}
+          未確認 ({submitted.length})
         </ion-segment-button>
         <ion-segment-button
           value="confirmed"
           onclick="swiperSlide(bookingSwiper,'1')"
         >
-          未開始
-          {countBookings(notCompleted)}
+          未開始 ({confirmed.length})
         </ion-segment-button>
         <ion-segment-button
           value="completed"
           onclick="swiperSlide(bookingSwiper,'2')"
         >
-          已完成
-          {countBookings(completed)}
+          已完成 ({completed.length})
         </ion-segment-button>
         <ion-segment-button
           value="cancelled"
           onclick="swiperSlide(bookingSwiper,'3')"
         >
-          已取消
-          {countBookings(cancelled)}
+          已取消 ({cancelled.length})
         </ion-segment-button>
       </ion-segment>
-      {services.length == 0 ? (
+      {service_count == 0 ? (
         <p class="ion-text-center">未有服務可接受預約</p>
       ) : null}
       {Swiper({
         id: 'bookingSwiper',
         slides: [
           <ion-list data-segment="submitted">
-            {submitted.length == 0 ? (
-              <p class="ion-margin-start">未有</p>
-            ) : (
-              mapArray(submitted, ({ service, bookings }) => {
-                return (
-                  <div data-service-id={service.id}>
-                    <ion-list-header>{service.name}</ion-list-header>
-                    <p class="ion-margin-start">
-                      <span class="booking-count">{bookings.length}</span>{' '}
-                      個未確認預約
-                    </p>
-                    {mapArray(bookings, booking =>
-                      BookingDetails(booking, context),
-                    )}
-                  </div>
-                )
-              })
+            <p class="ion-margin-start">
+              <span class="booking-count">{submitted.length}</span> 個未確認預約
+            </p>
+            {mapArray(submitted, booking =>
+              BookingDetails(
+                {
+                  booking,
+                  timestamp: (
+                    <div>提交時間：{timestamp(booking.submit_time)}</div>
+                  ),
+                },
+                context,
+              ),
             )}
           </ion-list>,
           <ion-list data-segment="confirmed">
-            {notCompleted.length == 0 ? (
-              <p class="ion-margin-start">未有</p>
-            ) : (
-              mapArray(notCompleted, ({ service, bookings }) => (
-                <>
-                  <ion-list-header>{service.name}</ion-list-header>
-                  {mapArray(bookings, booking => (
-                    <ion-item>
-                      <ion-label>{booking.user!.nickname}</ion-label>
-                      <ion-note>
-                        預約時間：{timestamp(booking.appointment_time!)}
-                      </ion-note>
-                    </ion-item>
-                  ))}
-                </>
-              ))
+            <p class="ion-margin-start">
+              <span class="booking-count">{confirmed.length}</span> 個未開始預約
+            </p>
+            {mapArray(confirmed, booking =>
+              BookingDetails(
+                {
+                  booking,
+                  timestamp: (
+                    <div>開始時間：{timestamp(booking.appointment_time)}</div>
+                  ),
+                },
+                context,
+              ),
             )}
           </ion-list>,
           <ion-list data-segment="completed">
-            {completed.length == 0 ? (
-              <p class="ion-margin-start">未有</p>
-            ) : (
-              mapArray(completed, ({ service, bookings }) => (
-                <>
-                  <ion-list-header>{service.name}</ion-list-header>
-                  {mapArray(bookings, booking => (
-                    <ion-item>
-                      <ion-label>{booking.user!.nickname}</ion-label>
-                      <ion-note>
-                        預約時間：{timestamp(booking.appointment_time!)}
-                      </ion-note>
-                    </ion-item>
-                  ))}
-                </>
-              ))
+            <p class="ion-margin-start">
+              <span class="booking-count">{completed.length}</span> 個已完成預約
+            </p>
+            {mapArray(completed, booking =>
+              BookingDetails(
+                {
+                  booking,
+                  timestamp: (
+                    <div>報到時間：{timestamp(booking.arrive_time!)}</div>
+                  ),
+                },
+                context,
+              ),
             )}
           </ion-list>,
           <ion-list data-segment="cancelled">
-            {cancelled.length == 0 ? (
-              <p class="ion-margin-start">未有</p>
-            ) : (
-              mapArray(cancelled, ({ service, bookings }) => (
-                <>
-                  <ion-list-header>{service.name}</ion-list-header>
-                  {mapArray(bookings, booking => (
-                    <ion-item>
-                      <ion-label>{booking.user!.nickname}</ion-label>
-                      <ion-note>
-                        取消時間：
-                        {timestamp(booking.reject_time || booking.cancel_time!)}
-                      </ion-note>
-                    </ion-item>
-                  ))}
-                </>
-              ))
+            <p class="ion-margin-start">
+              <span class="booking-count">{cancelled.length}</span> 個已取消預約
+            </p>
+            {mapArray(cancelled, booking =>
+              BookingDetails(
+                {
+                  booking,
+                  timestamp: (
+                    <div>
+                      取消時間：
+                      {timestamp(booking.cancel_time || booking.reject_time!)}
+                    </div>
+                  ),
+                },
+                context,
+              ),
             )}
           </ion-list>,
         ],

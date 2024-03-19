@@ -187,6 +187,7 @@ export type Booking = {
   service_option?: ServiceOption
   submit_time: number
   appointment_time: number
+  arrive_time: null | number
   approve_time: null | number
   reject_time: null | number
   cancel_time: null | number
