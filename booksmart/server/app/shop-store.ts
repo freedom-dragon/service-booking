@@ -1,26 +1,32 @@
-import { filter } from 'better-sqlite3-proxy'
+import { filter, find } from 'better-sqlite3-proxy'
 import { Shop, proxy } from '../../db/proxy.js'
 import { readdirSync } from 'fs'
 import { TimezoneDate } from 'timezone-date.ts'
 import { format_2_digit } from '@beenotung/tslib/format.js'
 import { values } from 'cast.ts'
 
-export function getShopLocale(shop_id: number) {
-  let rows = filter(proxy.shop_locale, { shop_id })
-  let dict: Record<string, string> = {}
-  for (let row of rows) {
-    dict[row.key] = row.value
-  }
-  let locale = dict as {
-    tutor: string
-    service: string
-  }
-  locale.tutor ||= '導師'
-  locale.service ||= '服務'
-  return locale
+export type ShopLocales = {
+  tutor: string
+  service: string
 }
 
-export type ShopLocales = ReturnType<typeof getShopLocale>
+let shop_locale_cache: Record<number, ShopLocales> = {}
+
+export function invalidateShopLocale(shop_id: number): void {
+  delete shop_locale_cache[shop_id]
+}
+
+export function getShopLocale(shop_id: number): ShopLocales {
+  let locale = shop_locale_cache[shop_id]
+  if (locale) return locale
+  locale = {
+    tutor: find(proxy.shop_locale, { shop_id, key: 'tutor' })?.value || '導師',
+    service:
+      find(proxy.shop_locale, { shop_id, key: 'service' })?.value || '服務',
+  }
+  shop_locale_cache[shop_id] = locale
+  return locale
+}
 
 export function getShopLogoImage(shop_slug: string) {
   return `/assets/shops/${shop_slug}/logo.webp`

@@ -1,6 +1,6 @@
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
-import { apiEndpointTitle, config, title } from '../../config.js'
+import { apiEndpointTitle, title } from '../../config.js'
 import Style from '../components/style.js'
 import {
   Context,
@@ -19,7 +19,7 @@ import { DAY } from '@beenotung/tslib/time.js'
 import { appIonTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { getAuthRole } from '../auth/role.js'
-import { Shop, User, proxy } from '../../../db/proxy.js'
+import { Booking, Shop, User, proxy } from '../../../db/proxy.js'
 import { filter, notNull } from 'better-sqlite3-proxy'
 import { timestamp } from '../components/timestamp.js'
 import { Swiper } from '../components/swiper.js'
@@ -36,6 +36,7 @@ import {
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
 import { getBookingTotalFee } from '../fee.js'
+import { env } from '../../env.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -80,6 +81,76 @@ function countBookings(list: { bookings: any[] }[]) {
   return ' (' + count + ')'
 }
 
+function BookingDetails(booking: Booking, context: Context) {
+  let receipts = filter(proxy.receipt, {
+    booking_id: booking.id!,
+  })
+  let avatar_url = toUploadedUrl(booking.user!.avatar)
+  let fee = getBookingTotalFee(booking)
+  let service = booking.service!
+  let shop_slug = service.shop!.slug
+  let service_slug = service.slug
+  return (
+    <ion-card data-booking-id={booking.id}>
+      <ion-card-content>
+        <div class="booking--header">
+          <div>
+            {avatar_url ? (
+              <ion-avatar>
+                <img src={avatar_url} loading="lazy" />
+              </ion-avatar>
+            ) : null}
+            <div>{booking.user!.nickname}</div>
+          </div>
+          <div>提交時間：{timestamp(booking.submit_time)}</div>
+        </div>
+        <div style="color: black">
+          {BookingPreview(booking, context)}
+          <div class="ion-margin-top">
+            <b>總共費用: {fee.str}</b>
+          </div>
+        </div>
+      </ion-card-content>
+      <div class="ion-margin-horizontal">
+        {receipts.length == 0 ? (
+          <div class="ion-margin-bottom">未有上載收據</div>
+        ) : (
+          <div class="ion-margin-bottom">上載了 {receipts.length} 張收據</div>
+        )}
+        {mapArray(receipts, receipt => (
+          <div>
+            <img
+              src={`/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`}
+              loading="lazy"
+            />
+          </div>
+        ))}
+        <div class="booking--buttons">
+          <ion-button
+            color="primary"
+            onclick={`emit('/booking/approve/${booking.id}')`}
+          >
+            確認
+          </ion-button>
+          <ion-button
+            color="warning"
+            // onclick={`emit('/booking/re/${booking.id}')`}
+            disabled
+          >
+            改期
+          </ion-button>
+          <ion-button
+            color="dark"
+            onclick={`emit('/booking/reject/${booking.id}')`}
+          >
+            取消
+          </ion-button>
+        </div>
+      </div>
+    </ion-card>
+  )
+}
+
 function AdminPage(shop: Shop, context: DynamicContext) {
   return (
     <>
@@ -100,8 +171,6 @@ function AdminPage(shop: Shop, context: DynamicContext) {
 
 function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
   let { shop } = attrs
-  let locale = getShopLocale(shop.id!)
-  let shop_slug = shop.slug
   let services = filter(proxy.service, { shop_id: shop.id! })
   let submitted = services
     .map(service => ({
@@ -196,7 +265,6 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
               <p class="ion-margin-start">未有</p>
             ) : (
               mapArray(submitted, ({ service, bookings }) => {
-                let service_slug = service.slug
                 return (
                   <div data-service-id={service.id}>
                     <ion-list-header>{service.name}</ion-list-header>
@@ -204,79 +272,9 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
                       <span class="booking-count">{bookings.length}</span>{' '}
                       個未確認預約
                     </p>
-                    {mapArray(bookings, booking => {
-                      let receipts = filter(proxy.receipt, {
-                        booking_id: booking.id!,
-                      })
-                      let avatar_url = toUploadedUrl(booking.user!.avatar)
-                      let fee = getBookingTotalFee(booking)
-                      return (
-                        <ion-card data-booking-id={booking.id}>
-                          <ion-card-content>
-                            <div class="booking--header">
-                              <div>
-                                {avatar_url ? (
-                                  <ion-avatar>
-                                    <img src={avatar_url} loading="lazy" />
-                                  </ion-avatar>
-                                ) : null}
-                                <div>{booking.user!.nickname}</div>
-                              </div>
-                              <div>
-                                提交時間：{timestamp(booking.submit_time)}
-                              </div>
-                            </div>
-                            <div style="color: black">
-                              {BookingPreview(
-                                { locale, service, booking },
-                                context,
-                              )}
-                              <div class="ion-margin-top">
-                                <b>總共費用: {fee.str}</b>
-                              </div>
-                            </div>
-                          </ion-card-content>
-                          <div class="ion-margin-horizontal">
-                            {receipts.length == 0 ? (
-                              <div class="ion-margin-bottom">未有上載收據</div>
-                            ) : (
-                              <div class="ion-margin-bottom">
-                                上載了 {receipts.length} 張收據
-                              </div>
-                            )}
-                            {mapArray(receipts, receipt => (
-                              <div>
-                                <img
-                                  src={`/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`}
-                                  loading="lazy"
-                                />
-                              </div>
-                            ))}
-                            <div class="booking--buttons">
-                              <ion-button
-                                color="primary"
-                                onclick={`emit('/booking/approve/${booking.id}')`}
-                              >
-                                確認
-                              </ion-button>
-                              <ion-button
-                                color="warning"
-                                // onclick={`emit('/booking/re/${booking.id}')`}
-                                disabled
-                              >
-                                改期
-                              </ion-button>
-                              <ion-button
-                                color="dark"
-                                onclick={`emit('/booking/reject/${booking.id}')`}
-                              >
-                                取消
-                              </ion-button>
-                            </div>
-                          </div>
-                        </ion-card>
-                      )
-                    })}
+                    {mapArray(bookings, booking =>
+                      BookingDetails(booking, context),
+                    )}
                   </div>
                 )
               })
@@ -582,7 +580,7 @@ function ApproveBooking(attrs: {}, context: WsContext) {
     let service_url = toServiceUrl(service)
 
     sendEmail({
-      from: config.email.auth.user,
+      from: env.EMAIL_USER,
       to: booking.user!.email!,
       cc: user.email!,
       subject: title(`${service!.name}預約確認`),
@@ -663,7 +661,7 @@ function RejectBooking(attrs: {}, context: WsContext) {
     let shop_url = toShopUrl(shop)
 
     sendEmail({
-      from: config.email.auth.user,
+      from: env.EMAIL_USER,
       to: booking.user!.email!,
       cc: user.email!,
       subject: title(`${service!.name}預約取消`),

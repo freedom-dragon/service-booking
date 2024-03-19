@@ -1,6 +1,7 @@
 import { Booking } from '../../db/proxy.js'
-import { config, title } from '../config.js'
+import { title } from '../config.js'
 import { sendEmail } from '../email.js'
+import { env } from '../env.js'
 import { formatDateTimeText } from './components/datetime.js'
 import { Context } from './context.js'
 
@@ -9,9 +10,9 @@ export function noticeBookingSubmit(booking: Booking, context: Context) {
   let user = booking.user!
   let shop = service.shop!
   let owner = shop.owner!
-  let booking_url = `${config.origin}/booking`
+  let booking_url = `${env.ORIGIN}/booking`
   sendEmail({
-    from: config.email.auth.user,
+    from: env.EMAIL_USER,
     to: owner.email!,
     cc: user.email!,
     subject: title(`${service!.name} 預約提交`),
@@ -45,9 +46,9 @@ export function noticeBookingReceiptSubmit(booking: Booking, context: Context) {
   let user = booking.user!
   let shop = service.shop!
   let owner = shop.owner!
-  let booking_url = `${config.origin}/booking`
+  let booking_url = `${env.ORIGIN}/booking`
   sendEmail({
-    from: config.email.auth.user,
+    from: env.EMAIL_USER,
     to: owner.email!,
     subject: title(`${user.nickname} 提交了 ${service!.name} 的預約收據`),
     html: /* html */ `

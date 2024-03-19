@@ -1,6 +1,6 @@
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
-import { apiEndpointTitle, config, title } from '../../config.js'
+import { apiEndpointTitle, title } from '../../config.js'
 import Style from '../components/style.js'
 import {
   Context,
@@ -84,6 +84,7 @@ import {
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
 import { getBookingTotalFee, isFree } from '../fee.js'
+import { env } from '../../env.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -1863,7 +1864,7 @@ let routes: Routes = {
               context,
             )
             sendEmail({
-              from: config.email.auth.user,
+              from: env.EMAIL_USER,
               to: email,
               subject: title(`${service.name} 預約確認`),
               html,

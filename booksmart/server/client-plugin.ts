@@ -26,7 +26,7 @@ export function loadClientPlugin(options: {
     entryPoints: [entryFile],
     outfile: outFile,
     bundle: true,
-    minify: config.production,
+    minify: config.minify,
     target: config.client_target,
   })
 

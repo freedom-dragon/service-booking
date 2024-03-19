@@ -1,4 +1,5 @@
 import { config } from '../../config.js'
+import { env } from '../../env.js'
 import type { Raw } from '../jsx/types'
 import * as esbuild from 'esbuild'
 
@@ -36,7 +37,7 @@ export type ScriptFlag = 'no-minify' | 'minify'
  * @returns script element
  */
 export function Script(js: string, flag?: ScriptFlag): Raw {
-  if (flag == 'minify' || (flag != 'no-minify' && config.production)) {
+  if (flag == 'minify' || (flag != 'no-minify' && config.minify)) {
     js = minify(js)
   }
   return ['raw', `<script>${js}</script>`]

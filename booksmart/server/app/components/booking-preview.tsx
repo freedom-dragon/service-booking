@@ -1,7 +1,7 @@
 import { Booking, Service } from '../../../db/proxy.js'
 import { Context } from '../context.js'
 import { o } from '../jsx/jsx.js'
-import { ShopLocales } from '../shop-store.js'
+import { ShopLocales, getShopLocale } from '../shop-store.js'
 import { toLocaleDateTimeString } from './datetime.js'
 import Style from './style.js'
 
@@ -14,16 +14,10 @@ export let bookingPreviewStyle = Style(/* css */ `
 }
 `)
 
-export function BookingPreview(
-  attrs: {
-    locale: ShopLocales
-    service: Service
-    booking: Booking
-  },
-  context: Context,
-) {
-  let { locale, service, booking } = attrs
+export function BookingPreview(booking: Booking, context: Context) {
+  let service = booking.service!
   let service_option = booking.service_option
+  let locale = getShopLocale(service.shop_id)
   return (
     <>
       <table class="booking-preview">

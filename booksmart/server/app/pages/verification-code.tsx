@@ -2,7 +2,7 @@ import { Random, digits } from '@beenotung/tslib/random.js'
 import { MINUTE } from '@beenotung/tslib/time.js'
 import { db } from '../../../db/db.js'
 import { HttpError } from '../../http-error.js'
-import { VerificationCode, proxy } from '../../../db/proxy.js'
+import { proxy } from '../../../db/proxy.js'
 import { boolean, email, object, optional, string } from 'cast.ts'
 import { sendEmail } from '../../email.js'
 import { apiEndpointTitle, config, title } from '../../config.js'
@@ -22,6 +22,7 @@ import { renderError } from '../components/error.js'
 import { debugLog } from '../../debug.js'
 import { filter, find, unProxy } from 'better-sqlite3-proxy'
 import { writeUserIdToCookie } from '../auth/user.js'
+import { env } from '../../env.js'
 
 let log = debugLog('app:verification-code')
 log.enabled = true
@@ -95,7 +96,7 @@ async function requestEmailVerification(
       context,
     )
     let info = await sendEmail({
-      from: config.email.auth.user,
+      from: env.EMAIL_USER,
       to: input.email,
       subject: title('Email Verification'),
       html,
@@ -146,7 +147,7 @@ export function verificationCodeEmail(
   context: Context,
 ) {
   let url = attrs.email
-    ? config.origin +
+    ? env.ORIGIN +
       '/verify/email/result?' +
       new URLSearchParams({
         code: attrs.passcode,
