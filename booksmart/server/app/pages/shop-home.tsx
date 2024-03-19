@@ -113,7 +113,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           src={getShopCoverImage(shop_slug)}
         />
 
-        <h2 class="ion-margin" style="margin-bottom: 0.25rem">
+        <h2 class="ion-margin" style="margin-bottom: 0.5rem">
           {/* {owner_name} {locale.service} */}
           Booking
         </h2>
