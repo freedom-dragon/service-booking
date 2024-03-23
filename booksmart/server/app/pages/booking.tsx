@@ -79,7 +79,8 @@ function Page(attrs: {}, context: DynamicContext) {
 function BookingDetails(attrs: {
   booking: Booking
   timestamp: Node
-  open_receipt?: ''
+  open_receipt?: boolean
+  can_confirm?: boolean
 }) {
   let { booking } = attrs
   let receipts = filter(proxy.receipt, {
@@ -132,12 +133,14 @@ function BookingDetails(attrs: {
           ))}
         </details>
         <div class="booking--buttons ion-margin-top">
-          <ion-button
-            color="primary"
-            onclick={`emit('/booking/approve/${booking.id}')`}
-          >
-            確認
-          </ion-button>
+          {attrs.can_confirm ? (
+            <ion-button
+              color="primary"
+              onclick={`emit('/booking/approve/${booking.id}')`}
+            >
+              確認
+            </ion-button>
+          ) : null}
           <ion-button
             color="warning"
             // onclick={`emit('/booking/re/${booking.id}')`}
@@ -269,6 +272,8 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
                 timestamp: (
                   <div>提交時間：{timestamp(booking.submit_time)}</div>
                 ),
+                open_receipt: true,
+                can_confirm: true,
               }),
             )}
           </ion-list>,
