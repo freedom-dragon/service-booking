@@ -40,6 +40,7 @@ import { env } from '../../env.js'
 import { db } from '../../../db/db.js'
 import { format_relative_time } from '@beenotung/tslib'
 import { Node } from '../jsx/types.js'
+import { ServerMessage } from '../../../client/types.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -55,6 +56,9 @@ hr {
 .booking--buttons {
   display: flex;
   justify-content: space-around;
+}
+ion-segment-button .list-count {
+  display: inline;
 }
 `)
 
@@ -81,6 +85,7 @@ function BookingDetails(attrs: {
   timestamp: Node
   open_receipt?: boolean
   can_confirm?: boolean
+  can_arrive?: boolean
 }) {
   let { booking } = attrs
   let receipts = filter(proxy.receipt, {
@@ -141,6 +146,14 @@ function BookingDetails(attrs: {
               確認
             </ion-button>
           ) : null}
+          {attrs.can_arrive ? (
+            <ion-button
+              color="primary"
+              onclick={`emit('/booking/arrive/${booking.id}')`}
+            >
+              報到
+            </ion-button>
+          ) : null}
           <ion-button
             color="warning"
             // onclick={`emit('/booking/re/${booking.id}')`}
@@ -161,17 +174,34 @@ function BookingDetails(attrs: {
 }
 
 function AdminPage(shop: Shop, context: DynamicContext) {
+  let page = AdminPageContent({ shop }, context)
   return (
     <>
-      <ion-header>
+      <ion-header id="BookingTabHeader">
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
             客戶的預約
           </ion-title>
         </ion-toolbar>
+        <ion-segment
+          value="submitted"
+          style="margin: 4px; width: calc(100% - 8px)"
+        >
+          {page.segmentButtons}
+        </ion-segment>
       </ion-header>
-      <ion-content id="BookingTab" class="ion-padding">
-        <AdminPageContent shop={shop} />
+      <ion-content id="BookingTabContent" class="ion-padding-horizontal">
+        <div class="page-message">
+          {page.service_count == 0 ? (
+            <p class="ion-text-center">未有服務可接受預約</p>
+          ) : null}
+        </div>
+        {Swiper({
+          id: 'bookingSwiper',
+          slides: page.segmentList.map(list => (
+            <ion-list data-segment={list.segment}>{list.content}</ion-list>
+          )),
+        })}
       </ion-content>
       {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     </>
@@ -189,7 +219,7 @@ where service.shop_id = :shop_id
   )
   .pluck()
 
-function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
+function AdminPageContent(attrs: { shop: Shop }, context: Context) {
   let { shop } = attrs
 
   let booking_ids: number[] = []
@@ -228,107 +258,150 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
     )
   }
 
-  return (
+  let segmentButtons = (
     <>
-      <ion-segment value="submitted">
-        <ion-segment-button
-          value="submitted"
-          onclick="swiperSlide(bookingSwiper,'0')"
-        >
-          未確認 ({submitted.length})
-        </ion-segment-button>
-        <ion-segment-button
-          value="confirmed"
-          onclick="swiperSlide(bookingSwiper,'1')"
-        >
-          未開始 ({confirmed.length})
-        </ion-segment-button>
-        <ion-segment-button
-          value="completed"
-          onclick="swiperSlide(bookingSwiper,'2')"
-        >
-          已完成 ({completed.length})
-        </ion-segment-button>
-        <ion-segment-button
-          value="cancelled"
-          onclick="swiperSlide(bookingSwiper,'3')"
-        >
-          已取消 ({cancelled.length})
-        </ion-segment-button>
-      </ion-segment>
-      {service_count == 0 ? (
-        <p class="ion-text-center">未有服務可接受預約</p>
-      ) : null}
-      {Swiper({
-        id: 'bookingSwiper',
-        slides: [
-          <ion-list data-segment="submitted">
-            <p class="ion-margin-start">
-              <span class="booking-count">{submitted.length}</span> 個未確認預約
-            </p>
-            {mapArray(submitted, booking =>
-              BookingDetails({
-                booking,
-                timestamp: (
-                  <div>提交時間：{relative_timestamp(booking.submit_time)}</div>
-                ),
-                open_receipt: true,
-                can_confirm: true,
-              }),
-            )}
-          </ion-list>,
-          <ion-list data-segment="confirmed">
-            <p class="ion-margin-start">
-              <span class="booking-count">{confirmed.length}</span> 個未開始預約
-            </p>
-            {mapArray(confirmed, booking =>
-              BookingDetails({
-                booking,
-                timestamp: (
-                  <div>
-                    開始時間：{relative_timestamp(booking.appointment_time)}
-                  </div>
-                ),
-              }),
-            )}
-          </ion-list>,
-          <ion-list data-segment="completed">
-            <p class="ion-margin-start">
-              <span class="booking-count">{completed.length}</span> 個已完成預約
-            </p>
-            {mapArray(completed, booking =>
-              BookingDetails({
-                booking,
-                timestamp: (
-                  <div>
-                    報到時間：{relative_timestamp(booking.arrive_time!)}
-                  </div>
-                ),
-              }),
-            )}
-          </ion-list>,
-          <ion-list data-segment="cancelled">
-            <p class="ion-margin-start">
-              <span class="booking-count">{cancelled.length}</span> 個已取消預約
-            </p>
-            {mapArray(cancelled, booking =>
-              BookingDetails({
-                booking,
-                timestamp: (
-                  <div>
-                    取消時間：
-                    {relative_timestamp(
-                      booking.cancel_time || booking.reject_time!,
-                    )}
-                  </div>
-                ),
-              }),
-            )}
-          </ion-list>,
-        ],
-      })}
+      <ion-segment-button
+        value="submitted"
+        onclick="swiperSlide(bookingSwiper,'0')"
+      >
+        未確認 ({submitted.length})
+      </ion-segment-button>
+      <ion-segment-button
+        value="confirmed"
+        onclick="swiperSlide(bookingSwiper,'1')"
+      >
+        未開始 ({confirmed.length})
+      </ion-segment-button>
+      <ion-segment-button
+        value="completed"
+        onclick="swiperSlide(bookingSwiper,'2')"
+      >
+        已完成 ({completed.length})
+      </ion-segment-button>
+      <ion-segment-button
+        value="cancelled"
+        onclick="swiperSlide(bookingSwiper,'3')"
+      >
+        已取消 ({cancelled.length})
+      </ion-segment-button>
     </>
   )
+
+  let segmentList = [
+    {
+      segment: 'submitted',
+      content: (
+        <>
+          <p class="ion-margin-start">
+            <span class="booking-count">{submitted.length}</span> 個未確認預約
+          </p>
+          {mapArray(submitted, booking =>
+            BookingDetails({
+              booking,
+              timestamp: (
+                <div>提交時間：{relative_timestamp(booking.submit_time)}</div>
+              ),
+              open_receipt: true,
+              can_confirm: true,
+            }),
+          )}
+        </>
+      ),
+    },
+    {
+      segment: 'confirmed',
+      content: (
+        <>
+          <p class="ion-margin-start">
+            <span class="booking-count">{confirmed.length}</span> 個未開始預約
+          </p>
+          {mapArray(confirmed, booking =>
+            BookingDetails({
+              booking,
+              timestamp: (
+                <div>
+                  開始時間：{relative_timestamp(booking.appointment_time)}
+                </div>
+              ),
+              can_arrive: true,
+            }),
+          )}{' '}
+        </>
+      ),
+    },
+    {
+      segment: 'completed',
+      content: (
+        <>
+          <p class="ion-margin-start">
+            <span class="booking-count">{completed.length}</span> 個已完成預約
+          </p>
+          {mapArray(completed, booking =>
+            BookingDetails({
+              booking,
+              timestamp: (
+                <div>報到時間：{relative_timestamp(booking.arrive_time!)}</div>
+              ),
+            }),
+          )}{' '}
+        </>
+      ),
+    },
+    {
+      segment: 'cancelled',
+      content: (
+        <>
+          <p class="ion-margin-start">
+            <span class="booking-count">{cancelled.length}</span> 個已取消預約
+          </p>
+          {mapArray(cancelled, booking =>
+            BookingDetails({
+              booking,
+              timestamp: (
+                <div>
+                  取消時間：
+                  {relative_timestamp(
+                    booking.cancel_time || booking.reject_time!,
+                  )}
+                </div>
+              ),
+            }),
+          )}{' '}
+        </>
+      ),
+    },
+  ]
+
+  function toUpdateMessages(): ServerMessage[] {
+    return [
+      [
+        'update-in',
+        '#BookingTabHeader ion-segment',
+        nodeToVNode(segmentButtons, context),
+      ],
+      [
+        'update-in',
+        '#BookingTabContent .page-message',
+        nodeToVNode(
+          page.service_count == 0 ? (
+            <p class="ion-text-center">未有服務可接受預約</p>
+          ) : (
+            <></>
+          ),
+          context,
+        ),
+      ],
+      ...segmentList.map(
+        (list): ServerMessage => [
+          'update-in',
+          `#bookingSwiper ion-list[data-segment="${list.segment}"]`,
+          nodeToVNode(list.content, context),
+        ],
+      ),
+    ]
+  }
+
+  return { segmentButtons, segmentList, service_count, toUpdateMessages }
 }
 
 function UserPage(user: User | null, context: DynamicContext) {
@@ -603,11 +676,7 @@ ${booking.user!.nickname} 你好，
           'eval',
           `showToast('確認了${booking.user!.nickname}的${booking.service!.name}預約','success')`,
         ],
-        [
-          'update-in',
-          '#BookingTab',
-          nodeToVNode(AdminPageContent({ shop }, context), context),
-        ],
+        ...AdminPageContent({ shop }, context).toUpdateMessages(),
       ],
     ])
   } catch (error) {
@@ -684,11 +753,7 @@ ${booking.user!.nickname} 你好，
           'eval',
           `showToast('取消了${booking.user!.nickname}的${booking.service!.name}預約','info')`,
         ],
-        [
-          'update-in',
-          '#BookingTab',
-          nodeToVNode(AdminPageContent({ shop }, context), context),
-        ],
+        ...AdminPageContent({ shop }, context).toUpdateMessages(),
       ],
     ])
   } catch (error) {
