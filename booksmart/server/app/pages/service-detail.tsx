@@ -705,7 +705,7 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
       <ion-content class="ion-padding">
         <h1>預約選項</h1>
         {bookingPreviewStyle}
-        {BookingPreview(booking, context)}
+        <BookingPreview booking={booking} />
 
         <h1>總共費用</h1>
         <div id="totalPriceLabel"></div>

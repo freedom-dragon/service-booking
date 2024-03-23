@@ -108,7 +108,7 @@ function BookingDetails(
           {attrs.timestamp}
         </div>
         <div style="color: black">
-          {BookingPreview(booking, context)}
+          <BookingPreview booking={booking} style="margin: 0.25rem 1rem" />
           <div class="ion-margin-top">
             <b>總共費用: {fee.str}</b>
           </div>
