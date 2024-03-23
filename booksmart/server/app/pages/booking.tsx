@@ -76,14 +76,11 @@ function Page(attrs: {}, context: DynamicContext) {
   return shop ? AdminPage(shop, context) : UserPage(user, context)
 }
 
-function BookingDetails(
-  attrs: {
-    booking: Booking
-    timestamp: Node
-    open_receipt?: ''
-  },
-  context: Context,
-) {
+function BookingDetails(attrs: {
+  booking: Booking
+  timestamp: Node
+  open_receipt?: ''
+}) {
   let { booking } = attrs
   let receipts = filter(proxy.receipt, {
     booking_id: booking.id!,
@@ -267,15 +264,12 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
               <span class="booking-count">{submitted.length}</span> 個未確認預約
             </p>
             {mapArray(submitted, booking =>
-              BookingDetails(
-                {
-                  booking,
-                  timestamp: (
-                    <div>提交時間：{timestamp(booking.submit_time)}</div>
-                  ),
-                },
-                context,
-              ),
+              BookingDetails({
+                booking,
+                timestamp: (
+                  <div>提交時間：{timestamp(booking.submit_time)}</div>
+                ),
+              }),
             )}
           </ion-list>,
           <ion-list data-segment="confirmed">
@@ -283,15 +277,12 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
               <span class="booking-count">{confirmed.length}</span> 個未開始預約
             </p>
             {mapArray(confirmed, booking =>
-              BookingDetails(
-                {
-                  booking,
-                  timestamp: (
-                    <div>開始時間：{timestamp(booking.appointment_time)}</div>
-                  ),
-                },
-                context,
-              ),
+              BookingDetails({
+                booking,
+                timestamp: (
+                  <div>開始時間：{timestamp(booking.appointment_time)}</div>
+                ),
+              }),
             )}
           </ion-list>,
           <ion-list data-segment="completed">
@@ -299,15 +290,12 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
               <span class="booking-count">{completed.length}</span> 個已完成預約
             </p>
             {mapArray(completed, booking =>
-              BookingDetails(
-                {
-                  booking,
-                  timestamp: (
-                    <div>報到時間：{timestamp(booking.arrive_time!)}</div>
-                  ),
-                },
-                context,
-              ),
+              BookingDetails({
+                booking,
+                timestamp: (
+                  <div>報到時間：{timestamp(booking.arrive_time!)}</div>
+                ),
+              }),
             )}
           </ion-list>,
           <ion-list data-segment="cancelled">
@@ -315,18 +303,15 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
               <span class="booking-count">{cancelled.length}</span> 個已取消預約
             </p>
             {mapArray(cancelled, booking =>
-              BookingDetails(
-                {
-                  booking,
-                  timestamp: (
-                    <div>
-                      取消時間：
-                      {timestamp(booking.cancel_time || booking.reject_time!)}
-                    </div>
-                  ),
-                },
-                context,
-              ),
+              BookingDetails({
+                booking,
+                timestamp: (
+                  <div>
+                    取消時間：
+                    {timestamp(booking.cancel_time || booking.reject_time!)}
+                  </div>
+                ),
+              }),
             )}
           </ion-list>,
         ],
