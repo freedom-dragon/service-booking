@@ -7,8 +7,8 @@ import Style from './style.js'
 export let ShopContactsStyle = Style(/* css */ `
 .social-media-buttons
 .img-icon {
-  max-width: 2.5rem;
-  max-height: 2.5rem;
+  max-width: 2.25rem;
+  max-height: 2.25rem;
 }
 .social-media-buttons
 .img-icon--text {
