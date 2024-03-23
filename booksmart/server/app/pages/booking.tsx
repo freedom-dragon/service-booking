@@ -215,6 +215,17 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
         submitted.push(booking)
       }
     }
+    let now = Date.now()
+    submitted.sort((a, b) => b.appointment_time - a.appointment_time)
+    confirmed.sort(
+      (a, b) =>
+        Math.abs(a.appointment_time - now) - Math.abs(b.appointment_time - now),
+    )
+    completed.sort((a, b) => b.arrive_time! - a.arrive_time!)
+    cancelled.sort(
+      (a, b) =>
+        (b.reject_time || b.cancel_time)! - (a.reject_time || a.cancel_time)!,
+    )
   }
 
   return (
