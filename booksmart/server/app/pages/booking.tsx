@@ -10,7 +10,7 @@ import {
 } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { id, object, string } from 'cast.ts'
+import { id, object, string, values } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
@@ -85,6 +85,8 @@ function BookingDetails(attrs: {
   open_receipt?: boolean
   can_confirm?: boolean
   can_arrive?: boolean
+  can_reschedule?: boolean
+  can_reject?: boolean
 }) {
   let { booking } = attrs
   let receipts = filter(proxy.receipt, {
@@ -140,7 +142,7 @@ function BookingDetails(attrs: {
           {attrs.can_confirm ? (
             <ion-button
               color="primary"
-              onclick={`emit('/booking/approve/${booking.id}')`}
+              onclick={`emit('/booking/${booking.id}/manage/approve')`}
             >
               確認
             </ion-button>
@@ -148,24 +150,28 @@ function BookingDetails(attrs: {
           {attrs.can_arrive ? (
             <ion-button
               color="primary"
-              onclick={`emit('/booking/arrive/${booking.id}')`}
+              onclick={`emit('/booking/${booking.id}/manage/arrive')`}
             >
               報到
             </ion-button>
           ) : null}
-          <ion-button
-            color="warning"
-            // onclick={`emit('/booking/re/${booking.id}')`}
-            disabled
-          >
-            改期
-          </ion-button>
-          <ion-button
-            color="dark"
-            onclick={`emit('/booking/reject/${booking.id}')`}
-          >
-            取消
-          </ion-button>
+          {attrs.can_reschedule ? (
+            <ion-button
+              color="warning"
+              onclick={`emit('/booking/${booking.id}/manage/reschedule')`}
+              disabled
+            >
+              改期
+            </ion-button>
+          ) : null}
+          {attrs.can_reject ? (
+            <ion-button
+              color="dark"
+              onclick={`emit('/booking/${booking.id}/manage/reject')`}
+            >
+              取消
+            </ion-button>
+          ) : null}
         </div>
       </div>
     </ion-card>
@@ -302,6 +308,8 @@ function AdminPageContent(attrs: { shop: Shop }, context: Context) {
               ),
               open_receipt: true,
               can_confirm: true,
+              can_reschedule: true,
+              can_reject: true,
             }),
           )}
         </>
@@ -323,6 +331,8 @@ function AdminPageContent(attrs: { shop: Shop }, context: Context) {
                 </div>
               ),
               can_arrive: true,
+              can_reschedule: true,
+              can_reject: true,
             }),
           )}{' '}
         </>
@@ -612,38 +622,52 @@ function AddPage(attrs: {}, context: DynamicContext) {
   return addPage
 }
 
-let approveParser = object({
-  params: object({ booking_id: id() }),
+let manageBookingParser = object({
+  params: object({
+    action: values([
+      'approve' as const,
+      'reschedule' as const,
+      'arrive' as const,
+      'reject' as const,
+    ]),
+    booking_id: id(),
+  }),
 })
 
-function ApproveBooking(attrs: {}, context: WsContext) {
+function ManageBooking(attrs: {}, context: WsContext) {
   try {
     let { user, shop } = getAuthRole(context)
-    if (!user) throw 'You must be logged in to approve booking'
-    if (!shop) throw 'You must be merchant to approve booking'
 
-    let input = approveParser.parse(context.routerMatch)
+    if (!user) throw `You must be logged in to manage booking`
+    if (!shop) throw `You must be merchant to manage booking`
 
-    let booking = proxy.booking[input.params.booking_id]
-    if (!booking) throw 'Booking not found, id: ' + input.params.booking_id
+    let {
+      params: { action, booking_id },
+    } = manageBookingParser.parse(context.routerMatch)
 
-    if (booking.service!.shop_id != shop.id)
-      throw 'You cannot approve booking of another shop'
+    let booking = proxy.booking[booking_id]
+    if (!booking) throw 'Booking not found, id: ' + booking_id
 
     let service = booking.service!
 
-    // TODO check quota
+    if (service.shop_id != shop.id)
+      throw 'You cannot manage booking of another shop'
 
-    booking.approve_time = Date.now()
+    let now = Date.now()
 
-    let service_url = toServiceUrl(service)
+    switch (action) {
+      case 'approve': {
+        // TODO check quota
+        booking.approve_time = now
 
-    sendEmail({
-      from: env.EMAIL_USER,
-      to: booking.user!.email!,
-      cc: user.email!,
-      subject: title(`${service!.name}預約確認`),
-      html: /* html */ `
+        let service_url = toServiceUrl(service)
+
+        sendEmail({
+          from: env.EMAIL_USER,
+          to: booking.user!.email!,
+          cc: user.email!,
+          subject: title(`${service!.name}預約確認`),
+          html: /* html */ `
 <p>
 ${booking.user!.nickname} 你好，
 <b>${user.nickname}</b>
@@ -660,67 +684,37 @@ ${booking.user!.nickname} 你好，
 按此查看詳情：<a href="${service_url}">${service_url}</a>
 </p>
 `,
-      text: `${user.nickname} 取消了原定在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。期待下次再見！`,
-    }).catch(error => {
-      context.ws.send([
-        'eval',
-        `showToast(${JSON.stringify('Failed to send email notice: ' + error)},'error');`,
-      ])
-    })
+          text: `${user.nickname} 確認了在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。到時見！！`,
+        }).catch(error => {
+          context.ws.send([
+            'eval',
+            `showToast(${JSON.stringify('Failed to send email notice: ' + error)},'error');`,
+          ])
+        })
 
-    throw new MessageException([
-      'batch',
-      [
-        [
-          'eval',
-          `showToast('確認了${booking.user!.nickname}的${booking.service!.name}預約','success')`,
-        ],
-        ...AdminPageContent({ shop }, context).toUpdateMessages(),
-      ],
-    ])
-  } catch (error) {
-    if (error instanceof MessageException) {
-      throw error
-    }
-    throw new MessageException([
-      'eval',
-      `showToast(${JSON.stringify(String(error))},'error')`,
-    ])
-  }
-}
+        throw new MessageException([
+          'batch',
+          [
+            [
+              'eval',
+              `showToast('確認了${booking.user!.nickname}的${booking.service!.name}預約','success')`,
+            ],
+            ...AdminPageContent({ shop }, context).toUpdateMessages(),
+          ],
+        ])
+      }
+      case 'reject': {
+        booking.reject_time = now
 
-let rejectParser = object({
-  params: object({ booking_id: id() }),
-})
+        let locale = getShopLocale(shop.id!)
+        let shop_url = toShopUrl(shop)
 
-function RejectBooking(attrs: {}, context: WsContext) {
-  try {
-    let { user, shop } = getAuthRole(context)
-    if (!user) throw 'You must be logged in to reject booking'
-    if (!shop) throw 'You must be merchant to reject booking'
-
-    let input = rejectParser.parse(context.routerMatch)
-
-    let booking = proxy.booking[input.params.booking_id]
-    if (!booking) throw 'Booking not found, id: ' + input.params.booking_id
-
-    if (booking.service!.shop_id != shop.id)
-      throw 'You cannot reject booking of another shop'
-
-    let service = booking.service!
-
-    booking.reject_time = Date.now()
-
-    let locale = getShopLocale(shop.id!)
-
-    let shop_url = toShopUrl(shop)
-
-    sendEmail({
-      from: env.EMAIL_USER,
-      to: booking.user!.email!,
-      cc: user.email!,
-      subject: title(`${service!.name}預約取消`),
-      html: /* html */ `
+        sendEmail({
+          from: env.EMAIL_USER,
+          to: booking.user!.email!,
+          cc: user.email!,
+          subject: title(`${service!.name}預約取消`),
+          html: /* html */ `
 <p>
 ${booking.user!.nickname} 你好，
 <b>${user.nickname}</b>
@@ -737,24 +731,41 @@ ${booking.user!.nickname} 你好，
 按此預約其他${locale.service}：<a href="${shop_url}">${shop_url}</a>
 </p>
 `,
-      text: `${user.nickname} 取消了原定在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。期待下次再見！`,
-    }).catch(error => {
-      context.ws.send([
-        'eval',
-        `showToast(${JSON.stringify('Failed to send email notice: ' + error)},'error');`,
-      ])
-    })
+          text: `${user.nickname} 取消了原定在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。期待下次再見！`,
+        }).catch(error => {
+          context.ws.send([
+            'eval',
+            `showToast(${JSON.stringify('Failed to send email notice: ' + error)},'error');`,
+          ])
+        })
 
-    throw new MessageException([
-      'batch',
-      [
-        [
-          'eval',
-          `showToast('取消了${booking.user!.nickname}的${booking.service!.name}預約','info')`,
-        ],
-        ...AdminPageContent({ shop }, context).toUpdateMessages(),
-      ],
-    ])
+        throw new MessageException([
+          'batch',
+          [
+            [
+              'eval',
+              `showToast('取消了${booking.user!.nickname}的${booking.service!.name}預約','info')`,
+            ],
+            ...AdminPageContent({ shop }, context).toUpdateMessages(),
+          ],
+        ])
+      }
+      case 'arrive': {
+        booking.arrive_time = now
+        throw new MessageException([
+          'batch',
+          [
+            [
+              'eval',
+              `showToast('報到了${booking.user!.nickname}的${booking.service!.name}預約','info')`,
+            ],
+            ...AdminPageContent({ shop }, context).toUpdateMessages(),
+          ],
+        ])
+      }
+      default:
+        throw `Unsupported action: ${action}`
+    }
   } catch (error) {
     if (error instanceof MessageException) {
       throw error
@@ -831,16 +842,10 @@ let routes: Routes = {
     menuFullNavigate: true,
     node: page,
   },
-  '/booking/approve/:booking_id': {
+  '/booking/:booking_id/manage/:action': {
     title: apiEndpointTitle,
-    description: 'approve a booking by merchant',
-    node: <ApproveBooking />,
-    streaming: false,
-  },
-  '/booking/reject/:booking_id': {
-    title: apiEndpointTitle,
-    description: 'reject a booking by merchant',
-    node: <RejectBooking />,
+    description: 'manage a booking by merchant',
+    node: <ManageBooking />,
     streaming: false,
   },
   '/booking/add': {
