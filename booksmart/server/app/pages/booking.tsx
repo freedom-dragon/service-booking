@@ -40,6 +40,7 @@ import { env } from '../../env.js'
 import { db } from '../../../db/db.js'
 import { Node } from '../jsx/types.js'
 import { ServerMessage } from '../../../client/types.js'
+import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -48,6 +49,8 @@ let style = Style(/* css */ `
 hr {
   border-bottom: 1px solid var(--ion-color-dark);
 }
+
+/* booking list item */
 .booking--header {
   display: flex;
   justify-content: space-between;
@@ -56,8 +59,16 @@ hr {
   display: flex;
   justify-content: space-around;
 }
-ion-segment-button .list-count {
-  display: inline;
+
+/* reschedule modal */
+ion-item [slot="start"] {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+ion-item [slot="start"] ion-icon {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 `)
 
@@ -97,6 +108,7 @@ function BookingDetails(attrs: {
   let service = booking.service!
   let shop_slug = service.shop!.slug
   let service_slug = service.slug
+  let locale = getShopLocale(service.shop_id)
   return (
     <ion-card>
       <ion-card-content>
@@ -155,15 +167,77 @@ function BookingDetails(attrs: {
               報到
             </ion-button>
           ) : null}
-          {attrs.can_reschedule ? (
-            <ion-button
-              color="warning"
-              onclick={`emit('/booking/${booking.id}/manage/reschedule')`}
-              disabled
-            >
-              改期
-            </ion-button>
-          ) : null}
+          {attrs.can_reschedule
+            ? (() => {
+                let modal = `rescheduleModal${booking.id}`
+                return (
+                  <>
+                    <ion-button
+                      color="warning"
+                      // onclick={`emit('/booking/${booking.id}/manage/reschedule')`}
+                      // onclick={`${datePicker}Button.shadowRoot.querySelector('button').click()`}
+                      onclick={`${modal}.present()`}
+                    >
+                      改期
+                    </ion-button>
+                    <ion-modal id={modal}>
+                      <ion-header>
+                        <ion-toolbar>
+                          <ion-buttons slot="start">
+                            <ion-button onclick={`${modal}.dismiss()`}>
+                              返回
+                            </ion-button>
+                          </ion-buttons>
+                          <ion-title>預約改期</ion-title>
+                        </ion-toolbar>
+                      </ion-header>
+                      <ion-content color="light">
+                        <form id={`bookingForm${booking.id}`}>
+                          <ion-list lines="full" inset="true">
+                            <ion-item>
+                              <div slot="start">
+                                <ion-icon name="planet-outline"></ion-icon>
+                                {locale.service}
+                              </div>
+                              <ion-input
+                                value={booking.service!.name}
+                                readonly
+                              />
+                            </ion-item>
+                            <ion-item>
+                              <div slot="start">
+                                <ion-icon name="happy-outline"></ion-icon>
+                                名稱
+                              </div>
+                              <ion-input
+                                value={booking.user!.nickname}
+                                readonly
+                              />
+                            </ion-item>
+                            <ion-item>
+                              <div slot="start">
+                                <ion-icon name="call-outline"></ion-icon>
+                                電話
+                              </div>
+                              <ion-input value={booking.user!.tel} readonly />
+                            </ion-item>
+                            <ServiceTimeslotPicker
+                              service={booking.service!}
+                              timeRadioGroup={`timeRadioGroup${booking.id}`}
+                              bookingForm={`bookingForm${booking.id}`}
+                              selectedTimeButton={`selectedTimeButton${booking.id}`}
+                            />
+                          </ion-list>
+                          <div class="ion-margin">
+                            <ion-button expand="block">確認改期</ion-button>
+                          </div>
+                        </form>
+                      </ion-content>
+                    </ion-modal>
+                  </>
+                )
+              })()
+            : null}
           {attrs.can_reject ? (
             <ion-button
               color="dark"
@@ -745,6 +819,54 @@ ${booking.user!.nickname} 你好，
             [
               'eval',
               `showToast('取消了${booking.user!.nickname}的${booking.service!.name}預約','info')`,
+            ],
+            ...AdminPageContent({ shop }, context).toUpdateMessages(),
+          ],
+        ])
+      }
+      case 'reschedule': {
+        booking.appointment_time = '?'
+
+        let service_url = toServiceUrl(service)
+
+        sendEmail({
+          from: env.EMAIL_USER,
+          to: booking.user!.email!,
+          cc: user.email!,
+          subject: title(`${service!.name}預約改期`),
+          html: /* html */ `
+<p>
+${booking.user!.nickname} 你好，
+<b>${user.nickname}</b>
+重新安排了你的
+<b>${booking.service!.name}</b>
+預約。
+</p>
+<p>
+預約時間已改為
+<b>${formatDateTimeText({ time: booking.appointment_time }, context)}</b>
+。
+</p>
+到時見！
+</p>
+<p>
+按此查看詳情：<a href="${service_url}">${service_url}</a>
+</p>
+`,
+          text: `${user.nickname} 確認了在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。到時見！！`,
+        }).catch(error => {
+          context.ws.send([
+            'eval',
+            `showToast(${JSON.stringify('Failed to send email notice: ' + error)},'error');`,
+          ])
+        })
+
+        throw new MessageException([
+          'batch',
+          [
+            [
+              'eval',
+              `showToast('確認了${booking.user!.nickname}的${booking.service!.name}預約','success')`,
             ],
             ...AdminPageContent({ shop }, context).toUpdateMessages(),
           ],
