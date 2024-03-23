@@ -12,7 +12,7 @@ import { proxy } from '../../../db/proxy.js'
 import { db } from '../../../db/db.js'
 import DateTimeText, { formatDateTimeText } from '../components/datetime.js'
 import { WEEK } from '@beenotung/tslib/time.js'
-import { timestamp } from '../components/timestamp.js'
+import { relative_timestamp } from '../components/timestamp.js'
 
 let pageTitle = '通知'
 
@@ -76,7 +76,7 @@ function Main(attrs: {}, context: Context) {
               {booking.user!.nickname} 取消了 {booking.service!.name} 的預約
             </span>
           ),
-          timestamp: timestamp(booking.cancel_time),
+          timestamp: relative_timestamp(booking.cancel_time),
         })
       } else {
         items.push({
@@ -85,7 +85,7 @@ function Main(attrs: {}, context: Context) {
               {booking.user!.nickname} 申請預約 {booking.service!.name}
             </span>
           ),
-          timestamp: timestamp(booking.submit_time),
+          timestamp: relative_timestamp(booking.submit_time),
         })
       }
     }

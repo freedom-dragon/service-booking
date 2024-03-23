@@ -21,7 +21,7 @@ import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { getAuthRole } from '../auth/role.js'
 import { Booking, Shop, User, proxy } from '../../../db/proxy.js'
 import { count, filter, notNull } from 'better-sqlite3-proxy'
-import { timestamp } from '../components/timestamp.js'
+import { relative_timestamp } from '../components/timestamp.js'
 import { Swiper } from '../components/swiper.js'
 import DateTimeText, { formatDateTimeText } from '../components/datetime.js'
 import { toUploadedUrl } from '../upload.js'
@@ -270,7 +270,7 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
               BookingDetails({
                 booking,
                 timestamp: (
-                  <div>提交時間：{timestamp(booking.submit_time)}</div>
+                  <div>提交時間：{relative_timestamp(booking.submit_time)}</div>
                 ),
                 open_receipt: true,
                 can_confirm: true,
@@ -285,7 +285,9 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
               BookingDetails({
                 booking,
                 timestamp: (
-                  <div>開始時間：{timestamp(booking.appointment_time)}</div>
+                  <div>
+                    開始時間：{relative_timestamp(booking.appointment_time)}
+                  </div>
                 ),
               }),
             )}
@@ -298,7 +300,9 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
               BookingDetails({
                 booking,
                 timestamp: (
-                  <div>報到時間：{timestamp(booking.arrive_time!)}</div>
+                  <div>
+                    報到時間：{relative_timestamp(booking.arrive_time!)}
+                  </div>
                 ),
               }),
             )}
@@ -313,7 +317,9 @@ function AdminPageContent(attrs: { shop: Shop }, context: DynamicContext) {
                 timestamp: (
                   <div>
                     取消時間：
-                    {timestamp(booking.cancel_time || booking.reject_time!)}
+                    {relative_timestamp(
+                      booking.cancel_time || booking.reject_time!,
+                    )}
                   </div>
                 ),
               }),

@@ -1,7 +1,5 @@
-import { WEEK } from '@beenotung/tslib/time.js'
-import { setLang } from '@beenotung/tslib/format.js'
+import { format_relative_time, setLang } from '@beenotung/tslib/format.js'
 import { o } from '../jsx/jsx.js'
-import DateTimeText from './datetime.js'
 import Style from './style.js'
 
 setLang('zh-HK')
@@ -12,10 +10,10 @@ export let TimestampStyle = Style(/* css */ `
 }
 `)
 
-export function timestamp(time: number) {
+export function relative_timestamp(time: number) {
   return (
     <time datetime={new Date(time).toISOString()}>
-      <DateTimeText time={time} relativeTimeThreshold={2 * WEEK} />
+      {format_relative_time(time - Date.now(), 0)}
     </time>
   )
 }
