@@ -156,6 +156,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let images = getServiceImages(shop_slug, service_slug)
   let user = getAuthUser(context)
+  let is_shop_owner = user && user.id == shop.owner_id
 
   // address_remark = ''
 
@@ -294,9 +295,12 @@ function selectOption(button){
             For guest: ask tel
               if tel in DB, ask email and auth code
               if tel is new, ask name, email and auth code
+
             For user: show name, tel, email
+
+            For shop: similar to guest flow, without need for auth code
             */}
-            {!user ? (
+            {!user || is_shop_owner ? (
               <>
                 <ion-item>
                   <div slot="start">
@@ -510,13 +514,15 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
   let receipts = filter(proxy.receipt, { booking_id: booking.id! })
   let fee = getBookingTotalFee(booking)
   let has_paid = receipts.length > 0
+  let is_shop_owner = getAuthUser(context)?.id == shop.owner_id
   let locale = getShopLocale(shop.id!)
   return (
     <>
       <ion-header>
         <ion-toolbar>
           <ion-buttons slot="start">
-            {!has_paid &&
+            {!is_shop_owner &&
+            !has_paid &&
             !fee.is_free &&
             !booking.approve_time &&
             !booking.reject_time &&
@@ -1639,8 +1645,9 @@ let routes: Routes = {
             ])
           }
           let user = getAuthUser(context)
+          let is_shop_owner = user && user.id == shop.owner_id
           let should_verify_email = !user
-          if (!user) {
+          if (!user || is_shop_owner) {
             user = find(proxy.user, { tel }) || null
           }
           if (!user) {
@@ -1696,6 +1703,41 @@ let routes: Routes = {
               { passcode, email },
               context,
             )
+            let email_success_messages: ServerMessage[] = is_shop_owner
+              ? [
+                  [
+                    'eval',
+                    `showToast('已發送電郵通知給 ${user.nickname}。','info')`,
+                  ],
+                  [
+                    'update-in',
+                    '#guestInfo .guestInfo--message',
+                    nodeToVNode(
+                      <p>已發送電郵通知給 {user.nickname}。</p>,
+                      context,
+                    ),
+                  ],
+                ]
+              : [
+                  [
+                    'eval',
+                    `showToast('請查看 ${hint} 郵箱，並點擊確認連接，以確認你的預約。','info')`,
+                  ],
+                  [
+                    'update-in',
+                    '#guestInfo .guestInfo--message',
+                    nodeToVNode(
+                      <p>
+                        請查看{' '}
+                        <a href={mailboxUrl} target="_blank">
+                          {hint}
+                        </a>{' '}
+                        郵箱，並點擊確認連接，以確認你的預約。
+                      </p>,
+                      context,
+                    ),
+                  ],
+                ]
             sendEmail({
               from: env.EMAIL_USER,
               to: email,
@@ -1705,29 +1747,7 @@ let routes: Routes = {
             })
               .then(info => {
                 if (context.type === 'ws') {
-                  context.ws.send([
-                    'batch',
-                    [
-                      [
-                        'eval',
-                        `showToast('請查看 ${hint} 郵箱，並點擊確認連接，以確認你的預約。','info')`,
-                      ],
-                      [
-                        'update-in',
-                        '#guestInfo .guestInfo--message',
-                        nodeToVNode(
-                          <p>
-                            請查看{' '}
-                            <a href={mailboxUrl} target="_blank">
-                              {hint}
-                            </a>{' '}
-                            郵箱，並點擊確認連接，以確認你的預約。
-                          </p>,
-                          context,
-                        ),
-                      ],
-                    ],
-                  ])
+                  context.ws.send(['batch', email_success_messages])
                 }
               })
               .catch(error => {
