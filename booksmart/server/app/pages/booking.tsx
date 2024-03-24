@@ -10,7 +10,7 @@ import {
 } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { id, object, string, values } from 'cast.ts'
+import { date, id, object, optional, string, values } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
@@ -41,6 +41,7 @@ import { db } from '../../../db/db.js'
 import { Node } from '../jsx/types.js'
 import { ServerMessage } from '../../../client/types.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
+import { Script } from '../components/script.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -69,6 +70,9 @@ ion-item [slot="start"] {
 ion-item [slot="start"] ion-icon {
   width: 1.25rem;
   height: 1.25rem;
+}
+ion-modal.modal-default.show-modal ~ ion-modal.modal-default {
+  --backdrop-opacity: 0.4;
 }
 `)
 
@@ -172,12 +176,7 @@ function BookingDetails(attrs: {
                 let modal = `rescheduleModal${booking.id}`
                 return (
                   <>
-                    <ion-button
-                      color="warning"
-                      // onclick={`emit('/booking/${booking.id}/manage/reschedule')`}
-                      // onclick={`${datePicker}Button.shadowRoot.querySelector('button').click()`}
-                      onclick={`${modal}.present()`}
-                    >
+                    <ion-button color="warning" onclick={`${modal}.present()`}>
                       改期
                     </ion-button>
                     <ion-modal id={modal}>
@@ -199,39 +198,73 @@ function BookingDetails(attrs: {
                                 <ion-icon name="planet-outline"></ion-icon>
                                 {locale.service}
                               </div>
-                              <ion-input
-                                value={booking.service!.name}
-                                readonly
-                              />
+                              <ion-label>{service.name}</ion-label>
                             </ion-item>
                             <ion-item>
                               <div slot="start">
                                 <ion-icon name="happy-outline"></ion-icon>
                                 名稱
                               </div>
-                              <ion-input
-                                value={booking.user!.nickname}
-                                readonly
-                              />
+                              <ion-label>{booking.user!.nickname}</ion-label>
                             </ion-item>
                             <ion-item>
                               <div slot="start">
                                 <ion-icon name="call-outline"></ion-icon>
                                 電話
                               </div>
-                              <ion-input value={booking.user!.tel} readonly />
+                              <ion-label>{booking.user!.tel}</ion-label>
                             </ion-item>
                             <ServiceTimeslotPicker
                               service={booking.service!}
+                              datePicker={`datePicker${booking.id}`}
                               timeRadioGroup={`timeRadioGroup${booking.id}`}
                               bookingForm={`bookingForm${booking.id}`}
                               selectedTimeButton={`selectedTimeButton${booking.id}`}
                             />
+                            <ion-item>
+                              <div slot="start">
+                                <ion-icon name="hourglass-outline"></ion-icon>{' '}
+                                時長
+                              </div>
+                              <ion-label>{service.hours}</ion-label>
+                            </ion-item>
                           </ion-list>
                           <div class="ion-margin">
-                            <ion-button expand="block">確認改期</ion-button>
+                            <ion-button
+                              expand="block"
+                              onclick={`confirmReschedule${booking.id}()`}
+                            >
+                              確認改期
+                            </ion-button>
                           </div>
                         </form>
+                        {Script(
+                          /* javascript */ `
+function initBookingForm${booking.id}() {
+  let date = bookingForm${booking.id}.date
+  let time = bookingForm${booking.id}.time
+  if (!date || !time) {
+    setTimeout(initBookingForm${booking.id},33)
+    return
+  }
+  date.value = '${new Date(booking.appointment_time).toISOString()}'
+  time.value = '${new Date(booking.appointment_time).toISOString().split('T')[1]}'
+}
+initBookingForm${booking.id}()
+function confirmReschedule${booking.id}() {
+  let bookingForm = bookingForm${booking.id}
+  if (!bookingForm.date.value) return showToast('請選擇日期', 'error')
+  if (!bookingForm.time.value) return showToast('請選擇時間', 'error')
+  let appointment_time = new Date(
+    bookingForm.date.value.split('T')[0]
+    + ' ' +
+    bookingForm.time.value
+  ).toISOString()
+  emit('/booking/${booking.id}/manage/reschedule', appointment_time)
+}
+`,
+                          'no-minify',
+                        )}
                       </ion-content>
                     </ion-modal>
                   </>
@@ -697,15 +730,18 @@ function AddPage(attrs: {}, context: DynamicContext) {
 }
 
 let manageBookingParser = object({
-  params: object({
-    action: values([
-      'approve' as const,
-      'reschedule' as const,
-      'arrive' as const,
-      'reject' as const,
-    ]),
-    booking_id: id(),
+  routerMatch: object({
+    params: object({
+      action: values([
+        'approve' as const,
+        'reschedule' as const,
+        'arrive' as const,
+        'reject' as const,
+      ]),
+      booking_id: id(),
+    }),
   }),
+  args: object({ 0: optional(date()) }),
 })
 
 function ManageBooking(attrs: {}, context: WsContext) {
@@ -715,9 +751,9 @@ function ManageBooking(attrs: {}, context: WsContext) {
     if (!user) throw `You must be logged in to manage booking`
     if (!shop) throw `You must be merchant to manage booking`
 
-    let {
-      params: { action, booking_id },
-    } = manageBookingParser.parse(context.routerMatch)
+    let input = manageBookingParser.parse(context)
+    let { action, booking_id } = input.routerMatch.params
+    let { 0: appointment_time } = input.args
 
     let booking = proxy.booking[booking_id]
     if (!booking) throw 'Booking not found, id: ' + booking_id
@@ -825,7 +861,10 @@ ${booking.user!.nickname} 你好，
         ])
       }
       case 'reschedule': {
-        booking.appointment_time = '?'
+        if (!appointment_time) {
+          throw 'missing appointment_time'
+        }
+        booking.appointment_time = appointment_time.getTime()
 
         let service_url = toServiceUrl(service)
 
@@ -853,7 +892,7 @@ ${booking.user!.nickname} 你好，
 按此查看詳情：<a href="${service_url}">${service_url}</a>
 </p>
 `,
-          text: `${user.nickname} 確認了在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。到時見！！`,
+          text: `${user.nickname} 重新安排了在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。到時見！！`,
         }).catch(error => {
           context.ws.send([
             'eval',
@@ -864,9 +903,10 @@ ${booking.user!.nickname} 你好，
         throw new MessageException([
           'batch',
           [
+            ['eval', `rescheduleModal${booking.id}.dismiss()`],
             [
               'eval',
-              `showToast('確認了${booking.user!.nickname}的${booking.service!.name}預約','success')`,
+              `showToast('重新安排了${booking.user!.nickname}的${booking.service!.name}預約','success')`,
             ],
             ...AdminPageContent({ shop }, context).toUpdateMessages(),
           ],

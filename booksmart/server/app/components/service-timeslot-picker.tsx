@@ -110,6 +110,7 @@ export function ServiceTimeslotPicker(attrs: {
     ) {
       return function onDateSelected(event: any) {
         let dateString = event.detail.value as string
+        if (!dateString) return
         dateString = dateString.split('T')[0]
         let date = new Date(dateString)
         let day = date.getDay()
@@ -212,7 +213,7 @@ export function ServiceTimeslotPicker(attrs: {
   let timeScript = Script(
     /* javascript */ `
 ${attrs.timeRadioGroup}.addEventListener('ionChange', event => {
-  selectedTimeButton.textContent = event.detail.value || '未選擇'
+  ${attrs.selectedTimeButton}.textContent = event.detail.value || '未選擇'
 })
 `,
     'no-minify',
