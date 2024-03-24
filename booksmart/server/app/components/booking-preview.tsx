@@ -5,6 +5,7 @@ import { o } from '../jsx/jsx.js'
 import { ShopLocales, getShopLocale } from '../shop-store.js'
 import { toLocaleDateTimeString } from './datetime.js'
 import { renderError } from './error.js'
+import { mapArray } from './fragment.js'
 import Style from './style.js'
 
 export let bookingPreviewStyle = Style(/* css */ `
@@ -26,6 +27,7 @@ export function BookingPreview(
   context: Context,
 ) {
   let { booking } = attrs
+  let user = booking.user!
   let service = booking.service!
   let service_option = booking.service_option
   let locale = getShopLocale(service.shop_id)
@@ -93,6 +95,43 @@ export function BookingPreview(
             時長:
           </td>
           <td>{service.hours}</td>
+        </tr>
+        <tr>
+          <td>
+            <ion-icon name="happy-outline"></ion-icon>
+            名稱:
+          </td>
+          <td>{user.nickname}</td>
+        </tr>
+        <tr>
+          <td>
+            <ion-icon name="call-outline"></ion-icon>
+            電話:
+          </td>
+          <td>{user.tel}</td>
+        </tr>
+        <tr>
+          <td>
+            <ion-icon name="at-outline"></ion-icon>
+            電郵:
+          </td>
+          <td style="max-width: 20ch">
+            {mapArray(
+              user.email!.split('@'),
+              s =>
+                mapArray(
+                  s.split('.'),
+                  s =>
+                    mapArray(
+                      s.split('-'),
+                      s => mapArray(s.split('_'), s => <span>{s}</span>, '_'),
+                      '-',
+                    ),
+                  '.',
+                ),
+              '@',
+            )}
+          </td>
         </tr>
       </tbody>
     </table>
