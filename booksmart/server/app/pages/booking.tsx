@@ -112,6 +112,7 @@ function BookingDetails(attrs: {
   let service = booking.service!
   let shop_slug = service.shop!.slug
   let service_slug = service.slug
+  let service_url = `/shop/${shop_slug}/service/${service_slug}`
   let locale = getShopLocale(service.shop_id)
   return (
     <ion-card>
@@ -280,6 +281,16 @@ function confirmReschedule${booking.id}() {
               取消
             </ion-button>
           ) : null}
+        </div>
+        <div class="ion-margin-horizontal">
+          <Link
+            tagName="ion-button"
+            href={service_url}
+            class="ion-margin-bottom"
+            expand="block"
+          >
+            查看{locale.service}詳情
+          </Link>
         </div>
       </div>
     </ion-card>
@@ -522,20 +533,199 @@ function AdminPageContent(attrs: { shop: Shop }, context: Context) {
 }
 
 function UserPage(user: User | null, context: DynamicContext) {
+  let page = user ? UserPageContent(user) : null
+
   return (
     <>
-      <ion-header>
+      <ion-header id="BookingTabHeader">
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
             我的預約
           </ion-title>
         </ion-toolbar>
+        {page ? (
+          <ion-segment
+            value="submitted"
+            style="margin: 4px; width: calc(100% - 8px)"
+          >
+            {page.segmentButtons}
+          </ion-segment>
+        ) : null}
       </ion-header>
-      <ion-content id="Calendar" class="ion-padding">
-        <Main />
+      <ion-content id="BookingTabContent" class="ion-padding">
+        {!page ? (
+          <>
+            <p>
+              <Link href="/login">「登入」</Link>
+              後可查看預約
+            </p>
+          </>
+        ) : (
+          <>
+            <div class="page-message">
+              {page.booking_count == 0 ? (
+                <p class="ion-text-center">未有預約</p>
+              ) : null}
+            </div>
+            {Swiper({
+              id: 'bookingSwiper',
+              slides: page.segmentList.map(list => (
+                <ion-list data-segment={list.segment}>{list.content}</ion-list>
+              )),
+            })}
+          </>
+        )}
       </ion-content>
+      {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     </>
   )
+}
+
+function UserPageContent(user: User) {
+  let submitted: Booking[] = []
+  let confirmed: Booking[] = []
+  let completed: Booking[] = []
+  let cancelled: Booking[] = []
+
+  let bookings = filter(proxy.booking, { user_id: user.id! })
+  let booking_count = bookings.length
+  if (booking_count > 0) {
+    for (let booking of bookings) {
+      if (booking.cancel_time || booking.reject_time) {
+        cancelled.push(booking)
+      } else if (booking.arrive_time) {
+        completed.push(booking)
+      } else if (booking.approve_time) {
+        confirmed.push(booking)
+      } else {
+        submitted.push(booking)
+      }
+    }
+    let now = Date.now()
+    submitted.sort((a, b) => b.appointment_time - a.appointment_time)
+    confirmed.sort(
+      (a, b) =>
+        Math.abs(a.appointment_time - now) - Math.abs(b.appointment_time - now),
+    )
+    completed.sort((a, b) => b.arrive_time! - a.arrive_time!)
+    cancelled.sort(
+      (a, b) =>
+        (b.reject_time || b.cancel_time)! - (a.reject_time || a.cancel_time)!,
+    )
+  }
+
+  let segmentButtons = (
+    <>
+      <ion-segment-button
+        value="submitted"
+        onclick="swiperSlide(bookingSwiper,'0')"
+      >
+        未確認 ({submitted.length})
+      </ion-segment-button>
+      <ion-segment-button
+        value="confirmed"
+        onclick="swiperSlide(bookingSwiper,'1')"
+      >
+        未開始 ({confirmed.length})
+      </ion-segment-button>
+      <ion-segment-button
+        value="completed"
+        onclick="swiperSlide(bookingSwiper,'2')"
+      >
+        已完成 ({completed.length})
+      </ion-segment-button>
+      <ion-segment-button
+        value="cancelled"
+        onclick="swiperSlide(bookingSwiper,'3')"
+      >
+        已取消 ({cancelled.length})
+      </ion-segment-button>
+    </>
+  )
+
+  let segmentList = [
+    {
+      segment: 'submitted',
+      content: (
+        <>
+          <p class="ion-margin-start">
+            <span class="booking-count">{submitted.length}</span> 個未確認預約
+          </p>
+          {mapArray(submitted, booking =>
+            BookingDetails({
+              booking,
+              timestamp: (
+                <div>提交時間：{relative_timestamp(booking.submit_time)}</div>
+              ),
+            }),
+          )}
+        </>
+      ),
+    },
+    {
+      segment: 'confirmed',
+      content: (
+        <>
+          <p class="ion-margin-start">
+            <span class="booking-count">{confirmed.length}</span> 個未開始預約
+          </p>
+          {mapArray(confirmed, booking =>
+            BookingDetails({
+              booking,
+              timestamp: (
+                <div>
+                  開始時間：{relative_timestamp(booking.appointment_time)}
+                </div>
+              ),
+            }),
+          )}{' '}
+        </>
+      ),
+    },
+    {
+      segment: 'completed',
+      content: (
+        <>
+          <p class="ion-margin-start">
+            <span class="booking-count">{completed.length}</span> 個已完成預約
+          </p>
+          {mapArray(completed, booking =>
+            BookingDetails({
+              booking,
+              timestamp: (
+                <div>報到時間：{relative_timestamp(booking.arrive_time!)}</div>
+              ),
+            }),
+          )}{' '}
+        </>
+      ),
+    },
+    {
+      segment: 'cancelled',
+      content: (
+        <>
+          <p class="ion-margin-start">
+            <span class="booking-count">{cancelled.length}</span> 個已取消預約
+          </p>
+          {mapArray(cancelled, booking =>
+            BookingDetails({
+              booking,
+              timestamp: (
+                <div>
+                  取消時間：
+                  {relative_timestamp(
+                    booking.cancel_time || booking.reject_time!,
+                  )}
+                </div>
+              ),
+            }),
+          )}{' '}
+        </>
+      ),
+    },
+  ]
+
+  return { segmentButtons, segmentList, booking_count }
 }
 
 let items = [
