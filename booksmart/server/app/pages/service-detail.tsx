@@ -1666,6 +1666,7 @@ let routes: Routes = {
             submit_time: Date.now(),
             appointment_time: input.appointment_time.getTime(),
             approve_time: null,
+            arrive_time: null,
             reject_time: null,
             cancel_time: null,
             amount: input.amount,

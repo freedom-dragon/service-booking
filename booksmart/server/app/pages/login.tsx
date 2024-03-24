@@ -20,6 +20,7 @@ import Style from '../components/style.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { wsStatus } from '../components/ws-status.js'
 import { db } from '../../../db/db.js'
+import { loadClientPlugin } from '../../client-plugin.js'
 
 let style = Style(/* css */ `
 #login .field {
@@ -119,15 +120,22 @@ let emailFormBody =
     </>
   ) : (
     <>
+      {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
       <ion-list>
         <ion-item>
-          <ion-input
-            label="電郵地址"
-            label-placement="floating"
-            type="email"
-            name="email"
-            autocomplete="email"
-          ></ion-input>
+          <div slot="start">
+            <ion-icon name="call-outline"></ion-icon> 電話
+          </div>
+          <ion-input type="tel" name="tel" autocomplete="tel" />
+        </ion-item>
+        <div class="ion-margin-horizontal" style="font-size: smaller">
+          或者
+        </div>
+        <ion-item>
+          <div slot="start">
+            <ion-icon name="at-outline"></ion-icon> 電郵
+          </div>
+          <ion-input type="email" name="email" autocomplete="email" />
         </ion-item>
         <ion-item>
           <ion-checkbox name="include_link" slot="start"></ion-checkbox>
@@ -207,7 +215,7 @@ let guestView = (
     <form
       method="POST"
       action="/verify/email/submit"
-      // onsubmit="emitForm(event)"
+      onsubmit="emitForm(event)"
     >
       {emailFormBody}
     </form>
@@ -280,7 +288,7 @@ async function submit(context: ExpressContext) {
 
 let routes: Routes = {
   '/login': {
-    title: title('Login'),
+    title: title('登入'),
     description: `Login to access exclusive content and functionality. Welcome back to our community on ${config.short_site_name}.`,
     menuText: 'Login',
     menuUrl: '/login',

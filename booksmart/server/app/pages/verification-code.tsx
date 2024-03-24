@@ -2,8 +2,8 @@ import { Random, digits } from '@beenotung/tslib/random.js'
 import { MINUTE } from '@beenotung/tslib/time.js'
 import { db } from '../../../db/db.js'
 import { HttpError } from '../../http-error.js'
-import { proxy } from '../../../db/proxy.js'
-import { boolean, email, object, optional, string } from 'cast.ts'
+import { User, proxy } from '../../../db/proxy.js'
+import { ParseResult, boolean, email, object, optional, string } from 'cast.ts'
 import { sendEmail } from '../../email.js'
 import { apiEndpointTitle, config, title } from '../../config.js'
 import {
@@ -23,6 +23,8 @@ import { debugLog } from '../../debug.js'
 import { filter, find, unProxy } from 'better-sqlite3-proxy'
 import { writeUserIdToCookie } from '../auth/user.js'
 import { env } from '../../env.js'
+import { EarlyTerminate, MessageException } from '../helpers.js'
+import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 
 let log = debugLog('app:verification-code')
 log.enabled = true
@@ -69,9 +71,11 @@ export function generatePasscode(): string {
 }
 
 let requestEmailVerificationParser = object({
-  email: email(),
+  tel: optional(string()),
+  email: optional(string()),
   include_link: optional(boolean()),
 })
+let email_parser = email()
 
 async function requestEmailVerification(
   context: DynamicContext,
@@ -80,30 +84,78 @@ async function requestEmailVerification(
     let body = getContextFormBody(context)
     let input = requestEmailVerificationParser.parse(body, { name: 'body' })
 
+    let user: User | undefined
+
+    if (input.email) {
+      let email: string
+      try {
+        email = email_parser.parse(input.email)
+      } catch (error) {
+        throw new MessageException([
+          'eval',
+          `showToast('請檢查電郵地址的形式','warning')`,
+        ])
+      }
+      user = find(proxy.user, { email })
+      if (!user) {
+        throw new MessageException([
+          'eval',
+          `showToast('這個電郵址未有登記。你可以在預約時自動登記。','info')`,
+        ])
+      }
+    } else if (input.tel) {
+      let tel = to_full_hk_mobile_phone(input.tel)
+      if (!tel) {
+        throw new MessageException([
+          'eval',
+          `showToast('請輸入香港的手提電話號碼','warning')`,
+        ])
+      }
+      user = find(proxy.user, { tel })
+      if (!user) {
+        throw new MessageException([
+          'eval',
+          `showToast('這個電話號碼未有登記。你可以在預約時自動登記。','info')`,
+        ])
+      }
+    } else {
+      throw new MessageException([
+        'eval',
+        `showToast('請輸入電話號碼或電郵地址','warning')`,
+      ])
+    }
+    let email = user.email
+    if (!email) {
+      throw new MessageException([
+        'eval',
+        `showToast('你未有登記電郵地址，請聯絡管理員跟進','error')`,
+      ])
+    }
+
     let passcode = generatePasscode()
     let request_time = Date.now()
     proxy.verification_code.push({
       passcode,
-      email: input.email,
+      email,
       request_time,
       revoke_time: null,
       match_id: null,
-      user_id: find(proxy.user, { email: input.email })?.id || null,
+      user_id: user.id || null,
       shop_id: null,
     })
     let { html, text } = verificationCodeEmail(
-      { passcode, email: input.include_link ? input.email : null },
+      { passcode, email: input.include_link ? email : null },
       context,
     )
     let info = await sendEmail({
       from: env.EMAIL_USER,
-      to: input.email,
-      subject: title('Email Verification'),
+      to: email,
+      subject: title('電郵驗證 - Email Verification'),
       html,
       text,
     })
-    if (info.accepted[0] === input.email) {
-      log('sent passcode email to:', input.email)
+    if (info.accepted[0] === email) {
+      log('sent passcode email to:', email)
     } else {
       log('failed to send email?')
       log('send email info:')
@@ -111,21 +163,21 @@ async function requestEmailVerification(
       throw new HttpError(502, info.response)
     }
     return {
-      title: title('Email Verification'),
+      title: title('電郵驗證 - Email Verification'),
       description:
         'API Endpoint to request email verification code for authentication',
       node: (
         <Redirect
-          href={
-            '/verify/email/result?' +
-            new URLSearchParams({ email: input.email })
-          }
+          href={'/verify/email/result?' + new URLSearchParams({ email })}
         />
       ),
     }
   } catch (error) {
+    if (error instanceof MessageException) {
+      throw error
+    }
     return {
-      title: title('Email Verification'),
+      title: title('電郵驗證'),
       description:
         'API Endpoint to request email verification code for authentication',
       node: (
@@ -216,22 +268,20 @@ function VerifyEmailPage(attrs: {}, context: DynamicContext) {
     <div id="verifyEmailPage">
       {error ? (
         <>
-          <p>{title || 'Failed to send verification code to your email'}.</p>
+          <p>{title || '無法將驗證碼發送到您的電郵地址。'}.</p>
           {renderError(error, context)}
           <p>
-            You can request another verification code in the{' '}
-            <Link href="/login">login page</Link> or{' '}
-            <Link href="/register">register page</Link>.
+            您可以在「<Link href="/login">登入頁面</Link>」要求另一個驗證碼。
           </p>
         </>
       ) : (
         <>
           <p>
             <span style="display: inline-block">
-              A verification code is sent to your email address.
+              驗證碼已發送至您的電郵地址。
             </span>{' '}
             <span style="display: inline-block">
-              Please check your inbox and spam folder.
+              請檢查您的收件匣和垃圾郵件資料夾。
             </span>
           </p>
 
@@ -246,7 +296,7 @@ function VerifyEmailPage(attrs: {}, context: DynamicContext) {
       <ion-header>
         <ion-toolbar>
           <ion-title role="heading" aria-level="1">
-            Email Verification
+            電郵驗證
           </ion-title>
         </ion-toolbar>
       </ion-header>
@@ -260,8 +310,40 @@ function VerifyEmailForm(attrs: { params: URLSearchParams }) {
   let code = params.get('code')
   return (
     <form method="post" action="/verify/email/code/submit">
+      {/* 
+      <ion-list>
+        <ion-item>
+          <div slot="start">
+            <ion-icon name="at-outline"></ion-icon> 電郵
+          </div>
+          <ion-input
+            type="email"
+            name="email"
+            autocomplete="email"
+            value={email}
+            readonly
+          />
+        </ion-item>
+        <ion-item>
+          <div slot="start">
+            <ion-icon name="at-outline"></ion-icon> 驗證碼
+          </div>
+          <ion-input
+            type="text"
+            name="code"
+            autocomplete="off"
+            minlength={PasscodeLength}
+            maxlength={PasscodeLength}
+            inputmode="numeric"
+            placeholder={'x'.repeat(PasscodeLength)}
+            required
+            value={code}
+          />
+        </ion-item>
+      </ion-list>
+      */}
       <Field
-        label="Email"
+        label="電郵地址"
         input={
           <input
             type="email"
@@ -274,7 +356,7 @@ function VerifyEmailForm(attrs: { params: URLSearchParams }) {
         }
       />
       <Field
-        label="Verification code"
+        label="驗證碼"
         input={
           <input
             style={`font-family: monospace; width: ${PasscodeLength + 2}ch; padding: 0.5ch`}
@@ -285,11 +367,12 @@ function VerifyEmailForm(attrs: { params: URLSearchParams }) {
             placeholder={'x'.repeat(PasscodeLength)}
             required
             value={code}
+            autocomplete="off"
           />
         }
       />
       <div>
-        <input type="submit" value="Verify" />
+        <input type="submit" value="驗證" />
       </div>
     </form>
   )
@@ -423,10 +506,10 @@ async function checkEmailVerificationCode(
       throw new HttpError(
         400,
         is_too_much_attempt
-          ? 'Too much mismatched attempts.'
+          ? '過多不匹配的嘗試。'
           : is_expired
-            ? 'Verification code expired.'
-            : 'Verification code not matched.',
+            ? '驗證碼已過期。'
+            : '驗證碼不匹配。',
       )
     }
     writeUserIdToCookie(res, user_id)
@@ -456,7 +539,7 @@ async function checkEmailVerificationCode(
     }
   } catch (error) {
     let params = new URLSearchParams({
-      title: 'Failed to verify email',
+      title: '未能驗證電郵地址。',
       error: String(error),
     })
     if (email) params.set('email', email)
@@ -475,7 +558,7 @@ let routes: Routes = {
     resolve: requestEmailVerification,
   },
   '/verify/email/result': {
-    title: title('Email Verification'),
+    title: title('電郵驗證'),
     description: 'Input email verification code for authentication',
     node: <VerifyEmailPage />,
   },
