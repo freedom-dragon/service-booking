@@ -102,7 +102,7 @@ function ProfileItems(attrs: {}, context: Context) {
   let user = getAuthUser(context)
   if (!user) {
     return (
-      <Link tagName="ion-item" href="/login" disabled>
+      <Link tagName="ion-item" href="/login">
         <ion-icon slot="start" name="log-in" />
         <ion-label>Login / Sign up</ion-label>
       </Link>
