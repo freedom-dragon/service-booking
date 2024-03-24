@@ -159,7 +159,7 @@ function BookingDetails(attrs: {
         <div class="booking--buttons ion-margin-top">
           {attrs.can_confirm ? (
             <ion-button
-              color="primary"
+              color="success"
               onclick={`emit('/booking/${booking.id}/manage/approve')`}
             >
               確認
@@ -167,7 +167,7 @@ function BookingDetails(attrs: {
           ) : null}
           {attrs.can_arrive ? (
             <ion-button
-              color="primary"
+              color="success"
               onclick={`emit('/booking/${booking.id}/manage/arrive')`}
             >
               報到
