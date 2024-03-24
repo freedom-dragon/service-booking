@@ -74,7 +74,7 @@ export function ServiceTimeslotPicker(attrs: {
     var availableTimeslots = ${JSON.stringify(availableTimeslots)};
     var book_duration_ms = ${service.book_duration_minute * MINUTE};
     var book_time_step_ms = ${15 * MINUTE};
-    datePicker.isDateEnabled = (${function (
+    ${attrs.datePicker}.isDateEnabled = (${function (
       timeslots: typeof availableTimeslots,
     ) {
       return function isDateEnabled(dateString: string) {
@@ -100,7 +100,7 @@ export function ServiceTimeslotPicker(attrs: {
         }
       }
     }})(availableTimeslots);
-    datePicker.addEventListener('ionChange', (${function (
+    ${attrs.datePicker}.addEventListener('ionChange', (${function (
       timeRadioGroup: HTMLElement,
       bookingForm: HTMLFormElement,
       selectedTimeButton: HTMLFormElement,
@@ -211,7 +211,7 @@ export function ServiceTimeslotPicker(attrs: {
 
   let timeScript = Script(
     /* javascript */ `
-timeRadioGroup.addEventListener('ionChange', event => {
+${attrs.timeRadioGroup}.addEventListener('ionChange', event => {
   selectedTimeButton.textContent = event.detail.value || '未選擇'
 })
 `,

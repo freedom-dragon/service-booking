@@ -283,6 +283,7 @@ function selectOption(button){
 
             <ServiceTimeslotPicker
               service={service}
+              datePicker="datePicker"
               timeRadioGroup="timeRadioGroup"
               bookingForm="bookingForm"
               selectedTimeButton="selectedTimeButton"
