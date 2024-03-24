@@ -127,6 +127,7 @@ function BookingDetails(attrs: {
           </div>
           {attrs.timestamp}
         </div>
+        <div style="margin: 0.25rem 1rem">預約資料</div>
         <div style="color: black">
           <BookingPreview booking={booking} style="margin: 0.25rem 1rem" />
           <div class="ion-margin-top">

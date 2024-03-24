@@ -38,14 +38,14 @@ export function BookingPreview(
         <tr>
           <td>
             <ion-icon name="planet-outline"></ion-icon>
-            預約{locale.service}:
+            {locale.service}:
           </td>
           <td>{service.name}</td>
         </tr>
         <tr>
           <td>
             <ion-icon name="people-outline"></ion-icon>
-            預約人數:
+            人數:
           </td>
           <td>
             {booking.amount} {service.price_unit}
@@ -63,7 +63,7 @@ export function BookingPreview(
         <tr>
           <td>
             <ion-icon name="calendar-outline"></ion-icon>
-            預約日期:
+            日期:
           </td>
           <td>
             {toLocaleDateTimeString(booking.appointment_time, context, {
@@ -77,7 +77,7 @@ export function BookingPreview(
         <tr>
           <td>
             <ion-icon name="time-outline"></ion-icon>
-            預約時間:
+            時間:
           </td>
           <td>
             {toLocaleDateTimeString(booking.appointment_time, context, {
