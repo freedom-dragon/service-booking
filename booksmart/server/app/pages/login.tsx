@@ -64,17 +64,25 @@ order by id desc
       <>
         <ion-header>
           <ion-toolbar color="primary">
-            <IonBackButton
-              href={shop ? '/shop/' + shop.slug : '/'}
-              backText="Home"
-              color="light"
-            />
-            <ion-title>Login</ion-title>
+            {shop ? (
+              <IonBackButton
+                href={'/shop/' + shop.slug}
+                backText={'主頁'}
+                color="light"
+              />
+            ) : (
+              <IonBackButton
+                href={'/app/more'}
+                backText={'更多'}
+                color="light"
+              />
+            )}
+            <ion-title>登入</ion-title>
           </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
           <div id="login">
-            <h1>Welcome back to {config.short_site_name}</h1>
+            <h1>歡迎回到 {config.short_site_name}</h1>
             {/* <p>{commonTemplatePageText}</p> */}
             <Main />
           </div>
@@ -95,7 +103,7 @@ let emailFormBody =
     <>
       <div class="field">
         <label>
-          Email
+          電郵地址
           <div class="input-container">
             <input name="email" type="email" autocomplete="email" />
           </div>
@@ -103,18 +111,18 @@ let emailFormBody =
       </div>
       <div class="field">
         <label>
-          <input type="checkbox" name="include_link" /> Include magic link (more
-          convince but may be treated as spam)
+          <input type="checkbox" name="include_link" /> 包括驗證連結
+          （更方便但可能會被當作垃圾郵件）
         </label>
       </div>
-      <input type="submit" value="Verify" />
+      <input type="submit" value="發送驗證碼" />
     </>
   ) : (
     <>
       <ion-list>
         <ion-item>
           <ion-input
-            label="Email"
+            label="電郵地址"
             label-placement="floating"
             type="email"
             name="email"
@@ -123,17 +131,17 @@ let emailFormBody =
         </ion-item>
         <ion-item>
           <ion-checkbox name="include_link" slot="start"></ion-checkbox>
-          <ion-label>Include magic link</ion-label>
+          <ion-label>包括驗證連結</ion-label>
         </ion-item>
         <ion-note color="dark">
           <div class="ion-padding-horizontal">
-            (More convince but may be treated as spam)
+            （更方便但可能會被當作垃圾郵件）
           </div>
         </ion-note>
       </ion-list>
       <div class="ion-text-center ion-margin">
         <ion-button type="submit" fill="block" color="tertiary">
-          Verify
+          發送驗證碼
         </ion-button>
       </div>
     </>
@@ -195,7 +203,7 @@ let passwordFormBody =
 
 let guestView = (
   <>
-    <div>Login with:</div>
+    <div hidden>Login with:</div>
     <form
       method="POST"
       action="/verify/email/submit"
@@ -203,11 +211,14 @@ let guestView = (
     >
       {emailFormBody}
     </form>
-    <div class="or-line flex-center">or</div>
-    <form method="post" action="/login/submit">
+    <div class="or-line flex-center" hidden>
+      or
+    </div>
+    <form method="post" action="/login/submit" hidden>
       {passwordFormBody}
     </form>
-    <div>
+    <div>首次使用{config.short_site_name}？您可以在提交預約時自動註冊。</div>
+    <div hidden>
       New to {config.short_site_name}?{' '}
       <Link href="/register">Create an account</Link>.
     </div>

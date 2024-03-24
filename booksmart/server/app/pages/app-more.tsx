@@ -104,7 +104,7 @@ function ProfileItems(attrs: {}, context: Context) {
     return (
       <Link tagName="ion-item" href="/login">
         <ion-icon slot="start" name="log-in" />
-        <ion-label>Login / Sign up</ion-label>
+        <ion-label>登入</ion-label>
       </Link>
     )
   }
