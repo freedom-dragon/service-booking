@@ -216,6 +216,13 @@ function BookingDetails(attrs: {
                               </div>
                               <ion-label>{booking.user!.tel}</ion-label>
                             </ion-item>
+                            <ion-item>
+                              <div slot="start">
+                                <ion-icon name="at-outline"></ion-icon>
+                                電郵
+                              </div>
+                              <ion-label>{booking.user!.email}</ion-label>
+                            </ion-item>
                             <ServiceTimeslotPicker
                               service={booking.service!}
                               datePicker={`datePicker${booking.id}`}
