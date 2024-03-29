@@ -36,6 +36,9 @@ export function ServiceTimeslotPicker(attrs: {
   timeRadioGroup: string
   bookingForm: string
   selectedTimeButton: string
+
+  /* event handler function name */
+  onSelectDateFn: string
 }) {
   let { service } = attrs
 
@@ -100,7 +103,7 @@ export function ServiceTimeslotPicker(attrs: {
         }
       }
     }})(availableTimeslots);
-    ${attrs.datePicker}.addEventListener('ionChange', (${function (
+    var ${attrs.onSelectDateFn} = (${function (
       timeRadioGroup: HTMLElement,
       bookingForm: HTMLFormElement,
       selectedTimeButton: HTMLFormElement,
@@ -175,7 +178,8 @@ export function ServiceTimeslotPicker(attrs: {
       availableTimeslots,
       book_duration_ms,
       book_time_step_ms
-    ))
+    )
+    ${attrs.datePicker}.addEventListener('ionChange', ${attrs.onSelectDateFn})
     `,
     'no-minify',
   )

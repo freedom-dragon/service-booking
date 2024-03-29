@@ -288,6 +288,7 @@ function selectOption(button){
               timeRadioGroup="timeRadioGroup"
               bookingForm="bookingForm"
               selectedTimeButton="selectedTimeButton"
+              onSelectDateFn="onSelectDateFn"
             />
 
             <ion-item-divider style="min-height:2px"></ion-item-divider>

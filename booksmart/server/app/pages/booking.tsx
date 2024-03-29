@@ -229,6 +229,7 @@ function BookingDetails(attrs: {
                               timeRadioGroup={`timeRadioGroup${booking.id}`}
                               bookingForm={`bookingForm${booking.id}`}
                               selectedTimeButton={`selectedTimeButton${booking.id}`}
+                              onSelectDateFn={`onSelectDateFn${booking.id}`}
                             />
                             <ion-item>
                               <div slot="start">
@@ -256,8 +257,30 @@ function initBookingForm${booking.id}() {
     setTimeout(initBookingForm${booking.id},33)
     return
   }
-  date.value = '${new Date(booking.appointment_time).toISOString()}'
-  time.value = '${new Date(booking.appointment_time).toISOString().split('T')[1]}'
+  let d = new Date(${booking.appointment_time})
+  let dateStr =
+  [
+    d.getFullYear(),
+    d.getMonth() + 1,
+    d.getDate()
+  ]
+  .map(x => x < 10 ? '0'+x : x)
+  .join('-')
+  let timeStr =
+  [
+    d.getHours(),
+    d.getMinutes(),
+  ].map(x => x < 10 ? '0'+x : x)
+  .join(':')
+  datePicker${booking.id}.value = dateStr
+  let event = {
+    detail: {
+      value: dateStr
+    }
+  }
+  onSelectDateFn${booking.id}(event)
+  timeRadioGroup${booking.id}.value = timeStr
+  selectedTimeButton${booking.id}.textContent = timeStr
 }
 initBookingForm${booking.id}()
 function confirmReschedule${booking.id}() {
