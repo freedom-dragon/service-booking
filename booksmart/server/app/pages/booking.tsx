@@ -85,7 +85,47 @@ let page = (
       {appIonTabBar}
       {selectIonTab('booking')}
     </ion-footer>
+    <ion-modal>
+      <ion-datetime
+        id="calendarPicker"
+        presentation="date"
+        show-default-buttons="true"
+        done-text="選擇日期"
+        cancel-text="顯示全部"
+      ></ion-datetime>
+    </ion-modal>
+    <ion-modal id="calendarModal2" hidden>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button onclick="calendarModal2.present()">Close</ion-button>
+          </ion-buttons>
+          <ion-title>預約 (月歷)</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <div style="display:flex;justify-content:center">
+          <ion-datetime></ion-datetime>
+        </div>
+      </ion-content>
+    </ion-modal>
     {fitIonFooter}
+    {Script(/* javascript */ `
+calendarPicker.addEventListener('ionChange', event => {
+  let value = event.detail.value.split('T')[0]
+  document.querySelector('ion-datetime-button[datetime="calendarPicker"] [slot="date-target"]').textContent = value
+  // TODO add shop slug
+  // TODO make it smooth
+  emit('/booking/filter?date='+value)
+})
+calendarPicker.addEventListener('ionCancel', event => {
+  document.querySelector('ion-datetime-button[datetime="calendarPicker"] [slot="date-target"]').textContent = '顯示全部'
+  // TODO add shop slug
+  // TODO make it smooth
+  emit('/booking/filter')
+
+})
+`)}
   </>
 )
 
@@ -336,7 +376,18 @@ function AdminPage(shop: Shop, context: DynamicContext) {
           <ion-title role="heading" aria-level="1">
             客戶的預約
           </ion-title>
+          <ion-buttons slot="end" hidden>
+            <ion-button onclick="calendarModal2.present()">
+              <ion-icon slot="icon-only" name="calendar"></ion-icon>
+            </ion-button>
+          </ion-buttons>
         </ion-toolbar>
+        <ion-item lines="none">
+          <ion-label>預約日期過濾器</ion-label>
+          <ion-datetime-button datetime="calendarPicker" slot="end">
+            <span slot="date-target">顯示全部</span>
+          </ion-datetime-button>
+        </ion-item>
         <ion-segment
           value="submitted"
           style="margin: 4px; width: calc(100% - 8px)"
@@ -572,6 +623,11 @@ function UserPage(user: User | null, context: DynamicContext) {
           <ion-title role="heading" aria-level="1">
             我的預約
           </ion-title>
+          <ion-buttons slot="end">
+            <ion-button onclick="calendarModal.present()">
+              <ion-icon slot="icon-only" name="calendar"></ion-icon>
+            </ion-button>
+          </ion-buttons>
         </ion-toolbar>
         {page ? (
           <ion-segment
