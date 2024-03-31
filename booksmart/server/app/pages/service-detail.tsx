@@ -86,6 +86,7 @@ import {
 import { getBookingTotalFee, isFree } from '../fee.js'
 import { env } from '../../env.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
+import { formatTel } from '../components/tel.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -329,7 +330,12 @@ function selectOption(button){
                   <div slot="start">
                     <ion-icon name="call-outline"></ion-icon> 電話
                   </div>
-                  <ion-input type="tel" name="tel" readonly value={user.tel} />
+                  <ion-input
+                    type="tel"
+                    name="tel"
+                    readonly
+                    value={formatTel(user.tel!)}
+                  />
                 </ion-item>
                 <ion-item>
                   <div slot="start">

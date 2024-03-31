@@ -7,6 +7,7 @@ import { toLocaleDateTimeString } from './datetime.js'
 import { renderError } from './error.js'
 import { mapArray } from './fragment.js'
 import Style from './style.js'
+import { Tel } from './tel.js'
 
 export let bookingPreviewStyle = Style(/* css */ `
 .booking-preview tr {
@@ -108,7 +109,7 @@ export function BookingPreview(
             <ion-icon name="call-outline"></ion-icon>
             電話:
           </td>
-          <td>{user.tel}</td>
+          <td>{Tel(user.tel!)}</td>
         </tr>
         <tr>
           <td>
