@@ -1,3 +1,4 @@
+import httpStatus from 'http-status'
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
 import { apiEndpointTitle, title } from '../../config.js'
@@ -25,7 +26,7 @@ import {
 } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
-import { getAuthUser } from '../auth/user.js'
+import { getAuthUser, getAuthUserId } from '../auth/user.js'
 import {
   Booking,
   Receipt,
@@ -578,7 +579,6 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
         <div id="receiptImageList">
           {mapArray(receipts, receipt => ReceiptFigure({ receipt }, context))}
         </div>
-        {/* TODO show this message after upload receipt (send ws message) */}
         <p class="receiptMessage ion-text-center">
           {fee.is_free
             ? ReceiptMessage.free(shop)
@@ -1444,9 +1444,31 @@ function attachRoutes(app: Router) {
         })
         if (!service) throw new HttpError(404, 'service not found')
 
-        // TODO check if option_id is given when field_name is option
-        // TODO check if this option belong to this service
-        // TODO check if the user is shop owner
+        let context: ExpressContext = {
+          type: 'express',
+          req,
+          res,
+          next,
+          url: req.url,
+        }
+        let { user } = getAuthRole(context)
+        let is_shop_owner = user?.id == shop.owner_id
+        if (!is_shop_owner) {
+          throw new HttpError(
+            user ? httpStatus.FORBIDDEN : httpStatus.UNAUTHORIZED,
+            'only shop owner can upload service image',
+          )
+        }
+
+        if (field_name == 'option') {
+          if (!option_id) throw new HttpError(400, 'missing option_id')
+
+          let option = proxy.service_option[option_id]
+          if (!option) throw new HttpError(404, 'service option not found')
+
+          if (option.service_id !== service.id!)
+            throw new HttpError(400, 'service option not belong to the service')
+        }
 
         let dir = join('public', 'assets', 'shops', shop_slug, service_slug)
         let filename =
@@ -1799,7 +1821,24 @@ let routes: Routes = {
         ({ service, shop, service_slug, shop_slug }) => {
           let booking_id = context.routerMatch?.params.booking_id
           let booking = proxy.booking[booking_id]
-          // TODO check user
+          if (!booking)
+            throw new MessageException([
+              'eval',
+              `showToast("找不到相應的預約，ID：${booking_id}","warning")`,
+            ])
+
+          let { user } = getAuthRole(context)
+          if (!user)
+            throw new MessageException([
+              'eval',
+              'showToast("請先登入","warning")',
+            ])
+
+          if (booking.user_id !== user.id && user.id !== shop.owner_id)
+            throw new MessageException([
+              'eval',
+              'showToast("不可以取消其他人的預約","warning")',
+            ])
 
           booking.cancel_time = Date.now()
 
@@ -1997,6 +2036,15 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       return resolveServiceRoute(
         context,
         ({ service, shop, shop_slug, service_slug }) => {
+          let { user } = getAuthRole(context)
+          let is_shop_owner = user?.id == shop.owner_id
+          if (!is_shop_owner) {
+            throw new MessageException([
+              'eval',
+              `showAlert('not shop owner','error')`,
+            ])
+          }
+
           let {
             args: { '0': option_id, 1: option_name },
           } = object({
@@ -2013,7 +2061,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               `showAlert('option #${option_id} not found','error')`,
             ])
           }
-          // TODO check if the user is shop owner
           option.name = option_name
 
           throw new MessageException([
@@ -2036,7 +2083,15 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       return resolveServiceRoute(
         context,
         ({ service, shop, shop_slug, service_slug }) => {
-          // TODO check if the user is shop owner
+          let { user } = getAuthRole(context)
+          let is_shop_owner = user?.id == shop.owner_id
+          if (!is_shop_owner) {
+            throw new MessageException([
+              'eval',
+              `showToast('only shop owner can update timeslot','error')`,
+            ])
+          }
+
           let timeslot_id = context.routerMatch?.params.timeslot_id
           let timeslot = find(proxy.service_timeslot, {
             service_id: service.id!,
@@ -2103,6 +2158,15 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       return resolveServiceRoute(
         context,
         ({ service, shop, shop_slug, service_slug }) => {
+          let { user } = getAuthRole(context)
+          let is_shop_owner = user?.id == shop.owner_id
+          if (!is_shop_owner) {
+            throw new MessageException([
+              'eval',
+              `showToast('only shop owner can remove timeslot','error')`,
+            ])
+          }
+
           let new_timeslot_count =
             count(proxy.service_timeslot, {
               service_id: service.id!,
@@ -2123,7 +2187,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
           if (!timeslot) {
             throw EarlyTerminate
           }
-          // TODO check if the user is shop owner
 
           del(proxy.timeslot_hour, { service_timeslot_id: timeslot_id })
           delete proxy.service_timeslot[timeslot_id]
@@ -2164,6 +2227,15 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       return resolveServiceRoute(
         context,
         ({ service, shop, shop_slug, service_slug }) => {
+          let { user } = getAuthRole(context)
+          let is_shop_owner = user?.id == shop.owner_id
+          if (!is_shop_owner) {
+            throw new MessageException([
+              'eval',
+              `showToast('only shop owner can add timeslot','error')`,
+            ])
+          }
+
           let timeslots = filter(proxy.service_timeslot, {
             service_id: service.id!,
           })
@@ -2176,7 +2248,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
             timeslot.start_date = str
             timeslot.end_date = str
           }
-          // TODO check if the user is shop owner
           let timeslot_id = proxy.service_timeslot.push({
             service_id: service.id!,
             start_date: timeslot.start_date,
@@ -2184,7 +2255,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
             weekdays: '',
           })
           timeslot = proxy.service_timeslot[timeslot_id]
-          // TODO send ws message
           let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
           context.ws.send([
             'batch',
@@ -2218,8 +2288,8 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
     resolve(context) {
       if (context.type !== 'ws') {
         return {
-          title: title('method not supported'),
-          description: 'update service option name',
+          title: apiEndpointTitle,
+          description: 'manage service timeslot',
           node: 'This api is only available over ws',
         }
       }
@@ -2227,6 +2297,15 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       return resolveServiceRoute(
         context,
         ({ service, shop, shop_slug, service_slug }) => {
+          let { user } = getAuthRole(context)
+          let is_shop_owner = user?.id == shop.owner_id
+          if (!is_shop_owner) {
+            throw new MessageException([
+              'eval',
+              `showToast('only shop owner can manage timeslot','error')`,
+            ])
+          }
+
           let {
             args: { '0': action, 1: hour_id, 2: field, 3: field_value },
           } = object({
@@ -2248,7 +2327,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               `showAlert('timeslot #${timeslot_id} not found','error')`,
             ])
           }
-          // TODO check if the user is shop owner
           switch (action) {
             case 'add': {
               // clone last timeslot hour

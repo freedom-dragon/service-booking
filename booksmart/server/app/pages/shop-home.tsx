@@ -22,6 +22,7 @@ import {
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { appIonTabBar } from '../components/app-tab-bar.js'
 import { ShopContacts, ShopContactsStyle } from '../components/shop-contact.js'
+import { countBooking } from '../booking-store.js'
 
 let pageTitle = 'The Balconi ARTLAB 香港'
 
@@ -118,38 +119,56 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           Booking
         </h2>
         <ion-list>
-          {mapArray(services, service => (
-            <Link
-              tagName="ion-card"
-              href={`/shop/${shop.slug}/service/${service.slug}`}
-              class="service--card"
-            >
-              <div class="d-flex">
-                <div>
-                  <ion-thumbnail>
-                    <img src={getServiceCoverImage(shop_slug, service.slug)} />
-                  </ion-thumbnail>
+          {mapArray(services, service => {
+            let { used, times } = countBooking({ service, user })
+            return (
+              <Link
+                tagName="ion-card"
+                href={`/shop/${shop.slug}/service/${service.slug}`}
+                class="service--card"
+              >
+                <div class="d-flex">
+                  <div>
+                    <ion-thumbnail>
+                      <img
+                        src={getServiceCoverImage(shop_slug, service.slug)}
+                      />
+                    </ion-thumbnail>
+                  </div>
+                  <div class="card-text-container">
+                    <h3>{service.name}</h3>
+                    {times > 1 ? (
+                      <p class="card--field">
+                        <ion-icon name="copy-outline" />
+                        &nbsp;次數:{' '}
+                        {used ? (
+                          <>
+                            {used}/{times}
+                          </>
+                        ) : (
+                          times
+                        )}
+                      </p>
+                    ) : null}
+                    <p class="card--field">
+                      <ion-icon name="hourglass-outline" />
+                      &nbsp;時長: {service.hours}
+                    </p>
+                    <p class="card--field">
+                      <ion-icon name="cash-outline" />
+                      &nbsp;費用:{' '}
+                      {+service.unit_price!
+                        ? '$' + service.unit_price + '/' + service.price_unit
+                        : service.unit_price}
+                    </p>
+                    <ion-button size="small" color="primary" fill="block">
+                      立即預約
+                    </ion-button>
+                  </div>
                 </div>
-                <div class="card-text-container">
-                  <h3>{service.name}</h3>
-                  <p class="card--field">
-                    <ion-icon name="hourglass-outline" />
-                    &nbsp;時長: {service.hours}
-                  </p>
-                  <p class="card--field">
-                    <ion-icon name="cash-outline" />
-                    &nbsp;費用:{' '}
-                    {+service.unit_price!
-                      ? '$' + service.unit_price + '/' + service.price_unit
-                      : service.unit_price}
-                  </p>
-                  <ion-button size="small" color="primary" fill="block">
-                    立即預約
-                  </ion-button>
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            )
+          })}
         </ion-list>
 
         <h2 class="ion-margin">關於我們</h2>
