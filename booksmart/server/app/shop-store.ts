@@ -251,21 +251,3 @@ export type ShopContact = ReturnType<typeof getShopContacts>[number]
 export let contactFields = getShopContacts({} as Shop).map(item => item.field)
 
 export let shopFieldsParser = values([...paymentFields, ...contactFields])
-
-export function toDatePart(date: TimezoneDate) {
-  date.timezone = +8
-  let y = date.getFullYear()
-  let m = date.getMonth() + 1
-  let d = date.getDate()
-  let str = [y, format_2_digit(m), format_2_digit(d)].join('-')
-  return str
-}
-
-export function fromDatePart(dateStr: string) {
-  let date = new TimezoneDate()
-  date.timezone = +8
-  date.setHours(0, 0, 0, 0)
-  let [y, m, d] = dateStr.split('-')
-  date.setFullYear(+y, +m, +d)
-  return date
-}

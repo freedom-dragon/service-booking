@@ -43,7 +43,6 @@ import {
   getServiceImages,
   getServiceOptionImage,
   getShopLocale,
-  toDatePart,
 } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
 import { wsStatus } from '../components/ws-status.js'
@@ -88,6 +87,7 @@ import { env } from '../../env.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
 import { getAuthRole } from '../auth/role.js'
+import { toDatePart } from '../format/date.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
