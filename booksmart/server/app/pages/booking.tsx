@@ -43,6 +43,7 @@ import { ServerMessage } from '../../../client/types.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { Script } from '../components/script.js'
 import { formatHKDateString } from '../format/date.js'
+import { countBooking } from '../booking-store.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -178,6 +179,8 @@ function BookingDetails(attrs: {
   let service_slug = service.slug
   let service_url = `/shop/${shop_slug}/service/${service_slug}`
   let locale = getShopLocale(service.shop_id)
+  let { used } = countBooking({ service, user: booking.user })
+  let need_pay = used == 0
   return (
     <ion-card>
       <ion-card-content>
@@ -195,32 +198,36 @@ function BookingDetails(attrs: {
         <div style="margin: 0.25rem 1rem">預約資料</div>
         <div style="color: black">
           <BookingPreview booking={booking} style="margin: 0.25rem 1rem" />
-          <div class="ion-margin-top">
-            <b>總共費用: {fee.str}</b>
-          </div>
+          {need_pay ? (
+            <div class="ion-margin-top">
+              <b>總共費用: {fee.str}</b>
+            </div>
+          ) : null}
         </div>
       </ion-card-content>
       <div class="ion-margin-horizontal">
-        <details open={attrs.open_receipt}>
-          <summary>
-            {receipts.length == 0 ? (
-              <span class="ion-margin-bottom">未有上載收據</span>
-            ) : (
-              <span class="ion-margin-bottom">
-                上載了 {receipts.length} 張收據
-              </span>
-            )}
-          </summary>
-          {mapArray(receipts, receipt => (
-            <div>
-              <img
-                src={`/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`}
-                loading="lazy"
-              />
-            </div>
-          ))}
-        </details>
-        <div class="booking--buttons ion-margin-top">
+        {need_pay ? (
+          <details open={attrs.open_receipt} class="ion-margin-bottom">
+            <summary>
+              {receipts.length == 0 ? (
+                <span class="ion-margin-bottom">未有上載收據</span>
+              ) : (
+                <span class="ion-margin-bottom">
+                  上載了 {receipts.length} 張收據
+                </span>
+              )}
+            </summary>
+            {mapArray(receipts, receipt => (
+              <div>
+                <img
+                  src={`/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`}
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </details>
+        ) : null}
+        <div class="booking--buttons">
           {attrs.can_confirm ? (
             <ion-button
               color="success"

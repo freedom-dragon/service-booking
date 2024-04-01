@@ -275,31 +275,29 @@ function selectOption(button){
                 </ion-label>
               </ion-item>
             )}
-            {times == 1 ? (
-              <ion-item>
-                <div slot="start">
-                  <ion-icon name="people-outline"></ion-icon> 人數
-                </div>
-                <ion-input
-                  placeholder="1"
-                  type="number"
-                  min="1"
-                  max={quota}
-                  name="amount"
-                  /* TODO avoid overbook */
-                  oninput={
-                    `this.value>${quota}&&(this.value=${quota});` +
-                    (+service.unit_price!
-                      ? `priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}';`
-                      : '')
-                  }
-                />
-                <ion-label slot="end">{service.price_unit}</ion-label>
-                <div slot="helper">
-                  上限: {quota} {service.price_unit}
-                </div>
-              </ion-item>
-            ) : null}
+            <ion-item hidden={times == 1 ? undefined : ''}>
+              <div slot="start">
+                <ion-icon name="people-outline"></ion-icon> 人數
+              </div>
+              <ion-input
+                placeholder="1"
+                type="number"
+                min="1"
+                max={quota}
+                name="amount"
+                /* TODO avoid overbook */
+                oninput={
+                  `this.value>${quota}&&(this.value=${quota});` +
+                  (+service.unit_price!
+                    ? `priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}';`
+                    : '')
+                }
+              />
+              <ion-label slot="end">{service.price_unit}</ion-label>
+              <div slot="helper">
+                上限: {quota} {service.price_unit}
+              </div>
+            </ion-item>
             <ion-item>
               <div slot="start">
                 <ion-icon name="hourglass-outline"></ion-icon> 時長
@@ -447,7 +445,9 @@ function selectOption(button){
       <ion-footer style="background-color: var(--ion-color-light);">
         <ion-list inset="true" style="margin-top: 0.5rem">
           <ion-item>
-            <ion-label>
+            <ion-label
+              style={used > 0 ? 'text-decoration: line-through' : undefined}
+            >
               費用{' '}
               <span id="priceLabel">
                 {+service.unit_price!
@@ -470,11 +470,12 @@ function selectOption(button){
       </ion-footer>
       <ion-modal id="submitModal">
         {booking &&
+        user &&
         !booking.approve_time &&
         !booking.reject_time &&
         !booking.cancel_time ? (
           <>
-            <PaymentModal booking={booking} />
+            <PaymentModal booking={booking} user={user} />
             {context.type == 'ws'
               ? Script(/* javascript */ `
 function showSubmitModal() {
@@ -536,16 +537,21 @@ async function uploadReceipt(url) {
   </>
 )
 
-function PaymentModal(attrs: { booking: Booking }, context: Context) {
-  let { booking } = attrs
+function PaymentModal(
+  attrs: { booking: Booking; user: User },
+  context: Context,
+) {
+  let { booking, user } = attrs
   let service = booking.service!
   let service_slug = service.slug
   let shop = service.shop!
   let shop_slug = shop.slug
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let receipts = filter(proxy.receipt, { booking_id: booking.id! })
+  let { used, times } = countBooking({ service, user })
   let fee = getBookingTotalFee(booking)
   let has_paid = receipts.length > 0
+  let need_pay = used == 0
   let is_shop_owner = getAuthUser(context)?.id == shop.owner_id
   let locale = getShopLocale(shop.id!)
   return (
@@ -554,6 +560,7 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
         <ion-toolbar>
           <ion-buttons slot="start">
             {!is_shop_owner &&
+            need_pay &&
             !has_paid &&
             !fee.is_free &&
             !booking.approve_time &&
@@ -577,31 +584,38 @@ function PaymentModal(attrs: { booking: Booking }, context: Context) {
         {bookingPreviewStyle}
         <BookingPreview booking={booking} />
 
-        <h1>總共費用</h1>
-        <div id="totalPriceLabel"></div>
-        <div>{fee.str}</div>
-        <h1>付款方法</h1>
-        <ion-item>
-          <ion-thumbnail slot="start">
-            <img src="/assets/payment-methods/payme.webp" />
-          </ion-thumbnail>
-          <ion-label>Payme / 98765432</ion-label>
-        </ion-item>
-        <div class="ion-margin">
-          <ion-button
-            fill="block"
-            color="primary"
-            onclick={`uploadReceipt('${serviceUrl}/receipt?booking_id=${booking.id}')`}
-          >
-            <ion-icon name="cloud-upload" slot="start"></ion-icon>
-            上傳付款證明
-          </ion-button>
-        </div>
-        <div id="receiptImageList">
-          {mapArray(receipts, receipt => ReceiptFigure({ receipt }, context))}
-        </div>
+        {need_pay ? (
+          <>
+            <h1>總共費用</h1>
+            <div id="totalPriceLabel"></div>
+            <div>{fee.str}</div>
+            <h1>付款方法</h1>
+            <ion-item>
+              <ion-thumbnail slot="start">
+                <img src="/assets/payment-methods/payme.webp" />
+              </ion-thumbnail>
+              <ion-label>Payme / 98765432</ion-label>
+            </ion-item>
+            <div class="ion-margin">
+              <ion-button
+                fill="block"
+                color="primary"
+                onclick={`uploadReceipt('${serviceUrl}/receipt?booking_id=${booking.id}')`}
+              >
+                <ion-icon name="cloud-upload" slot="start"></ion-icon>
+                上傳付款證明
+              </ion-button>
+            </div>
+            <div id="receiptImageList">
+              {mapArray(receipts, receipt =>
+                ReceiptFigure({ receipt }, context),
+              )}
+            </div>{' '}
+          </>
+        ) : null}
+
         <p class="receiptMessage ion-text-center">
-          {fee.is_free
+          {!need_pay || fee.is_free
             ? ReceiptMessage.free(shop)
             : has_paid
               ? ReceiptMessage.paid(shop)
@@ -1840,7 +1854,7 @@ let routes: Routes = {
               [
                 'update-in',
                 '#submitModal',
-                nodeToVNode(PaymentModal({ booking }, context), context),
+                nodeToVNode(PaymentModal({ booking, user }, context), context),
               ],
               ['eval', 'submitModal.present()'],
             ],

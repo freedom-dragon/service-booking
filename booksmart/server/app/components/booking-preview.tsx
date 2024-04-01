@@ -1,4 +1,5 @@
 import { Booking, Service } from '../../../db/proxy.js'
+import { countBooking } from '../booking-store.js'
 import { Context } from '../context.js'
 import { concatClassNames, flagsToClassName } from '../jsx/html.js'
 import { o } from '../jsx/jsx.js'
@@ -32,6 +33,7 @@ export function BookingPreview(
   let service = booking.service!
   let service_option = booking.service_option
   let locale = getShopLocale(service.shop_id)
+  let { used, times } = countBooking({ service, user })
   return (
     <table
       class={concatClassNames('booking-preview', attrs.class)}
@@ -45,15 +47,33 @@ export function BookingPreview(
           </td>
           <td>{service.name}</td>
         </tr>
-        <tr>
-          <td>
-            <ion-icon name="people-outline"></ion-icon>
-            人數:
-          </td>
-          <td>
-            {booking.amount} {service.price_unit}
-          </td>
-        </tr>
+        {times == 1 ? (
+          <tr>
+            <td>
+              <ion-icon name="people-outline"></ion-icon>
+              人數:
+            </td>
+            <td>
+              {booking.amount} {service.price_unit}
+            </td>
+          </tr>
+        ) : (
+          <tr>
+            <td>
+              <ion-icon name="copy-outline"></ion-icon>
+              次數:
+            </td>
+            <td>
+              {used ? (
+                <>
+                  {used}/{times}
+                </>
+              ) : (
+                times
+              )}
+            </td>
+          </tr>
+        )}
         {service_option ? (
           <tr>
             <td style="text-align: end_">
