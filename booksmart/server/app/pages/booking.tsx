@@ -85,7 +85,7 @@ let page = (
       {appIonTabBar}
       {selectIonTab('booking')}
     </ion-footer>
-    <ion-modal>
+    <ion-modal id="calendarModal">
       <ion-datetime
         id="calendarPicker"
         presentation="date"
@@ -93,21 +93,6 @@ let page = (
         done-text="選擇日期"
         cancel-text="顯示全部"
       ></ion-datetime>
-    </ion-modal>
-    <ion-modal id="calendarModal2" hidden>
-      <ion-header>
-        <ion-toolbar>
-          <ion-buttons slot="start">
-            <ion-button onclick="calendarModal2.present()">Close</ion-button>
-          </ion-buttons>
-          <ion-title>預約 (月歷)</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content class="ion-padding">
-        <div style="display:flex;justify-content:center">
-          <ion-datetime></ion-datetime>
-        </div>
-      </ion-content>
     </ion-modal>
     {fitIonFooter}
     {Script(/* javascript */ `
@@ -376,8 +361,8 @@ function AdminPage(shop: Shop, context: DynamicContext) {
           <ion-title role="heading" aria-level="1">
             客戶的預約
           </ion-title>
-          <ion-buttons slot="end" hidden>
-            <ion-button onclick="calendarModal2.present()">
+          <ion-buttons slot="end">
+            <ion-button onclick="calendarModal.present()">
               <ion-icon slot="icon-only" name="calendar"></ion-icon>
             </ion-button>
           </ion-buttons>
