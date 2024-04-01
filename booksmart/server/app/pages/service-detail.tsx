@@ -87,6 +87,7 @@ import { getBookingTotalFee, isFree } from '../fee.js'
 import { env } from '../../env.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
+import { getAuthRole } from '../auth/role.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -187,15 +188,17 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
             color="light"
           />
           <ion-title>{locale.service}詳情</ion-title>
-          <ion-buttons slot="end">
-            <Link
-              tagName="ion-button"
-              title={'管理' + locale.service}
-              href={`${serviceUrl}/admin`}
-            >
-              <ion-icon slot="icon-only" name="create"></ion-icon>
-            </Link>
-          </ion-buttons>
+          {is_shop_owner ? (
+            <ion-buttons slot="end">
+              <Link
+                tagName="ion-button"
+                title={'管理' + locale.service}
+                href={`${serviceUrl}/admin`}
+              >
+                <ion-icon slot="icon-only" name="create"></ion-icon>
+              </Link>
+            </ion-buttons>
+          ) : null}
         </ion-toolbar>
       </ion-header>
       <ion-content id="ServiceDetail" color="light">
@@ -784,13 +787,18 @@ function saveOptionName(button) {
 )
 function ManageService(attrs: { service: Service }, context: DynamicContext) {
   let { service } = attrs
+  let { user } = getAuthRole(context)
   let shop = service.shop!
+  let is_shop_owner = user?.id == shop.owner_id
   let shop_slug = shop!.slug
   let { slug: service_slug } = service
   let address = service.address || shop.address
   let options = filter(proxy.service_option, { service_id: service.id! })
   let locale = getShopLocale(shop.id!)
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
+  if (!is_shop_owner) {
+    return <Redirect href={serviceUrl} />
+  }
   let dateRange = getDateRange()
   let service_timeslot_rows = filter(proxy.service_timeslot, {
     service_id: service.id!,
