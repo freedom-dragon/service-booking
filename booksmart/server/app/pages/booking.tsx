@@ -489,7 +489,7 @@ function AdminPageContent(
       }
     }
     let now = Date.now()
-    submitted.sort((a, b) => a.appointment_time - b.appointment_time)
+    submitted.sort((a, b) => b.submit_time - a.submit_time)
     confirmed.sort(
       (a, b) =>
         Math.abs(a.appointment_time - now) - Math.abs(b.appointment_time - now),
@@ -753,7 +753,7 @@ function UserPageContent(
       }
     }
     let now = Date.now()
-    submitted.sort((a, b) => b.appointment_time - a.appointment_time)
+    submitted.sort((a, b) => b.submit_time - a.submit_time)
     confirmed.sort(
       (a, b) =>
         Math.abs(a.appointment_time - now) - Math.abs(b.appointment_time - now),
