@@ -149,6 +149,7 @@ id integer PK
 shop_id integer FK >0- shop.id
 slug text
 name text
+times integer NULL
 hours text
 book_duration_minute integer
 unit_price text NULL

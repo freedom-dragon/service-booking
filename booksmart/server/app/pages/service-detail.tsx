@@ -89,6 +89,7 @@ import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
 import { getAuthRole } from '../auth/role.js'
 import { toDatePart } from '../format/date.js'
+import { countBooking } from '../booking-store.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -178,6 +179,8 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
 
   let quota = service.quota
 
+  let { times, used } = countBooking({ service, user })
+
   return (
     <>
       {ServiceDetailStyle}
@@ -256,29 +259,47 @@ function selectOption(button){
   }
 }
 `)}
-            <ion-item>
-              <div slot="start">
-                <ion-icon name="people-outline"></ion-icon> 人數
-              </div>
-              <ion-input
-                placeholder="1"
-                type="number"
-                min="1"
-                max={quota}
-                name="amount"
-                /* TODO avoid overbook */
-                oninput={
-                  `this.value>${quota}&&(this.value=${quota});` +
-                  (+service.unit_price!
-                    ? `priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}';`
-                    : '')
-                }
-              />
-              <ion-label slot="end">{service.price_unit}</ion-label>
-              <div slot="helper">
-                上限: {quota} {service.price_unit}
-              </div>
-            </ion-item>
+            {times == 1 ? null : (
+              <ion-item>
+                <div slot="start">
+                  <ion-icon name="copy-outline"></ion-icon> 次數
+                </div>
+                <ion-label>
+                  {used ? (
+                    <>
+                      {used}/{times}
+                    </>
+                  ) : (
+                    times
+                  )}
+                </ion-label>
+              </ion-item>
+            )}
+            {times == 1 ? (
+              <ion-item>
+                <div slot="start">
+                  <ion-icon name="people-outline"></ion-icon> 人數
+                </div>
+                <ion-input
+                  placeholder="1"
+                  type="number"
+                  min="1"
+                  max={quota}
+                  name="amount"
+                  /* TODO avoid overbook */
+                  oninput={
+                    `this.value>${quota}&&(this.value=${quota});` +
+                    (+service.unit_price!
+                      ? `priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}';`
+                      : '')
+                  }
+                />
+                <ion-label slot="end">{service.price_unit}</ion-label>
+                <div slot="helper">
+                  上限: {quota} {service.price_unit}
+                </div>
+              </ion-item>
+            ) : null}
             <ion-item>
               <div slot="start">
                 <ion-icon name="hourglass-outline"></ion-icon> 時長
@@ -839,6 +860,20 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               value={service.name}
               onchange={`emit('${serviceUrl}/update','name',this.value)`}
             />
+          </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="copy-outline"></ion-icon> 次數
+            </div>
+            <div class="d-flex" style="align-items: center; gap: 0.25rem">
+              <ion-input
+                value={service.times || 1}
+                type="number"
+                min="1"
+                onchange={`emit('${serviceUrl}/update','times',this.value)`}
+              />
+            </div>
+            <div slot="helper">如：一次付費，三次服務的套票</div>
           </ion-item>
           <ion-item>
             <div slot="start">
@@ -1936,6 +1971,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
             let { 0: field, 1: value } = object({
               0: values([
                 'name' as const,
+                'times' as const,
                 'unit_price' as const,
                 'price_unit' as const,
                 'quota' as const,
@@ -1965,6 +2001,12 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               case 'name':
                 label = '標題'
                 service[field] = value
+                ok()
+                break
+              case 'times':
+                label = '次數'
+                if (!Number.isInteger(+value) || +value < 1) invalid()
+                service[field] = +value
                 ok()
                 break
               case 'unit_price':

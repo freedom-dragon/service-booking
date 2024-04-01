@@ -134,6 +134,7 @@ export type Service = {
   shop?: Shop
   slug: string
   name: string
+  times: null | number
   hours: string
   book_duration_minute: number
   unit_price: null | string
