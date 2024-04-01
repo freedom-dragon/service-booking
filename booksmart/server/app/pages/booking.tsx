@@ -1,6 +1,6 @@
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
-import { apiEndpointTitle, title } from '../../config.js'
+import { apiEndpointTitle, config, title } from '../../config.js'
 import Style from '../components/style.js'
 import {
   Context,
@@ -10,7 +10,7 @@ import {
 } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { date, id, object, optional, string, values } from 'cast.ts'
+import { date, dateString, id, object, optional, string, values } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
@@ -20,7 +20,7 @@ import { appIonTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { getAuthRole } from '../auth/role.js'
 import { Booking, Shop, User, proxy } from '../../../db/proxy.js'
-import { count, filter, notNull } from 'better-sqlite3-proxy'
+import { count, filter, find, notNull } from 'better-sqlite3-proxy'
 import { relative_timestamp } from '../components/timestamp.js'
 import { Swiper } from '../components/swiper.js'
 import DateTimeText, { formatDateTimeText } from '../components/datetime.js'
@@ -42,6 +42,7 @@ import { Node } from '../jsx/types.js'
 import { ServerMessage } from '../../../client/types.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { Script } from '../components/script.js'
+import { formatHKDateString } from '../format/date.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -100,19 +101,56 @@ calendarPicker.addEventListener('ionChange', event => {
   let value = event.detail.value.split('T')[0]
   document.querySelector('ion-datetime-button[datetime="calendarPicker"] [slot="date-target"]').textContent = value
   // TODO add shop slug
-  // TODO make it smooth
   emit('/booking/filter?date='+value)
+  showLoading()
 })
 calendarPicker.addEventListener('ionCancel', event => {
   document.querySelector('ion-datetime-button[datetime="calendarPicker"] [slot="date-target"]').textContent = '顯示全部'
   // TODO add shop slug
-  // TODO make it smooth
   emit('/booking/filter')
-
+  showLoading()
 })
+function showLoading() {
+  let loading = document.createElement('ion-loading')
+  document.body.appendChild(loading)
+  loading.message = 'Loading...'
+  loading.present()
+  if (!('loadings' in window)) {
+    window.loadings = []
+  }
+  window.loadings.push(loading)
+}
+function hideLoading() {
+  window.loadings?.forEach(loading => loading.dismiss())
+  window.loadings = []
+}
 `)}
   </>
 )
+
+let topMenuButtons = (
+  <ion-buttons slot="end">
+    <ion-button onclick="calendarModal.present()">
+      <ion-icon slot="icon-only" name="calendar"></ion-icon>
+    </ion-button>
+  </ion-buttons>
+)
+let calendarFilterItem = (
+  <ion-item lines="none">
+    <ion-label>預約日期過濾器</ion-label>
+    <ion-datetime-button datetime="calendarPicker" slot="end">
+      <span slot="date-target">顯示全部</span>
+    </ion-datetime-button>
+  </ion-item>
+)
+function calendarScript(attrs: { appointment_dates: Set<string> }) {
+  return /* javascript */ `
+var appointment_dates = new Set(${JSON.stringify(Array.from(attrs.appointment_dates))});
+calendarPicker.isDateEnabled = dateString => {
+  return appointment_dates.has(dateString)
+};
+`
+}
 
 function Page(attrs: {}, context: DynamicContext) {
   let { user, shop } = getAuthRole(context)
@@ -127,6 +165,7 @@ function BookingDetails(attrs: {
   can_arrive?: boolean
   can_reschedule?: boolean
   can_reject?: boolean
+  search: string
 }) {
   let { booking } = attrs
   let receipts = filter(proxy.receipt, {
@@ -185,7 +224,7 @@ function BookingDetails(attrs: {
           {attrs.can_confirm ? (
             <ion-button
               color="success"
-              onclick={`emit('/booking/${booking.id}/manage/approve')`}
+              onclick={`emit('/booking/${booking.id}/manage/approve${attrs.search}')`}
             >
               確認
             </ion-button>
@@ -193,7 +232,7 @@ function BookingDetails(attrs: {
           {attrs.can_arrive ? (
             <ion-button
               color="success"
-              onclick={`emit('/booking/${booking.id}/manage/arrive')`}
+              onclick={`emit('/booking/${booking.id}/manage/arrive${attrs.search}')`}
             >
               報到
             </ion-button>
@@ -317,7 +356,7 @@ function confirmReschedule${booking.id}() {
     + ' ' +
     bookingForm.time.value
   ).toISOString()
-  emit('/booking/${booking.id}/manage/reschedule', appointment_time)
+  emit('/booking/${booking.id}/manage/reschedule${attrs.search}', appointment_time)
 }
 `,
                           'no-minify',
@@ -331,7 +370,7 @@ function confirmReschedule${booking.id}() {
           {attrs.can_reject ? (
             <ion-button
               color="dark"
-              onclick={`emit('/booking/${booking.id}/manage/reject')`}
+              onclick={`emit('/booking/${booking.id}/manage/reject${attrs.search}')`}
             >
               取消
             </ion-button>
@@ -353,26 +392,18 @@ function confirmReschedule${booking.id}() {
 }
 
 function AdminPage(shop: Shop, context: DynamicContext) {
-  let page = AdminPageContent({ shop }, context)
+  let date = new URLSearchParams(context.routerMatch?.search).get('date')
+  let page = AdminPageContent({ shop, date }, context)
   return (
     <>
       <ion-header id="BookingTabHeader">
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
-            客戶的預約
+            {date ? '預約行程曆' : '客戶的預約'}
           </ion-title>
-          <ion-buttons slot="end">
-            <ion-button onclick="calendarModal.present()">
-              <ion-icon slot="icon-only" name="calendar"></ion-icon>
-            </ion-button>
-          </ion-buttons>
+          {topMenuButtons}
         </ion-toolbar>
-        <ion-item lines="none">
-          <ion-label>預約日期過濾器</ion-label>
-          <ion-datetime-button datetime="calendarPicker" slot="end">
-            <span slot="date-target">顯示全部</span>
-          </ion-datetime-button>
-        </ion-item>
+        {calendarFilterItem}
         <ion-segment
           value="submitted"
           style="margin: 4px; width: calc(100% - 8px)"
@@ -394,6 +425,7 @@ function AdminPage(shop: Shop, context: DynamicContext) {
         })}
       </ion-content>
       {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
+      {Script(page.script, 'no-minify')}
     </>
   )
 }
@@ -409,14 +441,21 @@ where service.shop_id = :shop_id
   )
   .pluck()
 
-function AdminPageContent(attrs: { shop: Shop }, context: Context) {
-  let { shop } = attrs
+function AdminPageContent(
+  attrs: { shop: Shop; date: string | null },
+  context: Context,
+) {
+  let { shop, date } = attrs
+
+  let search = date ? '?date=' + date : ''
 
   let booking_ids: number[] = []
   let submitted: Booking[] = []
   let confirmed: Booking[] = []
   let completed: Booking[] = []
   let cancelled: Booking[] = []
+
+  let appointment_dates = new Set<string>()
 
   let service_count = count(proxy.service, { shop_id: shop.id! })
   if (service_count > 0) {
@@ -425,6 +464,13 @@ function AdminPageContent(attrs: { shop: Shop }, context: Context) {
     }) as number[]
     for (let id of booking_ids) {
       let booking = proxy.booking[id]
+
+      let appointment_date = formatHKDateString(booking.appointment_time)
+      appointment_dates.add(appointment_date)
+      if (date && date != appointment_date) {
+        continue
+      }
+
       if (booking.cancel_time || booking.reject_time) {
         cancelled.push(booking)
       } else if (booking.arrive_time) {
@@ -495,6 +541,7 @@ function AdminPageContent(attrs: { shop: Shop }, context: Context) {
               can_confirm: true,
               can_reschedule: true,
               can_reject: true,
+              search,
             }),
           )}
         </>
@@ -518,6 +565,7 @@ function AdminPageContent(attrs: { shop: Shop }, context: Context) {
               can_arrive: true,
               can_reschedule: true,
               can_reject: true,
+              search,
             }),
           )}{' '}
         </>
@@ -536,6 +584,7 @@ function AdminPageContent(attrs: { shop: Shop }, context: Context) {
               timestamp: (
                 <div>報到時間：{relative_timestamp(booking.arrive_time!)}</div>
               ),
+              search,
             }),
           )}{' '}
         </>
@@ -559,12 +608,15 @@ function AdminPageContent(attrs: { shop: Shop }, context: Context) {
                   )}
                 </div>
               ),
+              search,
             }),
           )}{' '}
         </>
       ),
     },
   ]
+
+  let script = calendarScript({ appointment_dates })
 
   function toUpdateMessages(): ServerMessage[] {
     return [
@@ -592,15 +644,23 @@ function AdminPageContent(attrs: { shop: Shop }, context: Context) {
           nodeToVNode(list.content, context),
         ],
       ),
+      ['eval', script],
+      ['eval', 'hideLoading()'],
     ]
   }
 
-  return { segmentButtons, segmentList, service_count, toUpdateMessages }
+  return {
+    segmentButtons,
+    segmentList,
+    service_count,
+    script,
+    toUpdateMessages,
+  }
 }
 
 function UserPage(user: User | null, context: DynamicContext) {
-  let page = user ? UserPageContent(user) : null
-
+  let date = new URLSearchParams(context.routerMatch?.search).get('date')
+  let page = user ? UserPageContent({ user, date }, context) : null
   return (
     <>
       <ion-header id="BookingTabHeader">
@@ -608,12 +668,9 @@ function UserPage(user: User | null, context: DynamicContext) {
           <ion-title role="heading" aria-level="1">
             我的預約
           </ion-title>
-          <ion-buttons slot="end">
-            <ion-button onclick="calendarModal.present()">
-              <ion-icon slot="icon-only" name="calendar"></ion-icon>
-            </ion-button>
-          </ion-buttons>
+          {topMenuButtons}
         </ion-toolbar>
+        {calendarFilterItem}
         {page ? (
           <ion-segment
             value="submitted"
@@ -648,20 +705,36 @@ function UserPage(user: User | null, context: DynamicContext) {
         )}
       </ion-content>
       {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
+      {page ? Script(page.script, 'no-minify') : null}
     </>
   )
 }
 
-function UserPageContent(user: User) {
+function UserPageContent(
+  attrs: { user: User; date: string | null },
+  context: Context,
+) {
+  let { user, date } = attrs
+
+  let search = date ? '?date=' + date : ''
+
   let submitted: Booking[] = []
   let confirmed: Booking[] = []
   let completed: Booking[] = []
   let cancelled: Booking[] = []
 
+  let appointment_dates = new Set<string>()
+
   let bookings = filter(proxy.booking, { user_id: user.id! })
   let booking_count = bookings.length
   if (booking_count > 0) {
     for (let booking of bookings) {
+      let appointment_date = formatHKDateString(booking.appointment_time)
+      appointment_dates.add(appointment_date)
+      if (date && date != appointment_date) {
+        continue
+      }
+
       if (booking.cancel_time || booking.reject_time) {
         cancelled.push(booking)
       } else if (booking.arrive_time) {
@@ -728,6 +801,7 @@ function UserPageContent(user: User) {
               timestamp: (
                 <div>提交時間：{relative_timestamp(booking.submit_time)}</div>
               ),
+              search,
             }),
           )}
         </>
@@ -748,6 +822,7 @@ function UserPageContent(user: User) {
                   開始時間：{relative_timestamp(booking.appointment_time)}
                 </div>
               ),
+              search,
             }),
           )}{' '}
         </>
@@ -766,6 +841,7 @@ function UserPageContent(user: User) {
               timestamp: (
                 <div>報到時間：{relative_timestamp(booking.arrive_time!)}</div>
               ),
+              search,
             }),
           )}{' '}
         </>
@@ -789,6 +865,7 @@ function UserPageContent(user: User) {
                   )}
                 </div>
               ),
+              search,
             }),
           )}{' '}
         </>
@@ -796,7 +873,46 @@ function UserPageContent(user: User) {
     },
   ]
 
-  return { segmentButtons, segmentList, booking_count }
+  let script = calendarScript({ appointment_dates })
+
+  function toUpdateMessages(): ServerMessage[] {
+    return [
+      [
+        'update-in',
+        '#BookingTabHeader ion-segment',
+        nodeToVNode(segmentButtons, context),
+      ],
+      [
+        'update-in',
+        '#BookingTabContent .page-message',
+        nodeToVNode(
+          page.service_count == 0 ? (
+            <p class="ion-text-center">未有服務可接受預約</p>
+          ) : (
+            <></>
+          ),
+          context,
+        ),
+      ],
+      ...segmentList.map(
+        (list): ServerMessage => [
+          'update-in',
+          `#bookingSwiper ion-list[data-segment="${list.segment}"]`,
+          nodeToVNode(list.content, context),
+        ],
+      ),
+      ['eval', script],
+      ['eval', 'hideLoading()'],
+    ]
+  }
+
+  return {
+    segmentButtons,
+    segmentList,
+    booking_count,
+    script,
+    toUpdateMessages,
+  }
 }
 
 let items = [
@@ -991,6 +1107,52 @@ function AddPage(attrs: {}, context: DynamicContext) {
   return addPage
 }
 
+let filterParser = object({
+  date: optional(dateString()),
+})
+
+function Filter(attrs: {}, context: WsContext) {
+  try {
+    let { user, shop } = getAuthRole(context)
+
+    // TODO get shop slug from url
+    let shop_slug = config.shop_slug
+    shop ||= find(proxy.shop, { slug: shop_slug })
+    if (!shop) throw 'Shop not found, slug: ' + shop_slug
+
+    let input = filterParser.parse({
+      date: new URLSearchParams(context.routerMatch?.search).get('date'),
+    })
+    let date = input.date || null
+
+    let is_shop_owner = user?.id == shop.owner_id
+
+    throw new MessageException([
+      'batch',
+      [
+        [
+          'update-text',
+          'ion-title',
+          input.date ? '預約行程曆' : is_shop_owner ? '客戶的預約' : '我的預約',
+        ],
+        ...(is_shop_owner
+          ? AdminPageContent({ shop, date }, context).toUpdateMessages()
+          : user
+            ? UserPageContent({ user, date }, context).toUpdateMessages()
+            : []),
+      ],
+    ])
+  } catch (error) {
+    if (error instanceof MessageException) {
+      throw error
+    }
+    throw new MessageException([
+      'eval',
+      `showToast(${JSON.stringify(String(error))},'error')`,
+    ])
+  }
+}
+
 let manageBookingParser = object({
   routerMatch: object({
     params: object({
@@ -1016,6 +1178,7 @@ function ManageBooking(attrs: {}, context: WsContext) {
     let input = manageBookingParser.parse(context)
     let { action, booking_id } = input.routerMatch.params
     let { 0: appointment_time } = input.args
+    let date = new URLSearchParams(context.routerMatch?.search).get('date')
 
     let booking = proxy.booking[booking_id]
     if (!booking) throw 'Booking not found, id: ' + booking_id
@@ -1071,7 +1234,7 @@ ${booking.user!.nickname} 你好，
               'eval',
               `showToast('確認了${booking.user!.nickname}的${booking.service!.name}預約','success')`,
             ],
-            ...AdminPageContent({ shop }, context).toUpdateMessages(),
+            ...AdminPageContent({ shop, date }, context).toUpdateMessages(),
           ],
         ])
       }
@@ -1118,7 +1281,7 @@ ${booking.user!.nickname} 你好，
               'eval',
               `showToast('取消了${booking.user!.nickname}的${booking.service!.name}預約','info')`,
             ],
-            ...AdminPageContent({ shop }, context).toUpdateMessages(),
+            ...AdminPageContent({ shop, date }, context).toUpdateMessages(),
           ],
         ])
       }
@@ -1170,7 +1333,7 @@ ${booking.user!.nickname} 你好，
               'eval',
               `showToast('重新安排了${booking.user!.nickname}的${booking.service!.name}預約','success')`,
             ],
-            ...AdminPageContent({ shop }, context).toUpdateMessages(),
+            ...AdminPageContent({ shop, date }, context).toUpdateMessages(),
           ],
         ])
       }
@@ -1183,7 +1346,7 @@ ${booking.user!.nickname} 你好，
               'eval',
               `showToast('報到了${booking.user!.nickname}的${booking.service!.name}預約','info')`,
             ],
-            ...AdminPageContent({ shop }, context).toUpdateMessages(),
+            ...AdminPageContent({ shop, date }, context).toUpdateMessages(),
           ],
         ])
       }
@@ -1265,6 +1428,11 @@ let routes: Routes = {
     menuText: pageTitle,
     menuFullNavigate: true,
     node: page,
+  },
+  '/booking/filter': {
+    title: apiEndpointTitle,
+    description: 'view all or filter by one date',
+    node: <Filter />,
   },
   '/booking/:booking_id/manage/:action': {
     title: apiEndpointTitle,
