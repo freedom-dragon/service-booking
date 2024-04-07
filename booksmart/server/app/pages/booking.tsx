@@ -82,11 +82,6 @@ let page = (
   <>
     {style}
     {bookingPreviewStyle}
-    <Page />
-    <ion-footer>
-      {appIonTabBar}
-      {selectIonTab('booking')}
-    </ion-footer>
     <ion-modal id="calendarModal">
       <ion-datetime
         id="calendarPicker"
@@ -96,6 +91,11 @@ let page = (
         cancel-text="顯示全部"
       ></ion-datetime>
     </ion-modal>
+    <Page />
+    <ion-footer>
+      {appIonTabBar}
+      {selectIonTab('booking')}
+    </ion-footer>
     {fitIonFooter}
     {Script(/* javascript */ `
 calendarPicker.addEventListener('ionChange', event => {
@@ -144,12 +144,28 @@ let calendarFilterItem = (
     </ion-datetime-button>
   </ion-item>
 )
-function calendarScript(attrs: { appointment_dates: Set<string> }) {
+
+let submitted_pink = '#ff000040'
+let confirmed_green = '#00c000'
+let finished_orange = '#f08040'
+let cancelled_gray = '#40404040'
+
+type DateColors = {
+  textColor?: string
+  backgroundColor?: string
+}
+
+function calendarScript(attrs: { appointment_dates: Map<string, DateColors> }) {
   return /* javascript */ `
-var appointment_dates = new Set(${JSON.stringify(Array.from(attrs.appointment_dates))});
+var appointment_dates = new Map(${JSON.stringify(Array.from(attrs.appointment_dates))});
 calendarPicker.isDateEnabled = dateString => {
   return appointment_dates.has(dateString)
 };
+calendarPicker.highlightedDates = Array.from(appointment_dates)
+  .map(([date,color])=>({
+    date,
+    ...color
+  }))
 `
 }
 
@@ -456,50 +472,18 @@ function AdminPageContent(
 
   let search = date ? '?date=' + date : ''
 
-  let booking_ids: number[] = []
-  let submitted: Booking[] = []
-  let confirmed: Booking[] = []
-  let completed: Booking[] = []
-  let cancelled: Booking[] = []
-
-  let appointment_dates = new Set<string>()
-
   let service_count = count(proxy.service, { shop_id: shop.id! })
-  if (service_count > 0) {
-    booking_ids = select_booking_id_by_shop.all({
-      shop_id: shop.id,
-    }) as number[]
-    for (let id of booking_ids) {
-      let booking = proxy.booking[id]
 
-      let appointment_date = formatHKDateString(booking.appointment_time)
-      appointment_dates.add(appointment_date)
-      if (date && date != appointment_date) {
-        continue
-      }
+  let booking_ids =
+    service_count > 0
+      ? (select_booking_id_by_shop.all({
+          shop_id: shop.id,
+        }) as number[])
+      : []
+  let bookings = booking_ids.map(id => proxy.booking[id])
 
-      if (booking.cancel_time || booking.reject_time) {
-        cancelled.push(booking)
-      } else if (booking.arrive_time) {
-        completed.push(booking)
-      } else if (booking.approve_time) {
-        confirmed.push(booking)
-      } else {
-        submitted.push(booking)
-      }
-    }
-    let now = Date.now()
-    submitted.sort((a, b) => b.submit_time - a.submit_time)
-    confirmed.sort(
-      (a, b) =>
-        Math.abs(a.appointment_time - now) - Math.abs(b.appointment_time - now),
-    )
-    completed.sort((a, b) => b.arrive_time! - a.arrive_time!)
-    cancelled.sort(
-      (a, b) =>
-        (b.reject_time || b.cancel_time)! - (a.reject_time || a.cancel_time)!,
-    )
-  }
+  let { booking_count, submitted, confirmed, completed, cancelled, colors } =
+    groupAppointments({ bookings, date })
 
   let segmentButtons = (
     <>
@@ -623,7 +607,7 @@ function AdminPageContent(
     },
   ]
 
-  let script = calendarScript({ appointment_dates })
+  let script = calendarScript({ appointment_dates: colors })
 
   function toUpdateMessages(): ServerMessage[] {
     return [
@@ -717,39 +701,43 @@ function UserPage(user: User | null, context: DynamicContext) {
   )
 }
 
-function UserPageContent(
-  attrs: { user: User; date: string | null },
-  context: Context,
-) {
-  let { user, date } = attrs
-
-  let search = date ? '?date=' + date : ''
+function groupAppointments(options: {
+  bookings: Booking[]
+  date: string | null
+}) {
+  let { bookings, date } = options
 
   let submitted: Booking[] = []
   let confirmed: Booking[] = []
   let completed: Booking[] = []
   let cancelled: Booking[] = []
 
-  let appointment_dates = new Set<string>()
+  let colors = new Map<string, DateColors>()
 
-  let bookings = filter(proxy.booking, { user_id: user.id! })
   let booking_count = bookings.length
   if (booking_count > 0) {
     for (let booking of bookings) {
       let appointment_date = formatHKDateString(booking.appointment_time)
-      appointment_dates.add(appointment_date)
       if (date && date != appointment_date) {
         continue
       }
-
+      let color = colors.get(appointment_date)
+      if (!color) {
+        color = {}
+        colors.set(appointment_date, color)
+      }
       if (booking.cancel_time || booking.reject_time) {
         cancelled.push(booking)
+        color.backgroundColor ||= cancelled_gray
       } else if (booking.arrive_time) {
         completed.push(booking)
+        color.textColor ||= finished_orange
       } else if (booking.approve_time) {
         confirmed.push(booking)
+        color.textColor = confirmed_green
       } else {
         submitted.push(booking)
+        color.backgroundColor = submitted_pink
       }
     }
     let now = Date.now()
@@ -764,6 +752,29 @@ function UserPageContent(
         (b.reject_time || b.cancel_time)! - (a.reject_time || a.cancel_time)!,
     )
   }
+
+  return {
+    booking_count,
+    submitted,
+    confirmed,
+    completed,
+    cancelled,
+    colors,
+  }
+}
+
+function UserPageContent(
+  attrs: { user: User; date: string | null },
+  context: Context,
+) {
+  let { user, date } = attrs
+
+  let search = date ? '?date=' + date : ''
+
+  let bookings = filter(proxy.booking, { user_id: user.id! })
+
+  let { booking_count, submitted, confirmed, completed, cancelled, colors } =
+    groupAppointments({ bookings, date })
 
   let segmentButtons = (
     <>
@@ -880,7 +891,7 @@ function UserPageContent(
     },
   ]
 
-  let script = calendarScript({ appointment_dates })
+  let script = calendarScript({ appointment_dates: colors })
 
   function toUpdateMessages(): ServerMessage[] {
     return [
