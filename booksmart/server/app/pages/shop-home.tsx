@@ -59,6 +59,10 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   let user = getAuthUser(context)
   let services = filter(proxy.service, { shop_id: shop.id! })
   let locale = getShopLocale(shop.id!)
+  let contacts = getShopContacts(shop)
+  let floating_contact = contacts.find(
+    contact => contact.field == shop.floating_contact_method,
+  )
   return (
     <>
       {style}
@@ -179,8 +183,18 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
 
         <h2 class="ion-margin">聯絡方法</h2>
         {ShopContactsStyle}
-        <ShopContacts shop={shop} items={getShopContacts(shop)} />
-        {wsStatus.safeArea}
+        <ShopContacts shop={shop} items={contacts} />
+
+        {floating_contact ? (
+          <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+            <ion-fab-button
+              href={floating_contact.prefix + shop[floating_contact.field]}
+              target="_blank"
+            >
+              <img src={'/assets/contact-methods/' + floating_contact.icon} />
+            </ion-fab-button>
+          </ion-fab>
+        ) : null}
       </ion-content>
       <ion-footer>
         {appIonTabBar}

@@ -47,13 +47,28 @@ function saveField(button) {
   let input = item.querySelector('ion-input')
   emit(url, input.value, input.label)
 }
+document.querySelectorAll('ion-checkbox[name="floating_contact_method"]').forEach(checkbox => {
+  checkbox.addEventListener('ionChange', event => {
+    let field = event.detail.value
+    let checked = event.detail.checked
+    let shop_slug = event.target.dataset.shopSlug
+    let label = event.target.dataset.label
+    let url = '/shop/:slug/admin/save/:field'
+      .replace(':slug', shop_slug)
+      .replace(':field', 'floating_contact_method')
+    let value = checked ? field : ''
+    label = '浮動' + label
+    emit(url, value, label)
+  })
+})
 `)}
   </>
 )
 
 function ShopAdmin(attrs: { shop: Shop }) {
   let { shop } = attrs
-  let urlPrefix = `/shop/${shop.slug}/admin`
+  let shop_slug = shop.slug
+  let urlPrefix = `/shop/${shop_slug}/admin`
   let contacts = getShopContacts(shop)
     .map(item => ({
       ...item,
@@ -159,6 +174,17 @@ function ShopAdmin(attrs: { shop: Shop }) {
                     <ion-icon name="close" slot="icon-only"></ion-icon>
                   </ion-button>
                 </ion-buttons>
+              </ion-item>
+              <ion-item>
+                <ion-checkbox
+                  checked={shop.floating_contact_method == item.field}
+                  name="floating_contact_method"
+                  value={item.field}
+                  data-label={item.label}
+                  data-shop-slug={shop_slug}
+                >
+                  浮在主頁
+                </ion-checkbox>
               </ion-item>
               <div class="contact--preview">
                 <ion-note color="dark" class="ion-margin-horizontal">

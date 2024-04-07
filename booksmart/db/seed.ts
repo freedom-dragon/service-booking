@@ -60,6 +60,7 @@ proxy.shop[1] = {
   whatsapp: '62787635',
   telegram: 'beenotung',
   twitter: 'beenotung',
+  floating_contact_method: 'whatsapp',
   payme_tel: null,
   payme_link: null,
   fps_tel: null,

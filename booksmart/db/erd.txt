@@ -125,6 +125,7 @@ youtube text NULL
 whatsapp text NULL
 telegram text NULL
 twitter text NULL
+floating_contact_method text NULL
 payme_tel text NULL
 payme_link text NULL
 fps_tel text NULL
