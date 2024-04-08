@@ -18,7 +18,10 @@ export function fromDatePart(dateStr: string) {
   let date = new TimezoneDate()
   date.timezone = +8
   date.setHours(0, 0, 0, 0)
-  let [y, m, d] = dateStr.split('-')
-  date.setFullYear(+y, +m, +d)
+  let parts = dateStr.split('-')
+  let y = +parts[0]
+  let m = +parts[1] - 1
+  let d = +parts[2]
+  date.setFullYear(y, m, d)
   return date
 }
