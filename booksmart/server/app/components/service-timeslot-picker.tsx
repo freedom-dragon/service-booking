@@ -1,8 +1,14 @@
-import { MINUTE } from '@beenotung/tslib/time.js'
+import { DAY, MINUTE } from '@beenotung/tslib/time.js'
 import { db } from '../../../db/db.js'
-import { Service } from '../../../db/proxy.js'
+import { Service, proxy } from '../../../db/proxy.js'
 import { Script } from './script.js'
 import { o } from '../jsx/jsx.js'
+import { fromDatePart } from '../format/date.js'
+import { ResolvedPageRoue, Routes } from '../routes.js'
+import { resolveServiceRoute } from '../shop-route.js'
+import { apiEndpointTitle } from '../../config.js'
+import { find } from 'better-sqlite3-proxy'
+import { EarlyTerminate } from '../helpers.js'
 
 export type ServiceTimeslotRow = Record<
   'id' | 'start_date' | 'end_date' | 'weekdays',
@@ -25,6 +31,18 @@ select
 , end_time
 from timeslot_hour
 where service_timeslot_id = :service_timeslot_id
+`)
+
+let select_booking_by_time = db.prepare(/* sql */ `
+select
+  *
+from booking
+where service_id = :service_id
+  and approve_time is not null
+  and cancel_time is null
+  and reject_time is null
+  and :start_time <= appointment_time
+  and appointment_time < :end_time
 `)
 
 export function ServiceTimeslotPicker(attrs: {
@@ -52,6 +70,27 @@ export function ServiceTimeslotPicker(attrs: {
     }) as TimeslotHourRow[]
     return { timeslot, hours }
   })
+
+  function test() {
+    console.log('='.repeat(32))
+    console.log('test')
+    let dateStr = '2024-04-24'
+    let dateStartTime = fromDatePart(dateStr).getTime()
+    let dateEndTime = dateStartTime + DAY
+    console.dir({ availableTimeslots }, { depth: 20 })
+    let bookings = select_booking_by_time.all({
+      start_time: dateStartTime,
+      end_time: dateEndTime,
+      service_id: service.id,
+    })
+    console.log({
+      start_time: dateStartTime,
+      end_time: dateEndTime,
+    })
+    console.dir({ bookings }, { depth: 20 })
+    console.log('='.repeat(32))
+  }
+  test()
 
   let dateItem = (
     <ion-item>
@@ -103,6 +142,9 @@ export function ServiceTimeslotPicker(attrs: {
         }
       }
     }})(availableTimeslots);
+    var ${attrs.onSelectDateFn}Callback = ${function () {
+      return function onDateSelectedCallback() {}
+    }}();
     var ${attrs.onSelectDateFn} = (${function (
       timeRadioGroup: HTMLElement,
       bookingForm: HTMLFormElement,
@@ -115,6 +157,10 @@ export function ServiceTimeslotPicker(attrs: {
         let dateString = event.detail.value as string
         if (!dateString) return
         dateString = dateString.split('T')[0]
+        if ('dev') {
+          console.log({ dateString })
+          return
+        }
         let date = new Date(dateString)
         let day = date.getDay()
         let isTimeAllowed = false
@@ -233,6 +279,35 @@ ${attrs.timeRadioGroup}.addEventListener('ionChange', event => {
   )
 }
 
-// declare var timeRadioGroup: HTMLElement
-// declare var bookingForm: HTMLFormElement
-// declare var selectedTimeButton: HTMLFormElement
+let routes: Routes = {
+  '/shop/:shop_slug/service/:service_slug/available_timeslot': {
+    streaming: false,
+    resolve(context): ResolvedPageRoue {
+      if (context.type != 'express') {
+        return {
+          title: apiEndpointTitle,
+          description: 'get available timeslot with reminding quota',
+          node: 'expect ajax GET request',
+        }
+      }
+      let { shop_slug, service_slug } = context.routerMatch?.params
+      let shop = find(proxy.shop, { slug: shop_slug })
+      if (!shop) {
+        context.res.json({ error: 'shop not found' })
+        throw EarlyTerminate
+      }
+      let service = find(proxy.service, {
+        shop_id: shop.id!,
+        slug: service_slug,
+      })
+      if (!service) {
+        context.res.json({ error: 'service not found' })
+        throw EarlyTerminate
+      }
+      // TODO
+      throw EarlyTerminate
+    },
+  },
+}
+
+export default { routes }
