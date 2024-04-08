@@ -1,8 +1,6 @@
-import { filter, find } from 'better-sqlite3-proxy'
+import { find } from 'better-sqlite3-proxy'
 import { Shop, proxy } from '../../db/proxy.js'
 import { readdirSync } from 'fs'
-import { TimezoneDate } from 'timezone-date.ts'
-import { format_2_digit } from '@beenotung/tslib/format.js'
 import { values } from 'cast.ts'
 
 export type ShopLocales = {

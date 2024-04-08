@@ -13,7 +13,6 @@ import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import {
   date,
-  dateString,
   email,
   id,
   int,
@@ -21,12 +20,11 @@ import {
   object,
   optional,
   string,
-  timeString,
   values,
 } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
-import { getAuthUser, getAuthUserId } from '../auth/user.js'
+import { getAuthUser } from '../auth/user.js'
 import {
   Booking,
   Receipt,
@@ -55,35 +53,26 @@ import { loadClientPlugin } from '../../client-plugin.js'
 import { Router } from 'express'
 import { HttpError } from '../../http-error.js'
 import { join } from 'path'
-import { Formidable } from 'formidable'
-import { existsSync, mkdirSync, renameSync, unlinkSync } from 'fs'
+import { existsSync, renameSync, unlinkSync } from 'fs'
 import { EarlyTerminate, MessageException } from '../helpers.js'
 import { nodeToVNode } from '../jsx/vnode.js'
-import { client_config } from '../../../client/client-config.js'
 import { TimezoneDate } from 'timezone-date.ts'
-import { db } from '../../../db/db.js'
-import { MINUTE } from '@beenotung/tslib/time.js'
-import DateTimeText, { toLocaleDateTimeString } from '../components/datetime.js'
-import { boolean } from 'cast.ts'
-import { digits } from '@beenotung/tslib/random.js'
+import { toLocaleDateTimeString } from '../components/datetime.js'
 import { maskEmailForHint } from '../email-mask.js'
 import { generatePasscode, verificationCodeEmail } from './verification-code.js'
 import { sendEmail } from '../../email.js'
-import { Raw } from '../components/raw.js'
-import { randomUUID } from 'crypto'
 import { Node } from '../jsx/types.js'
-import { nodeToHTML } from '../jsx/html.js'
 import {
   noticeBookingReceiptSubmit,
   noticeBookingSubmit,
 } from '../app-email.js'
 import { ServerMessage } from '../../../client/types.js'
-import { createUploadForm, MimeTypeRegex } from '../upload.js'
+import { createUploadForm } from '../upload.js'
 import {
   BookingPreview,
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
-import { getBookingTotalFee, isFree } from '../fee.js'
+import { getBookingTotalFee } from '../fee.js'
 import { env } from '../../env.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
