@@ -291,6 +291,15 @@ function BookingDetails(attrs: {
                             </ion-item>
                             <ion-item>
                               <div slot="start">
+                                <ion-icon name="people-outline"></ion-icon>
+                                人數:
+                              </div>
+                              <ion-label>
+                                {booking.amount} {service.price_unit}
+                              </ion-label>
+                            </ion-item>
+                            <ion-item>
+                              <div slot="start">
                                 <ion-icon name="happy-outline"></ion-icon>
                                 名稱
                               </div>
