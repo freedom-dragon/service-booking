@@ -28,6 +28,7 @@ import appAbout from './pages/app-about.js'
 import appCharacter from './pages/app-character.js'
 import type { renderWebTemplate } from '../../template/web.js'
 import type { renderIonicTemplate } from '../../template/ionic.js'
+import ServiceTimeslotPicker from './components/service-timeslot-picker.js'
 
 let titles: Record<string, string> = {}
 
@@ -79,6 +80,7 @@ export type Routes = Record<string, PageRoute>
 let routeDict: Routes = {
   ...ShopAdmin.routes,
   ...ServiceDetail.routes,
+  ...ServiceTimeslotPicker.routes,
   ...Calendar.routes,
   ...ShopHome.routes,
   ...AppNotice.routes,

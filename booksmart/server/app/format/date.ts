@@ -25,3 +25,19 @@ export function fromDatePart(dateStr: string) {
   date.setFullYear(y, m, d)
   return date
 }
+
+export function toTimePart(time: number) {
+  let date = new TimezoneDate(time)
+  date.timezone = +8
+  let h = d2(date.getHours())
+  let m = d2(date.getMinutes())
+  return `${h}:${m}`
+}
+
+export function fromTimePart(timeStr: string) {
+  let date = new TimezoneDate()
+  date.timezone = +8
+  let [h, m] = timeStr.split(':')
+  date.setHours(+h, +m, 0, 0)
+  return date
+}

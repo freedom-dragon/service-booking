@@ -78,7 +78,11 @@ import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
 import { getAuthRole } from '../auth/role.js'
 import { toDatePart } from '../format/date.js'
-import { countBooking } from '../booking-store.js'
+import {
+  countBooking,
+  selectAvailableHours,
+  selectAvailableQuota,
+} from '../booking-store.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -1712,11 +1716,17 @@ let routes: Routes = {
               `showToast('請輸入香港的手提電話號碼','error')`,
             ])
           }
+          let availableQuota = selectAvailableQuota({
+            service_id: service.id!,
+            appointment_time: input.appointment_time.getTime(),
+          })
           // TODO check confirmed booking to see if amount is too big
-          if (input.amount > service.quota!) {
+          if (input.amount > availableQuota) {
             throw new MessageException([
               'eval',
-              `showToast('人數不可超過${service.quota}${service.price_unit}','error')`,
+              availableQuota > 0
+                ? `showToast('所選擇時段只淨${availableQuota}${service.price_unit}','error')`
+                : `showToast('所選擇時段沒有空位','error')`,
             ])
           }
           let user = getAuthUser(context)
