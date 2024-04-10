@@ -156,7 +156,7 @@ book_duration_minute integer
 unit_price text NULL
 price_unit text
 time text
-quota integer NULL
+quota integer
 address text NULL
 address_remark text NULL
 desc text NULL

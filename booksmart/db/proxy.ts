@@ -141,7 +141,7 @@ export type Service = {
   unit_price: null | string
   price_unit: string
   time: string
-  quota: null | number
+  quota: number
   address: null | string
   address_remark: null | string
   desc: null | string
