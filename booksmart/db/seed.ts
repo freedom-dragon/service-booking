@@ -180,13 +180,13 @@ seedService({
   timeslots: [
     {
       start_date: '2024-02-11',
-      end_date: '2024-04-17',
+      end_date: '2024-05-17',
       weekdays: '日二四六',
       hours: '09:00-12:00,14:00-16:30,20:00-22:00',
     },
     {
       start_date: '2024-02-18',
-      end_date: '2024-04-24',
+      end_date: '2024-05-24',
       weekdays: '一三五',
       hours: '14:00-16:30',
     },
@@ -210,7 +210,20 @@ seedService({
   address_remark: null,
   desc: null,
   remarks: [],
-  timeslots: [],
+  timeslots: [
+    {
+      start_date: '2024-02-11',
+      end_date: '2024-05-17',
+      weekdays: '日二四六',
+      hours: '09:00-12:00,14:00-16:30,20:00-22:00',
+    },
+    {
+      start_date: '2024-02-18',
+      end_date: '2024-05-24',
+      weekdays: '一三五',
+      hours: '14:00-16:30',
+    },
+  ],
 })
 
 seedService({
@@ -230,7 +243,20 @@ seedService({
   address_remark: null,
   desc: null,
   remarks: [],
-  timeslots: [],
+  timeslots: [
+    {
+      start_date: '2024-02-11',
+      end_date: '2024-05-17',
+      weekdays: '日二四六',
+      hours: '09:00-12:00,14:00-16:30,20:00-22:00',
+    },
+    {
+      start_date: '2024-02-18',
+      end_date: '2024-05-24',
+      weekdays: '一三五',
+      hours: '14:00-16:30',
+    },
+  ],
 })
 
 seedService({
@@ -250,5 +276,18 @@ seedService({
   address_remark: null,
   desc: null,
   remarks: [],
-  timeslots: [],
+  timeslots: [
+    {
+      start_date: '2024-02-11',
+      end_date: '2024-05-17',
+      weekdays: '日二四六',
+      hours: '09:00-12:00,14:00-16:30,20:00-22:00',
+    },
+    {
+      start_date: '2024-02-18',
+      end_date: '2024-05-24',
+      weekdays: '一三五',
+      hours: '14:00-16:30',
+    },
+  ],
 })
