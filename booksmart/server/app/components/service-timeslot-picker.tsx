@@ -1,31 +1,27 @@
-import { MINUTE } from '@beenotung/tslib/time.js'
+import { DAY, MINUTE } from '@beenotung/tslib/time.js'
 import { db } from '../../../db/db.js'
-import { Service } from '../../../db/proxy.js'
+import { Service, proxy } from '../../../db/proxy.js'
 import { Script } from './script.js'
 import { o } from '../jsx/jsx.js'
-
-export type ServiceTimeslotRow = Record<
-  'id' | 'start_date' | 'end_date' | 'weekdays',
-  string
->
-let select_service_timeslot = db.prepare(/* sql */ `
-select
-  id
-, start_date
-, end_date
-, weekdays
-from service_timeslot
-where service_id = :service_id
-`)
-
-export type TimeslotHourRow = Record<'start_time' | 'end_time', string>
-let select_timeslot_hour = db.prepare(/* sql */ `
-select
-  start_time
-, end_time
-from timeslot_hour
-where service_timeslot_id = :service_timeslot_id
-`)
+import { fromDatePart, fromTimePart, toTimePart } from '../format/date.js'
+import { ResolvedPageRoue, Routes } from '../routes.js'
+import { resolveServiceRoute } from '../shop-route.js'
+import { apiEndpointTitle } from '../../config.js'
+import { find } from 'better-sqlite3-proxy'
+import { EarlyTerminate } from '../helpers.js'
+import { HttpError } from '../../http-error.js'
+import { d2, dateString, object, string } from 'cast.ts'
+import { Context, DynamicContext, ExpressContext } from '../context.js'
+import {
+  AvailableHour,
+  isOverlap,
+  selectAvailableDates,
+  selectAvailableHours,
+} from '../booking-store.js'
+import type {
+  SweetAlertIcon,
+  SweetAlertOptions,
+} from 'sweetalert2-unrestricted'
 
 export function ServiceTimeslotPicker(attrs: {
   /* database proxy */
@@ -42,16 +38,7 @@ export function ServiceTimeslotPicker(attrs: {
 }) {
   let { service } = attrs
 
-  let availableTimeslots = (
-    select_service_timeslot.all({
-      service_id: service.id,
-    }) as ServiceTimeslotRow[]
-  ).map(timeslot => {
-    let hours = select_timeslot_hour.all({
-      service_timeslot_id: timeslot.id,
-    }) as TimeslotHourRow[]
-    return { timeslot, hours }
-  })
+  let availableDates = selectAvailableDates({ service_id: service.id! })
 
   let dateItem = (
     <ion-item>
@@ -74,11 +61,11 @@ export function ServiceTimeslotPicker(attrs: {
 
   let dateScript = Script(
     /* javascript */ `
-    var availableTimeslots = ${JSON.stringify(availableTimeslots)};
+    var availableDates = ${JSON.stringify(availableDates)};
     var book_duration_ms = ${service.book_duration_minute * MINUTE};
     var book_time_step_ms = ${15 * MINUTE};
     ${attrs.datePicker}.isDateEnabled = (${function (
-      timeslots: typeof availableTimeslots,
+      dates: typeof availableDates,
     ) {
       return function isDateEnabled(dateString: string) {
         let date = new Date(dateString)
@@ -88,83 +75,57 @@ export function ServiceTimeslotPicker(attrs: {
           return false
         }
         let day = date.getDay()
-        for (let { timeslot, hours } of timeslots) {
+        for (let timeslot of dates) {
           if (
             timeslot.start_date <= dateString &&
-            dateString <= timeslot.end_date
+            dateString <= timeslot.end_date &&
+            timeslot.weekdays.includes('日一二三四五六'[day])
           ) {
-            let canSelect = '日一二三四五六'
-              .split('')
-              .some(
-                (weekday, i) => timeslot.weekdays.includes(weekday) && day == i,
-              )
-            if (canSelect) return true
+            return true
           }
         }
       }
-    }})(availableTimeslots);
+    }})(availableDates);
     var ${attrs.onSelectDateFn} = (${function (
       timeRadioGroup: HTMLElement,
       bookingForm: HTMLFormElement,
       selectedTimeButton: HTMLFormElement,
-      timeslots: typeof availableTimeslots,
-      book_duration_ms: number,
-      book_time_step_ms: number,
+      shop_slug: string,
+      service_slug: string,
+      price_unit: string,
     ) {
-      return function onDateSelected(event: any) {
+      return async function onDateSelected(event: any) {
         let dateString = event.detail.value as string
         if (!dateString) return
         dateString = dateString.split('T')[0]
-        let date = new Date(dateString)
-        let day = date.getDay()
+
+        let url =
+          '/shop/:shop_slug/service/:service_slug/date/:date/available_timeslot'
+            .replace(':shop_slug', shop_slug)
+            .replace(':service_slug', service_slug)
+            .replace(':date', dateString)
+
+        let res = await fetch(url)
+        let json = await res.json()
+        if (json.error) {
+          showToast(json.error, 'error')
+          return
+        }
+        let hours = json.hours as AvailableHour[]
+
         let isTimeAllowed = false
-        for (let { timeslot, hours } of timeslots) {
-          if (
-            timeslot.start_date <= dateString &&
-            dateString <= timeslot.end_date
-          ) {
-            let canSelect = '日一二三四五六'
-              .split('')
-              .some(
-                (weekday, i) => timeslot.weekdays.includes(weekday) && day == i,
-              )
-            if (canSelect) {
-              timeRadioGroup
-                .querySelectorAll('ion-item')
-                .forEach(e => e.remove())
-              for (let hour of hours) {
-                let [h, m] = hour.start_time.split(':')
-                let start = new Date()
-                start.setHours(+h, +m, 0, 0)
 
-                let d2 = (x: number) => (x < 10 ? '0' + x : x)
-
-                for (;;) {
-                  let start_time =
-                    d2(start.getHours()) + ':' + d2(start.getMinutes())
-
-                  let end = new Date(start.getTime() + book_duration_ms)
-                  let end_time = d2(end.getHours()) + ':' + d2(end.getMinutes())
-
-                  if (end_time > hour.end_time) break
-
-                  let item = document.createElement('ion-item')
-                  let radio = document.createElement(
-                    'ion-radio',
-                  ) as HTMLInputElement
-                  radio.value = start_time
-                  if (start_time == bookingForm.time.value) {
-                    isTimeAllowed = true
-                  }
-                  radio.textContent = start_time + ' - ' + end_time
-                  item.appendChild(radio)
-                  timeRadioGroup.appendChild(item)
-
-                  start.setTime(start.getTime() + book_time_step_ms)
-                }
-              }
-            }
+        timeRadioGroup.querySelectorAll('ion-item').forEach(e => e.remove())
+        for (let hour of hours) {
+          let item = document.createElement('ion-item')
+          let radio = document.createElement('ion-radio') as HTMLInputElement
+          radio.value = hour.start_time
+          if (hour.start_time == bookingForm.time.value) {
+            isTimeAllowed = true
           }
+          radio.textContent = `${hour.start_time} - ${hour.end_time} (剩餘 ${hour.quota} ${price_unit})`
+          item.appendChild(radio)
+          timeRadioGroup.appendChild(item)
         }
         if (!isTimeAllowed) {
           bookingForm.time.value = ''
@@ -175,9 +136,9 @@ export function ServiceTimeslotPicker(attrs: {
       ${attrs.timeRadioGroup},
       ${attrs.bookingForm},
       ${attrs.selectedTimeButton},
-      availableTimeslots,
-      book_duration_ms,
-      book_time_step_ms
+      ${JSON.stringify(service.shop!.slug)},
+      ${JSON.stringify(service.slug)},
+      ${JSON.stringify(service.price_unit)},
     )
     ${attrs.datePicker}.addEventListener('ionChange', ${attrs.onSelectDateFn})
     `,
@@ -233,6 +194,46 @@ ${attrs.timeRadioGroup}.addEventListener('ionChange', event => {
   )
 }
 
-// declare var timeRadioGroup: HTMLElement
-// declare var bookingForm: HTMLFormElement
-// declare var selectedTimeButton: HTMLFormElement
+let dateStringParser = dateString()
+
+function getAvailableTimeslot(context: DynamicContext): ResolvedPageRoue {
+  if (context.type != 'express') {
+    return {
+      title: apiEndpointTitle,
+      description: 'get available timeslot with reminding quota',
+      node: 'expect ajax GET request',
+    }
+  }
+  let { shop_slug, service_slug, date } = context.routerMatch?.params
+
+  let dateString = dateStringParser.parse(date)
+  let start_time = fromDatePart(dateStringParser.parse(date)).getTime()
+  let end_time = start_time + DAY
+
+  let shop = find(proxy.shop, { slug: shop_slug })
+  if (!shop) throw new HttpError(404, 'shop not found')
+
+  let service = find(proxy.service, {
+    shop_id: shop.id!,
+    slug: service_slug,
+  })
+  if (!service) throw new HttpError(404, 'service not found')
+
+  let hours = selectAvailableHours({ service_id: service.id!, dateString })
+  context.res.json({ hours })
+  throw EarlyTerminate
+}
+
+let routes: Routes = {
+  '/shop/:shop_slug/service/:service_slug/date/:date/available_timeslot': {
+    streaming: false,
+    resolve: getAvailableTimeslot,
+  },
+}
+
+export default { routes }
+
+declare function showToast(
+  title: SweetAlertOptions['title'],
+  icon: SweetAlertIcon,
+): void

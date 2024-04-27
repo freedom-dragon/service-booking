@@ -96,6 +96,7 @@ export type Shop = {
   whatsapp: null | string
   telegram: null | string
   twitter: null | string
+  floating_contact_method: null | string
   payme_tel: null | string
   payme_link: null | string
   fps_tel: null | string
@@ -140,7 +141,7 @@ export type Service = {
   unit_price: null | string
   price_unit: string
   time: string
-  quota: null | number
+  quota: number
   address: null | string
   address_remark: null | string
   desc: null | string

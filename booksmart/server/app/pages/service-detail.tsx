@@ -13,7 +13,6 @@ import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import {
   date,
-  dateString,
   email,
   id,
   int,
@@ -21,12 +20,11 @@ import {
   object,
   optional,
   string,
-  timeString,
   values,
 } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
-import { getAuthUser, getAuthUserId } from '../auth/user.js'
+import { getAuthUser } from '../auth/user.js'
 import {
   Booking,
   Receipt,
@@ -55,41 +53,36 @@ import { loadClientPlugin } from '../../client-plugin.js'
 import { Router } from 'express'
 import { HttpError } from '../../http-error.js'
 import { join } from 'path'
-import { Formidable } from 'formidable'
-import { existsSync, mkdirSync, renameSync, unlinkSync } from 'fs'
+import { existsSync, renameSync, unlinkSync } from 'fs'
 import { EarlyTerminate, MessageException } from '../helpers.js'
 import { nodeToVNode } from '../jsx/vnode.js'
-import { client_config } from '../../../client/client-config.js'
 import { TimezoneDate } from 'timezone-date.ts'
-import { db } from '../../../db/db.js'
-import { MINUTE } from '@beenotung/tslib/time.js'
-import DateTimeText, { toLocaleDateTimeString } from '../components/datetime.js'
-import { boolean } from 'cast.ts'
-import { digits } from '@beenotung/tslib/random.js'
+import { toLocaleDateTimeString } from '../components/datetime.js'
 import { maskEmailForHint } from '../email-mask.js'
 import { generatePasscode, verificationCodeEmail } from './verification-code.js'
 import { sendEmail } from '../../email.js'
-import { Raw } from '../components/raw.js'
-import { randomUUID } from 'crypto'
 import { Node } from '../jsx/types.js'
-import { nodeToHTML } from '../jsx/html.js'
 import {
   noticeBookingReceiptSubmit,
   noticeBookingSubmit,
 } from '../app-email.js'
 import { ServerMessage } from '../../../client/types.js'
-import { createUploadForm, MimeTypeRegex } from '../upload.js'
+import { createUploadForm } from '../upload.js'
 import {
   BookingPreview,
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
-import { getBookingTotalFee, isFree } from '../fee.js'
+import { getBookingTotalFee } from '../fee.js'
 import { env } from '../../env.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
 import { getAuthRole } from '../auth/role.js'
 import { toDatePart } from '../format/date.js'
-import { countBooking } from '../booking-store.js'
+import {
+  countBooking,
+  selectAvailableHours,
+  selectAvailableQuota,
+} from '../booking-store.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -1723,11 +1716,17 @@ let routes: Routes = {
               `showToast('請輸入香港的手提電話號碼','error')`,
             ])
           }
+          let availableQuota = selectAvailableQuota({
+            service_id: service.id!,
+            appointment_time: input.appointment_time.getTime(),
+          })
           // TODO check confirmed booking to see if amount is too big
-          if (input.amount > service.quota!) {
+          if (input.amount > availableQuota) {
             throw new MessageException([
               'eval',
-              `showToast('人數不可超過${service.quota}${service.price_unit}','error')`,
+              availableQuota > 0
+                ? `showToast('所選擇時段只淨${availableQuota}${service.price_unit}','error')`
+                : `showToast('所選擇時段沒有空位','error')`,
             ])
           }
           let user = getAuthUser(context)

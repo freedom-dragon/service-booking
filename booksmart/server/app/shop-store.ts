@@ -1,8 +1,6 @@
-import { filter, find } from 'better-sqlite3-proxy'
+import { find } from 'better-sqlite3-proxy'
 import { Shop, proxy } from '../../db/proxy.js'
 import { readdirSync } from 'fs'
-import { TimezoneDate } from 'timezone-date.ts'
-import { format_2_digit } from '@beenotung/tslib/format.js'
 import { values } from 'cast.ts'
 
 export type ShopLocales = {
@@ -250,4 +248,8 @@ export type ShopContact = ReturnType<typeof getShopContacts>[number]
 
 export let contactFields = getShopContacts({} as Shop).map(item => item.field)
 
-export let shopFieldsParser = values([...paymentFields, ...contactFields])
+export let shopFieldsParser = values([
+  ...paymentFields,
+  ...contactFields,
+  'floating_contact_method',
+])

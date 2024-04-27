@@ -125,6 +125,7 @@ youtube text NULL
 whatsapp text NULL
 telegram text NULL
 twitter text NULL
+floating_contact_method text NULL
 payme_tel text NULL
 payme_link text NULL
 fps_tel text NULL
@@ -155,7 +156,7 @@ book_duration_minute integer
 unit_price text NULL
 price_unit text
 time text
-quota integer NULL
+quota integer
 address text NULL
 address_remark text NULL
 desc text NULL
