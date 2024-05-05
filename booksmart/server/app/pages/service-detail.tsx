@@ -453,7 +453,7 @@ function selectOption(button){
               color="primary"
               slot="end"
               class="ion-padding-horizontal"
-              style="--ion-padding: 2rem;"
+              style="--ion-padding: 2rem; padding: 0"
               onclick="submitBooking()"
             >
               立即預約
