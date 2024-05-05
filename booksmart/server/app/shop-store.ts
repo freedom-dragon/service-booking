@@ -48,7 +48,13 @@ export function getServiceOptionImage(
 
 export function getServiceImages(shop_slug: string, service_slug: string) {
   let dir = `assets/shops/${shop_slug}/${service_slug}`
-  let filenames = readdirSync(`public/${dir}`)
+  let filenames: string[]
+  try {
+    filenames = readdirSync(`public/${dir}`)
+  } catch (error) {
+    // file not found
+    filenames = []
+  }
   let cover = getServiceCoverImage(shop_slug, service_slug)
   let more: string[] = []
   let options: string[] = []
