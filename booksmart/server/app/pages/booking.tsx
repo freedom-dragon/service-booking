@@ -146,8 +146,8 @@ let calendarFilterItem = (
 )
 
 let submitted_pink = '#ff000040'
-let confirmed_green = '#00c000'
-let finished_orange = '#f08040'
+let confirmed_orange = '#f08040'
+let finished_green = '#00c000'
 let cancelled_gray = '#40404040'
 
 type DateColors = {
@@ -740,10 +740,10 @@ function groupAppointments(options: {
         color.backgroundColor ||= cancelled_gray
       } else if (booking.arrive_time) {
         completed.push(booking)
-        color.textColor ||= finished_orange
+        color.textColor ||= finished_green
       } else if (booking.approve_time) {
         confirmed.push(booking)
-        color.textColor = confirmed_green
+        color.textColor = confirmed_orange
       } else {
         submitted.push(booking)
         color.backgroundColor = submitted_pink
