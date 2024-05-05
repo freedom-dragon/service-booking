@@ -60,6 +60,12 @@ let page = (
           </ion-label>
         </ion-item>
       </ion-list>
+      <div class="ion-text-center">
+        <img
+          src="/assets/powered-by-BookSmart.webp"
+          style="max-width: 8rem; margin-top: 2rem"
+        />
+      </div>
     </ion-content>
     <ion-footer>
       {appIonTabBar}
