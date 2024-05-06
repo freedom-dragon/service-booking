@@ -2,7 +2,7 @@ import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
 import { apiEndpointTitle, title } from '../../config.js'
 import Style from '../components/style.js'
-import { DynamicContext, getContextFormBody } from '../context.js'
+import { Context, DynamicContext, getContextFormBody } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { object, string } from 'cast.ts'
@@ -23,6 +23,12 @@ import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { appIonTabBar } from '../components/app-tab-bar.js'
 import { ShopContacts, ShopContactsStyle } from '../components/shop-contact.js'
 import { countBooking } from '../booking-store.js'
+import { EarlyTerminate, MessageException } from '../helpers.js'
+import { getAuthRole } from '../auth/role.js'
+import { loadClientPlugin } from '../../client-plugin.js'
+import { randomUUID } from 'crypto'
+import { serialize } from 'v8'
+import { db } from '../../../db/db.js'
 
 let pageTitle = 'The Balconi ARTLAB 香港'
 
@@ -53,11 +59,29 @@ ion-thumbnail {
 
 `)
 
+let select_service_ids = db.prepare<
+  { shop_id: number; user_id: number | null },
+  { id: number; timeslot_count: number | null }
+>(/* sql */ `
+select
+  service.id
+, count(service_timeslot.id) as timeslot_count
+from service
+left join service_timeslot on service_timeslot.service_id = service.id
+inner join shop on shop.id = service.shop_id
+where service.shop_id = :shop_id
+group by service.id
+having (count(service_timeslot.id) > 0 or shop.owner_id = :user_id)
+`)
+
 function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   let { shop } = attrs
   let { name, slug: shop_slug, owner_name } = shop
   let user = getAuthUser(context)
-  let services = filter(proxy.service, { shop_id: shop.id! })
+  let services = select_service_ids.all({
+    shop_id: shop.id!,
+    user_id: user?.id || null,
+  })
   let locale = getShopLocale(shop.id!)
   let contacts = getShopContacts(shop)
   let floating_contact = contacts.find(
@@ -92,19 +116,19 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         <h1
           class="ion-margin"
           style="
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-          "
+          display: flex;
+          gap: 0.5rem;
+          justify-content: center;
+          align-items: center;
+          flex-wrap: wrap;
+        "
         >
           <img
             style="
-            max-width: 1.5em;
-            max-height: 1.5em;
-            border-radius: 0.2em;
-          "
+          max-width: 1.5em;
+          max-height: 1.5em;
+          border-radius: 0.2em;
+        "
             src={getShopLogoImage(shop_slug)}
           />
           {name}
@@ -112,18 +136,34 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         <img
           class="ion-margin-horizontal"
           style="
-            border-radius: 1rem;
-            width: calc(100% - 2rem);
-          "
+          border-radius: 1rem;
+          width: calc(100% - 2rem);
+        "
           src={getShopCoverImage(shop_slug)}
         />
 
         <h2 class="ion-margin" style="margin-bottom: 0.5rem">
           {/* {owner_name} {locale.service} */}
           Booking
+          {shop.owner_id == user?.id ? (
+            <>
+              <Link
+                href={`/shop/${shop_slug}/add-service`}
+                tagName="ion-button"
+                style="margin-inline-start: 1rem"
+                size="small"
+              >
+                新增服務
+              </Link>
+              {
+                loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' })
+                  .node
+              }
+            </>
+          ) : null}
         </h2>
         <ion-list>
-          {mapArray(services, service => {
+          {mapArray(services, ({ id, timeslot_count }) => {
             let { used, times } = countBooking({ service, user })
             return (
               <Link
@@ -154,6 +194,10 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                         )}
                       </p>
                     ) : null}
+                    <p class="card--field">
+                      <ion-icon name="ban-outline" color="danger" />
+                      &nbsp;未公開
+                    </p>
                     <p class="card--field">
                       <ion-icon name="hourglass-outline" />
                       &nbsp;時長: {service.hours}
@@ -329,6 +373,40 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
   )
 }
 
+let addServiceParser = object({
+  args: object({
+    0: object({
+      shop_slug: string(),
+    }),
+  }),
+})
+function AddService(attrs: { shop: Shop }, context: DynamicContext) {
+  if (context.type != 'ws') {
+    throw new Error('expect ws mode')
+  }
+  let { shop } = attrs
+  let service_slug = randomUUID()
+  let service_id = proxy.service.push({
+    shop_id: shop.id!,
+    slug: service_slug,
+    name: '',
+    times: null,
+    hours: '',
+    book_duration_minute: 120,
+    unit_price: null,
+    price_unit: '',
+    time: '',
+    quota: 6,
+    address: null,
+    address_remark: null,
+    desc: null,
+  })
+  throw new MessageException([
+    'redirect',
+    `/shop/${shop.slug}/service/${service_slug}/admin`,
+  ])
+}
+
 let routes: Routes = {
   '/shop/:slug': {
     resolve(context) {
@@ -346,6 +424,44 @@ let routes: Routes = {
         title: title(shop_name),
         description: 'Booking page for ' + shop_name,
         node: <ShopHome shop={shop} />,
+      }
+    },
+  },
+  '/shop/:slug/add-service': {
+    title: apiEndpointTitle,
+    streaming: false,
+    resolve(context) {
+      let slug = context.routerMatch?.params.slug
+      let shop = find(proxy.shop, { slug })
+      if (!shop) {
+        throw new MessageException([
+          'eval',
+          `showToast('shop not found', 'warning')`,
+        ])
+      }
+      let role = getAuthRole(context)
+      if (!role.user) {
+        throw new MessageException([
+          'batch',
+          [
+            [
+              'eval',
+              `showToast('login as shop owner to create service', 'warning')`,
+            ],
+            ['redirect', '/login'],
+          ],
+        ])
+      }
+      if (role.user.id != shop.owner_id) {
+        throw new MessageException([
+          'eval',
+          `showToast('you're not the shop owner', 'warning')`,
+        ])
+      }
+      return {
+        title: apiEndpointTitle,
+        description: 'Add new service by shop owner',
+        node: <AddService shop={shop} />,
       }
     },
   },
