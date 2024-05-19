@@ -59,7 +59,7 @@ ion-thumbnail {
 
 `)
 
-let select_service_ids = db.prepare<
+let select_service = db.prepare<
   { shop_id: number; user_id: number | null },
   { id: number; timeslot_count: number | null }
 >(/* sql */ `
@@ -78,7 +78,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   let { shop } = attrs
   let { name, slug: shop_slug, owner_name } = shop
   let user = getAuthUser(context)
-  let services = select_service_ids.all({
+  let services = select_service.all({
     shop_id: shop.id!,
     user_id: user?.id || null,
   })
@@ -164,6 +164,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         </h2>
         <ion-list>
           {mapArray(services, ({ id, timeslot_count }) => {
+            let service = proxy.service[id]
             let { used, times } = countBooking({ service, user })
             return (
               <Link
@@ -194,10 +195,12 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                         )}
                       </p>
                     ) : null}
-                    <p class="card--field">
-                      <ion-icon name="ban-outline" color="danger" />
-                      &nbsp;未公開
-                    </p>
+                    {!timeslot_count ? (
+                      <p class="card--field">
+                        <ion-icon name="ban-outline" color="danger" />
+                        &nbsp;未公開
+                      </p>
+                    ) : null}
                     <p class="card--field">
                       <ion-icon name="hourglass-outline" />
                       &nbsp;時長: {service.hours}
