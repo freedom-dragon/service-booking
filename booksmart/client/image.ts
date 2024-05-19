@@ -3,13 +3,13 @@ import {
   compressMobilePhoto,
   dataURItoFile,
   resizeImage,
-  resizeWithRatio,
   rotateImage,
   toImage,
 } from '@beenotung/tslib/image.js'
 import { selectImage } from '@beenotung/tslib/file.js'
 import { client_config } from './client-config.js'
 
+/** @description compress to within the file size budget */
 function compressPhotos(files: FileList | File[]) {
   return Promise.all(
     Array.from(files, async file => {
@@ -24,24 +24,58 @@ function compressPhotos(files: FileList | File[]) {
   )
 }
 
+/** @description resize to given dimension */
+async function selectPhotos(
+  options?: {
+    accept?: string
+    quality?: number
+    multiple?: boolean
+  } & ({ width: number; height: number } | { size: number } | {}),
+) {
+  let files = await selectImage({
+    accept: options?.accept || '.jpg,.png,.webp,.heic,.gif',
+    multiple: options?.multiple,
+  })
+  return Promise.all(
+    files.map(async file => {
+      let image = await toImage(file)
+      let width = 720
+      let height = 720
+      let quality = 0.5
+      if (options) {
+        if ('size' in options) {
+          width = options.size
+          height = options.size
+        }
+        if ('width' in options) {
+          width = options.width
+        }
+        if ('height' in options) {
+          height = options.height
+        }
+        if (options.quality) {
+          quality = options.quality
+        }
+      }
+      let dataUrl = resizeImage(image, width, height, 'image/webp', quality)
+      file = dataURItoFile(dataUrl, file)
+      return { dataUrl, file }
+    }),
+  )
+}
+
 async function selectServiceImage() {
-  let [file] = await selectImage({
-    // TODO support video
-    // accept: 'image/*',
+  let [photo] = await selectPhotos({
     accept: '.jpg,.png,.webp,.heic,.gif',
     multiple: false,
+    size: 720,
   })
-  if (!file) return
-  let image = await toImage(file)
-  let size = 720
-  let quality = 0.5
-  let dataUrl = resizeImage(image, size, size, 'image/webp', quality)
-  file = dataURItoFile(dataUrl, file)
-  return { dataUrl, file }
+  return photo
 }
 
 async function selectReceiptImages() {
   let files = await selectImage({
+    // TODO support video
     // accept: 'image/*',
     accept: '.jpg,.png,.webp,.heic',
     multiple: true,
@@ -66,6 +100,7 @@ async function selectReceiptImages() {
 
 Object.assign(window, {
   compressPhotos,
+  selectPhotos,
   format_byte,
   selectServiceImage,
   selectReceiptImages,
