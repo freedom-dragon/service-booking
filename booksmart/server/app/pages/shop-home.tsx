@@ -204,6 +204,18 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                       <ion-icon name="hourglass-outline" />
                       &nbsp;時長: {service.hours}
                     </p>
+                    {service.original_price ? (
+                      <p
+                        class="card--field"
+                        style="text-decoration: line-through"
+                      >
+                        <ion-icon name="cash-outline" />
+                        &nbsp;原價:{' '}
+                        {+service.original_price
+                          ? '$' + service.original_price
+                          : service.original_price}
+                      </p>
+                    ) : null}
                     <p class="card--field">
                       <ion-icon name="cash-outline" />
                       &nbsp;費用:{' '}
@@ -396,6 +408,7 @@ function AddService(attrs: { shop: Shop }, context: DynamicContext) {
     hours: '',
     book_duration_minute: 120,
     unit_price: null,
+    original_price: null,
     price_unit: '',
     time: '',
     quota: 6,

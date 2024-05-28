@@ -154,6 +154,7 @@ times integer NULL
 hours text
 book_duration_minute integer
 unit_price text NULL
+original_price text NULL
 price_unit text
 time text
 quota integer

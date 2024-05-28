@@ -444,6 +444,14 @@ function selectOption(button){
             <ion-label
               style={used > 0 ? 'text-decoration: line-through' : undefined}
             >
+              {service.original_price ? (
+                <div style="text-decoration: line-through">
+                  原價:{' '}
+                  {+service.original_price
+                    ? '$' + service.original_price
+                    : service.original_price}
+                </div>
+              ) : null}
               費用{' '}
               <span id="priceLabel">
                 {+service.unit_price!
@@ -928,6 +936,19 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               />
             </div>
             <div slot="helper">如：一次付費，三次服務的套票</div>
+          </ion-item>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="cash-outline"></ion-icon> 原價
+            </div>
+            <div class="d-flex" style="align-items: center; gap: 0.25rem">
+              <ion-input
+                value={service.original_price}
+                type="text"
+                onchange={`emit('${serviceUrl}/update','original_price',this.value)`}
+                placeholder="可選輸入"
+              />
+            </div>
           </ion-item>
           <ion-item>
             <div slot="start">

@@ -139,6 +139,7 @@ export type Service = {
   hours: string
   book_duration_minute: number
   unit_price: null | string
+  original_price: null | string
   price_unit: string
   time: string
   quota: number
