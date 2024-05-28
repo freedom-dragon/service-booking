@@ -1,6 +1,6 @@
 import { find } from 'better-sqlite3-proxy'
 import { Shop, proxy } from '../../db/proxy.js'
-import { readdirSync } from 'fs'
+import { existsSync, readdirSync, renameSync } from 'fs'
 import { values } from 'cast.ts'
 
 export type ShopLocales = {
@@ -32,6 +32,18 @@ export function getShopLogoImage(shop_slug: string) {
 
 export function getShopCoverImage(shop_slug: string) {
   return `/assets/shops/${shop_slug}/cover.webp`
+}
+
+export function renameServiceSlug(
+  shop_slug: string,
+  old_service_slug: string,
+  new_service_slug: string,
+) {
+  let src = `public/assets/shops/${shop_slug}/${old_service_slug}`
+  let dest = `public/assets/shops/${shop_slug}/${new_service_slug}`
+  if (existsSync(src)) {
+    renameSync(src, dest)
+  }
 }
 
 export function getServiceCoverImage(shop_slug: string, service_slug: string) {

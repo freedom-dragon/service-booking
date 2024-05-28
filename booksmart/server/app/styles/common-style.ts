@@ -54,4 +54,9 @@ code.inline-code {
 .ws_status--safe-area {
   margin-top: 3rem;
 }
+
+.item--hint {
+  margin-inline-start: 1rem;
+  margin-block: 0.25rem;
+}
 `

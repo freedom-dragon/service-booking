@@ -42,6 +42,7 @@ import {
   getServiceImages,
   getServiceOptionImage,
   getShopLocale,
+  renameServiceSlug,
 } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
 import { wsStatus } from '../components/ws-status.js'
@@ -893,6 +894,19 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
         >
           <ion-item>
             <div slot="start">
+              <ion-icon name="globe-outline"></ion-icon> 網址
+            </div>
+            <ion-input
+              placeholder="選擇一個獨特的網址"
+              value={service.slug}
+              onchange={`emit('${serviceUrl}/update','slug',this.value)`}
+            />
+          </ion-item>
+          <div class="item--hint" id="urlPreview">
+            {env.ORIGIN + serviceUrl}
+          </div>
+          <ion-item>
+            <div slot="start">
               <ion-icon name="people-outline"></ion-icon> 標題
             </div>
             <ion-input
@@ -1376,10 +1390,6 @@ function getDateRange() {
 let addPage = (
   <>
     {Style(/* css */ `
-#AddServiceDetail .hint {
-  margin-inline-start: 1rem;
-  margin-block: 0.25rem;
-}
 `)}
     <ion-header>
       <ion-toolbar>
@@ -1406,7 +1416,7 @@ let addPage = (
               maxlength="50"
             />
           </ion-item>
-          <p class="hint">(3-50 characters)</p>
+          <p class="item--hint">(3-50 characters)</p>
           <ion-item>
             <ion-input
               name="slug"
@@ -1416,7 +1426,7 @@ let addPage = (
               pattern="(\w|-|\.){1,32}"
             />
           </ion-item>
-          <p class="hint">
+          <p class="item--hint">
             (1-32 characters of: <code>a-z A-Z 0-9 - _ .</code>)
           </p>
         </ion-list>
@@ -2020,6 +2030,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               throw 'Only shop owner can update the service'
             let { 0: field, 1: value } = object({
               0: values([
+                'slug' as const,
                 'name' as const,
                 'times' as const,
                 'unit_price' as const,
@@ -2034,20 +2045,59 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
             }).parse(context.args)
 
             let label: string
-            let ok = () => {
-              throw new MessageException([
+            let ok = (message?: ServerMessage) => {
+              let toast: ServerMessage = [
                 'eval',
                 `showToast('更新了${label}','info')`,
-              ])
+              ]
+              if (message) {
+                message = ['batch', [toast, message]]
+              } else {
+                message = toast
+              }
+              throw new MessageException(message)
             }
-            let invalid = () => {
+            let invalid = (message = `無效的${label}`) => {
+              message = JSON.stringify(message)
               throw new MessageException([
                 'eval',
-                `showToast('無效的${label}','error')`,
+                `showToast(${message},'error')`,
               ])
             }
 
             switch (field) {
+              case 'slug':
+                label = '網址'
+                if (service_slug == value) throw EarlyTerminate
+                if (value.includes('/')) {
+                  invalid('網址不可包括 "/"')
+                }
+                if (
+                  find(proxy.service, {
+                    shop_id: service.shop_id,
+                    slug: value,
+                  })
+                )
+                  throw new MessageException([
+                    'eval',
+                    `showToast('此網址已被使用','error')`,
+                  ])
+                service[field] = value
+                renameServiceSlug(shop_slug, service_slug, value)
+                ok([
+                  'redirect',
+                  toRouteUrl(
+                    routes,
+                    '/shop/:shop_slug/service/:service_slug/admin',
+                    {
+                      params: {
+                        shop_slug,
+                        service_slug: value,
+                      },
+                    },
+                  ),
+                ])
+                break
               case 'name':
                 label = '標題'
                 service[field] = value
