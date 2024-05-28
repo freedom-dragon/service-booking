@@ -87,7 +87,7 @@ let remark_id = 0
 let timeslot_id = 0
 let hour_id = 0
 function seedService(
-  data: Service & {
+  data: Omit<Service, 'archive_time'> & {
     options: string[]
     timeslots: (Omit<ServiceTimeslot, 'service_id'> & {
       /** @example '09:00-12:00,14:00-16:30,20:00-22:00' */
@@ -97,7 +97,7 @@ function seedService(
   },
 ) {
   let { id: service_id, options, timeslots, remarks, ...service } = data
-  proxy.service[service_id!] = service
+  proxy.service[service_id!] = { ...service, archive_time: null }
   for (let option of options) {
     option_id++
     proxy.service_option[option_id] = {
