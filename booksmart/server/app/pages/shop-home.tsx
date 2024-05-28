@@ -243,6 +243,13 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
             </ion-fab-button>
           </ion-fab>
         ) : null}
+
+        <div class="ion-text-center">
+          <img
+            src="/assets/powered-by-BookSmart.webp"
+            style="max-width: 8rem; margin: 1rem"
+          />
+        </div>
       </ion-content>
       <ion-footer>
         {appIonTabBar}
