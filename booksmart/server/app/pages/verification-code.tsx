@@ -562,7 +562,7 @@ async function checkEmailVerificationCode(
   }
 }
 
-let routes: Routes = {
+let routes = {
   '/verify/email/submit': {
     streaming: false,
     resolve: requestEmailVerification,
@@ -576,6 +576,6 @@ let routes: Routes = {
     streaming: false,
     resolve: checkEmailVerificationCode,
   },
-}
+} satisfies Routes
 
 export default { routes }

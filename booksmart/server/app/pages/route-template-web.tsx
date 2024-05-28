@@ -158,7 +158,7 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
   )
 }
 
-let routes: Routes = {
+let routes = {
   '/__url__': {
     title: title(pageTitle),
     description: 'TODO',
@@ -183,6 +183,6 @@ let routes: Routes = {
     node: <SubmitResult />,
     streaming: false,
   },
-}
+} satisfies Routes
 
 export default { routes }
