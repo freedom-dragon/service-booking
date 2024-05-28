@@ -1,4 +1,6 @@
-export function formatPrice(price: number): string {
+export function formatPrice(price: string | number | null): string | number {
   if (!price) return '-'
-  return '$' + price.toLocaleString()
+  if (price == '0' || +price!) price = +price!
+  if (price) return '$' + price.toLocaleString()
+  return price
 }

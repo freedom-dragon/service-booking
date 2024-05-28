@@ -85,6 +85,7 @@ import {
   selectAvailableQuota,
 } from '../booking-store.js'
 import { db } from '../../../db/db.js'
+import { formatPrice } from '../format/price.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -161,13 +162,13 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
 
   let booking =
     user &&
-    find(proxy.booking, {
+    filter(proxy.booking, {
       user_id: user.id!,
       service_id: service.id!,
       approve_time: null,
       reject_time: null,
       cancel_time: null,
-    })
+    }).sort((a, b) => b.submit_time - a.submit_time)[0]
 
   let allImages = [images.cover, ...images.more, ...images.options]
   let optionImageOffset = 1 + images.more.length
@@ -286,7 +287,7 @@ function selectOption(button){
                 oninput={
                   `this.value>${quota}&&(this.value=${quota});` +
                   (+service.unit_price!
-                    ? `priceLabel.textContent='$'+${service.unit_price}*(this.value||1)+'/'+this.value+'${service.price_unit}';`
+                    ? `priceLabel.textContent= '$' + ((+this.value||1) >= (${service.peer_amount} || Infinity) ? ${service.peer_price} * (this.value||1) : ${service.unit_price} * (this.value||1)) + '/' + this.value + '${service.price_unit}';`
                     : '')
                 }
               />
@@ -459,6 +460,12 @@ function selectOption(button){
                   ? '$' + service.unit_price + '/' + service.price_unit
                   : service.unit_price}
               </span>
+              {service.peer_amount && service.peer_price ? (
+                <div>
+                  {service.peer_amount}人同行，每人
+                  {formatPrice(service.peer_price)}
+                </div>
+              ) : null}
             </ion-label>
             <ion-button
               size="normal"
@@ -554,7 +561,8 @@ function PaymentModal(
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let receipts = filter(proxy.receipt, { booking_id: booking.id! })
   let { used, times } = countBooking({ service, user })
-  let fee = calcBookingTotalFee(booking)
+  let total_price = booking.total_price
+  let is_free = +total_price! === 0
   let has_paid = receipts.length > 0
   let need_pay = used == 0
   let is_shop_owner = getAuthUser(context)?.id == shop.owner_id
@@ -567,7 +575,7 @@ function PaymentModal(
             {!is_shop_owner &&
             need_pay &&
             !has_paid &&
-            !fee.is_free &&
+            !is_free &&
             !booking.approve_time &&
             !booking.reject_time &&
             !booking.cancel_time ? (
@@ -593,7 +601,7 @@ function PaymentModal(
           <>
             <h1>總共費用</h1>
             <div id="totalPriceLabel"></div>
-            <div>{fee.str}</div>
+            <div>{formatPrice(total_price)}</div>
             <h1>付款方法</h1>
             <ion-item>
               <ion-thumbnail slot="start">
@@ -620,14 +628,14 @@ function PaymentModal(
         ) : null}
 
         <p class="receiptMessage ion-text-center">
-          {!need_pay || fee.is_free
+          {!need_pay || is_free
             ? ReceiptMessage.free(shop)
             : has_paid
               ? ReceiptMessage.paid(shop)
               : ReceiptMessage.not_paid}
         </p>
         <div id="receiptNavButtons">
-          {fee.is_free || has_paid ? receiptNavButton : null}
+          {is_free || has_paid ? receiptNavButton : null}
         </div>
       </ion-content>
     </>
@@ -973,6 +981,28 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           <ion-note class="item--hint">
             如: $100/人 、 $150/對情侶 、 📐 量身訂做/位
           </ion-note>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="cash-outline"></ion-icon> 同行價
+            </div>
+            <div class="d-flex" style="align-items: center; gap: 0.25rem">
+              <ion-input
+                style="width: 2rem; text-align: end"
+                value={service.peer_amount}
+                placeholder="多"
+                type="text"
+                onchange={`emit('${serviceUrl}/update','peer_amount',this.value)`}
+              />
+              <span style="padding-bottom: 0.25rem">人同行，每人</span>
+              <ion-input
+                style="width: 4rem"
+                value={service.peer_price}
+                placeholder="優惠價"
+                onchange={`emit('${serviceUrl}/update','peer_price',this.value)`}
+              />
+            </div>
+          </ion-item>
+          <ion-note class="item--hint">如: 2人同行，每人$50</ion-note>
           <ion-item>
             <div slot="start">
               <ion-icon name="people-outline"></ion-icon> 人數
@@ -1773,7 +1803,7 @@ let routes = {
     resolve(context) {
       return resolveServiceRoute(
         context,
-        db.transaction(({ service, shop, service_slug, shop_slug }) => {
+        ({ service, shop, service_slug, shop_slug }) => {
           let body = getContextFormBody(context)
           let input = submitBookingParser.parse(body)
           let tel = to_full_hk_mobile_phone(input.tel)
@@ -1820,25 +1850,29 @@ let routes = {
             })
             user = proxy.user[user_id]
           }
-          let booking_id = proxy.booking.push({
-            service_id: service.id!,
-            submit_time: Date.now(),
-            appointment_time: input.appointment_time.getTime(),
-            approve_time: null,
-            arrive_time: null,
-            reject_time: null,
-            cancel_time: null,
-            amount: input.amount,
-            service_option_id: input.option_id,
-            user_id: user.id!,
-            total_price: 0,
-          })
-          let booking = proxy.booking[booking_id]
-          let fee = calcBookingTotalFee(booking)
-          booking.total_price = fee.total_fee
-          if (fee.is_free) {
-            noticeBookingSubmit(booking, context)
-          }
+          let user_id = user.id!
+          let booking: Booking = db.transaction(() => {
+            let booking_id = proxy.booking.push({
+              service_id: service.id!,
+              submit_time: Date.now(),
+              appointment_time: input.appointment_time.getTime(),
+              approve_time: null,
+              arrive_time: null,
+              reject_time: null,
+              cancel_time: null,
+              amount: input.amount,
+              service_option_id: input.option_id,
+              user_id,
+              total_price: null,
+            })
+            let booking = proxy.booking[booking_id]
+            let fee = calcBookingTotalFee(booking)
+            booking.total_price = fee.total_fee
+            if (fee.is_free) {
+              noticeBookingSubmit(booking, context)
+            }
+            return booking
+          })()
           if (should_verify_email) {
             let email = user.email!
             let hint = maskEmailForHint(email)
@@ -1850,7 +1884,7 @@ let routes = {
               request_time: Date.now(),
               revoke_time: null,
               match_id: null,
-              user_id: user.id!,
+              user_id,
               shop_id: shop.id!,
             })
             let { html, text } = verificationCodeEmail(
@@ -1922,12 +1956,15 @@ let routes = {
               [
                 'update-in',
                 '#submitModal',
-                nodeToVNode(PaymentModal({ booking, user }, context), context),
+                nodeToVNode(
+                  PaymentModal({ booking: booking!, user }, context),
+                  context,
+                ),
               ],
               ['eval', 'submitModal.present()'],
             ],
           ])
-        }),
+        },
       )
     },
   },
@@ -2061,6 +2098,8 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 'original_price' as const,
                 'unit_price' as const,
                 'price_unit' as const,
+                'peer_amount' as const,
+                'peer_price' as const,
                 'quota' as const,
                 'hours' as const,
                 'book_duration_minute' as const,
@@ -2157,6 +2196,22 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 break
               case 'price_unit':
                 label = '費用 (單位)'
+                service[field] = value
+                ok()
+                break
+              case 'peer_amount':
+                label = '同行人數'
+                if (!Number.isInteger(+value) || +value < 0) invalid()
+                service[field] = +value || null
+                ok()
+                break
+              case 'peer_price':
+                label = '同行優惠價'
+                if (value.startsWith('$')) {
+                  let val = +value.substring(1)
+                  if (!val && val != 0) invalid()
+                  value = val.toString()
+                }
                 service[field] = value
                 ok()
                 break
@@ -2653,3 +2708,5 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
 } satisfies Routes
 
 export default { routes, attachRoutes }
+
+declare var priceLabel: HTMLElement

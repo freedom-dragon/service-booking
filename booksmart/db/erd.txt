@@ -153,9 +153,11 @@ name text
 times integer NULL
 hours text
 book_duration_minute integer
-unit_price text NULL
 original_price text NULL
+unit_price text NULL
 price_unit text
+peer_amount integer NULL
+peer_price text NULL
 time text
 quota integer
 address text NULL
@@ -209,7 +211,7 @@ approve_time integer NULL
 reject_time integer NULL
 cancel_time integer NULL
 amount integer
-total_price integer
+total_price text NULL
 
 
 receipt

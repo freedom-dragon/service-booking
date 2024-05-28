@@ -138,9 +138,11 @@ export type Service = {
   times: null | number
   hours: string
   book_duration_minute: number
-  unit_price: null | string
   original_price: null | string
+  unit_price: null | string
   price_unit: string
+  peer_amount: null | number
+  peer_price: null | string
   time: string
   quota: number
   address: null | string
@@ -196,7 +198,7 @@ export type Booking = {
   reject_time: null | number
   cancel_time: null | number
   amount: number
-  total_price: number
+  total_price: null | string
 }
 
 export type Receipt = {

@@ -2,31 +2,38 @@ import { Booking } from './proxy'
 
 // TODO support people amount based discount
 export function calcBookingTotalFee(booking: Booking): {
-  total_fee: number
+  total_fee: string
   str: string
   is_free: boolean
 } {
   let service = booking.service!
   let unit_price = service.unit_price!
-  let fee_val = +unit_price
+  let fee_val =
+    booking.amount *
+    (service.peer_amount &&
+    service.peer_price &&
+    booking.amount >= service.peer_amount
+      ? +service.peer_price
+      : +service.unit_price!)
+  let total_fee = fee_val
   if (fee_val == 0) {
     return {
-      total_fee: fee_val,
+      total_fee: '0',
       str: '$0',
       is_free: true,
     }
   }
   if (fee_val) {
     return {
+      total_fee: fee_val.toFixed(0),
       // e.g. '$1,200'
-      total_fee: fee_val * booking.amount,
-      str: '$' + (fee_val * booking.amount).toLocaleString(),
+      str: '$' + fee_val.toLocaleString(),
       is_free: false,
     }
   }
   return {
     // e.g. '📐 量身訂做'
-    total_fee: 0,
+    total_fee: '',
     str: unit_price,
     is_free: false,
   }

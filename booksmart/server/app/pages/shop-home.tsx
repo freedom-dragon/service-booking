@@ -27,6 +27,7 @@ import { getAuthRole } from '../auth/role.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { randomUUID } from 'crypto'
 import { db } from '../../../db/db.js'
+import { formatPrice } from '../format/price.js'
 
 let pageTitle = 'The Balconi ARTLAB 香港'
 
@@ -223,6 +224,12 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                         ? '$' + service.unit_price + '/' + service.price_unit
                         : service.unit_price}
                     </p>
+                    {service.peer_amount && service.peer_price ? (
+                      <p class="card--field">
+                        {service.peer_amount}
+                        人同行，每人{formatPrice(service.peer_price)}
+                      </p>
+                    ) : null}
                     <ion-button size="small" color="primary" fill="block">
                       立即預約
                     </ion-button>
@@ -407,9 +414,11 @@ function AddService(attrs: { shop: Shop }, context: DynamicContext) {
     times: null,
     hours: '',
     book_duration_minute: 120,
-    unit_price: null,
     original_price: null,
+    unit_price: null,
     price_unit: '',
+    peer_amount: null,
+    peer_price: null,
     time: '',
     quota: 6,
     address: null,
