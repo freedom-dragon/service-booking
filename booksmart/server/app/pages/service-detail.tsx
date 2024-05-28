@@ -54,7 +54,7 @@ import { Router } from 'express'
 import { HttpError } from '../../http-error.js'
 import { join } from 'path'
 import { existsSync, renameSync, unlinkSync } from 'fs'
-import { EarlyTerminate, MessageException } from '../helpers.js'
+import { EarlyTerminate, MessageException, toRouteUrl } from '../helpers.js'
 import { nodeToVNode } from '../jsx/vnode.js'
 import { TimezoneDate } from 'timezone-date.ts'
 import { toLocaleDateTimeString } from '../components/datetime.js'
@@ -199,7 +199,9 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="ServiceDetail" color="light">
-        <h1 class="ion-margin">{service.name}</h1>
+        <h1 class="ion-margin">
+          {service.name} {service.archive_time ? '(已封存)' : null}
+        </h1>
         <div class="ion-margin-horizontal">
           <Swiper
             id="ServiceImages"
@@ -724,6 +726,16 @@ let ManageServiceScripts = (
     {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     {Script(/* javascript */ `
+async function archiveService(title, url) {
+  if(!await showConfirm({
+    title,
+    icon: 'warning',
+    confirmButtonText: '封存',
+  })) {
+    return
+  }
+  emit(url)
+}
 function chooseWeekdays(button, weekdays) {
   let item = button.closest('.available-timeslot--item')
   let list = item.querySelector('.weekday--list')
@@ -839,6 +851,17 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
     }
     return str
   })()
+  let archive_title = JSON.stringify(
+    concat_words('確認封存', service.name) + '，並不再展示？',
+  )
+  let archive_url = JSON.stringify(
+    toRouteUrl(routes, '/shop/:shop_slug/service/:service_slug/archive', {
+      params: {
+        shop_slug,
+        service_slug,
+      },
+    }),
+  )
   return (
     <>
       {ServiceDetailStyle}
@@ -849,6 +872,16 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           <ion-title role="heading" aria-level="1">
             {concat_words('管理', service.name)}
           </ion-title>
+          <ion-buttons slot="end">
+            <ion-button
+              color="dark"
+              size="small"
+              title={concat_words('封存', service.name)}
+              onclick={`archiveService(${archive_title}, ${archive_url})`}
+            >
+              <ion-icon name="archive-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-buttons>
         </ion-toolbar>
       </ion-header>
       <ion-content id="ManageService" color="light">
@@ -1630,7 +1663,7 @@ let submitBookingParser = object({
   tel: string(),
 })
 
-let routes: Routes = {
+let routes = {
   '/shop/:shop_slug/service/:service_slug': {
     resolve(context) {
       return resolveServiceRoute(context, ({ service, shop }) => {
@@ -1982,6 +2015,9 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
         context,
         ({ service, shop, shop_slug, service_slug }) => {
           try {
+            let { user } = getAuthRole(context)
+            if (shop.owner_id != user?.id)
+              throw 'Only shop owner can update the service'
             let { 0: field, 1: value } = object({
               0: values([
                 'name' as const,
@@ -2071,6 +2107,49 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
             throw new Error('not supported fields: ' + field)
           } catch (error) {
             if (error instanceof MessageException) throw error
+            throw new MessageException([
+              'eval',
+              `showToast(${JSON.stringify(String(error))},'error')`,
+            ])
+          }
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/archive': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'update service details',
+          node: 'This api is only available over ws',
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          try {
+            let { user } = getAuthRole(context)
+            if (shop.owner_id != user?.id)
+              throw 'Only shop owner can archive the service'
+
+            let title = service.name || service.slug
+            title = concat_words('封存了', title)
+
+            // TODO remind if there are pending bookings
+
+            service.archive_time = Date.now()
+
+            throw new MessageException([
+              'batch',
+              [
+                ['eval', `showToast(${JSON.stringify(title)},'info')`],
+                ['redirect', `/shop/${shop_slug}`],
+              ],
+            ])
+          } catch (error) {
+            if (error instanceof MessageException) throw error
+            console.log(error)
             throw new MessageException([
               'eval',
               `showToast(${JSON.stringify(String(error))},'error')`,
@@ -2485,6 +2564,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
     node: <SubmitResult />,
     streaming: false,
   },
-}
+} satisfies Routes
 
 export default { routes, attachRoutes }

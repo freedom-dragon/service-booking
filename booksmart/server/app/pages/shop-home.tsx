@@ -70,6 +70,7 @@ from service
 left join service_timeslot on service_timeslot.service_id = service.id
 inner join shop on shop.id = service.shop_id
 where service.shop_id = :shop_id
+  and service.archive_time is null
 group by service.id
 having (count(service_timeslot.id) > 0 or shop.owner_id = :user_id)
 `)
@@ -403,6 +404,7 @@ function AddService(attrs: { shop: Shop }, context: DynamicContext) {
     address: null,
     address_remark: null,
     desc: null,
+    archive_time: null,
   })
   throw new MessageException([
     'redirect',

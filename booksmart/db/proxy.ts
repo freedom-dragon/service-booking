@@ -145,6 +145,7 @@ export type Service = {
   address: null | string
   address_remark: null | string
   desc: null | string
+  archive_time: null | number
 }
 
 export type ServiceRemark = {

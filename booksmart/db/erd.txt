@@ -160,6 +160,7 @@ quota integer
 address text NULL
 address_remark text NULL
 desc text NULL
+archive_time integer NULL
 
 
 service_remark
