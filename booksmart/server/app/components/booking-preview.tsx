@@ -16,6 +16,7 @@ export let bookingPreviewStyle = Style(/* css */ `
 }
 .booking-preview td {
   padding: 0.25rem;
+  min-width: 5rem;
 }
 .booking-preview td ion-icon {
   width: 1rem;
@@ -34,11 +35,8 @@ export function BookingPreview(
   let service_option = booking.service_option
   let locale = getShopLocale(service.shop_id)
   let { used, times } = countBooking({ service, user })
-  return (
-    <table
-      class={concatClassNames('booking-preview', attrs.class)}
-      style={attrs.style}
-    >
+  let table = (
+    <table>
       <tbody>
         <tr>
           <td>
@@ -156,5 +154,30 @@ export function BookingPreview(
         </tr>
       </tbody>
     </table>
+  )
+  return (
+    <div
+      class={concatClassNames('booking-preview', attrs.class)}
+      style={attrs.style}
+    >
+      {table}
+      {service.question ? (
+        <table>
+          <tbody>
+            <tr>
+              <td style="vertical-align: baseline">
+                <ion-icon name="help-circle-outline"></ion-icon>
+                備註:
+              </td>
+              <td>
+                <p>{service.question}</p>
+                <hr />
+                <p>{booking.answer || '(沒有回答)'}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      ) : null}
+    </div>
   )
 }

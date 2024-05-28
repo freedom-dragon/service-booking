@@ -42,7 +42,7 @@ ion-app.hide {
 
 /* general */
 hr {
-  height: 1px solid;
+  height: 1px;
   background-color: var(--ion-color-dark);
 }
 `

@@ -50,7 +50,7 @@ let addPageTitle = 'Add Calendar'
 
 let style = Style(/* css */ `
 hr {
-  border-bottom: 1px solid var(--ion-color-dark);
+  /* border-bottom: 1px solid var(--ion-color-dark); */
 }
 
 /* booking list item */

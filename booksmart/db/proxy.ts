@@ -149,6 +149,7 @@ export type Service = {
   address_remark: null | string
   desc: null | string
   archive_time: null | number
+  question: null | string
 }
 
 export type ServiceRemark = {
@@ -199,6 +200,7 @@ export type Booking = {
   cancel_time: null | number
   amount: number
   total_price: null | string
+  answer: null | string
 }
 
 export type Receipt = {

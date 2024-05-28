@@ -164,6 +164,7 @@ address text NULL
 address_remark text NULL
 desc text NULL
 archive_time integer NULL
+question text NULL
 
 
 service_remark
@@ -212,6 +213,7 @@ reject_time integer NULL
 cancel_time integer NULL
 amount integer
 total_price text NULL
+answer text NULL
 
 
 receipt

@@ -312,8 +312,20 @@ function selectOption(button){
               selectedTimeButton="selectedTimeButton"
               onSelectDateFn="onSelectDateFn"
             />
-
             <ion-item-divider style="min-height:2px"></ion-item-divider>
+
+            {service.question ? (
+              <ion-item>
+                <div slot="start">
+                  <ion-icon name="help-circle-outline"></ion-icon> 備註
+                </div>
+                <div>
+                  <ion-label>{service.question}</ion-label>
+                  <ion-textarea name="answer" auto-grow />
+                </div>
+              </ion-item>
+            ) : null}
+
             {/*
             For guest: ask tel
               if tel in DB, ask email and auth code
@@ -1724,6 +1736,7 @@ let submitBookingParser = object({
   amount: int({ min: 1 }),
   option_id: id(),
   tel: string(),
+  answer: string(),
 })
 
 let routes = {
@@ -1864,6 +1877,7 @@ let routes = {
               service_option_id: input.option_id,
               user_id,
               total_price: null,
+              answer: input.answer,
             })
             let booking = proxy.booking[booking_id]
             let fee = calcBookingTotalFee(booking)
