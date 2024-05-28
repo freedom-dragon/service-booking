@@ -35,7 +35,7 @@ import {
   BookingPreview,
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
-import { getBookingTotalFee } from '../fee.js'
+import { formatPrice } from '../format/price.js'
 import { env } from '../../env.js'
 import { db } from '../../../db/db.js'
 import { Node } from '../jsx/types.js'
@@ -189,7 +189,6 @@ function BookingDetails(attrs: {
     booking_id: booking.id!,
   })
   let avatar_url = toUploadedUrl(booking.user!.avatar)
-  let fee = getBookingTotalFee(booking)
   let service = booking.service!
   let shop_slug = service.shop!.slug
   let service_slug = service.slug
@@ -216,7 +215,7 @@ function BookingDetails(attrs: {
           <BookingPreview booking={booking} style="margin: 0.25rem 1rem" />
           {need_pay ? (
             <div class="ion-margin-top">
-              <b>總共費用: {fee.str}</b>
+              <b>總共費用: {formatPrice(booking.total_price)}</b>
             </div>
           ) : null}
         </div>

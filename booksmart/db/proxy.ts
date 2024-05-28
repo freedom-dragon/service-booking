@@ -196,6 +196,7 @@ export type Booking = {
   reject_time: null | number
   cancel_time: null | number
   amount: number
+  total_price: number
 }
 
 export type Receipt = {

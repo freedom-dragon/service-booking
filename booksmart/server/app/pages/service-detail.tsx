@@ -73,7 +73,7 @@ import {
   BookingPreview,
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
-import { getBookingTotalFee } from '../fee.js'
+import { calcBookingTotalFee } from '../../../db/service-store.js'
 import { env } from '../../env.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
@@ -84,6 +84,7 @@ import {
   selectAvailableHours,
   selectAvailableQuota,
 } from '../booking-store.js'
+import { db } from '../../../db/db.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -553,7 +554,7 @@ function PaymentModal(
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let receipts = filter(proxy.receipt, { booking_id: booking.id! })
   let { used, times } = countBooking({ service, user })
-  let fee = getBookingTotalFee(booking)
+  let fee = calcBookingTotalFee(booking)
   let has_paid = receipts.length > 0
   let need_pay = used == 0
   let is_shop_owner = getAuthUser(context)?.id == shop.owner_id
@@ -1772,7 +1773,7 @@ let routes = {
     resolve(context) {
       return resolveServiceRoute(
         context,
-        ({ service, shop, service_slug, shop_slug }) => {
+        db.transaction(({ service, shop, service_slug, shop_slug }) => {
           let body = getContextFormBody(context)
           let input = submitBookingParser.parse(body)
           let tel = to_full_hk_mobile_phone(input.tel)
@@ -1830,10 +1831,12 @@ let routes = {
             amount: input.amount,
             service_option_id: input.option_id,
             user_id: user.id!,
+            total_price: 0,
           })
           let booking = proxy.booking[booking_id]
-          let price = +service.unit_price! || 0
-          if (price == 0) {
+          let fee = calcBookingTotalFee(booking)
+          booking.total_price = fee.total_fee
+          if (fee.is_free) {
             noticeBookingSubmit(booking, context)
           }
           if (should_verify_email) {
@@ -1924,7 +1927,7 @@ let routes = {
               ['eval', 'submitModal.present()'],
             ],
           ])
-        },
+        }),
       )
     },
   },

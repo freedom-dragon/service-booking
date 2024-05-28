@@ -1,5 +1,6 @@
-import { seedRow } from 'better-sqlite3-proxy'
+import { filter, seedRow } from 'better-sqlite3-proxy'
 import { Service, ServiceTimeslot, proxy } from './proxy'
+import { calcBookingTotalFee as calcBookingFee } from './service-store'
 
 // This file serve like the knex seed file.
 //
@@ -296,3 +297,11 @@ seedService({
     },
   ],
 })
+
+function patch_booking_total_price() {
+  for (let booking of filter(proxy.booking, { total_price: null as any })) {
+    let fee = calcBookingFee(booking)
+    booking.total_price = fee.total_fee
+  }
+}
+patch_booking_total_price()

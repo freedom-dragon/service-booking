@@ -209,6 +209,7 @@ approve_time integer NULL
 reject_time integer NULL
 cancel_time integer NULL
 amount integer
+total_price integer
 
 
 receipt
