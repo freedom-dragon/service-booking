@@ -2058,6 +2058,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 'slug' as const,
                 'name' as const,
                 'times' as const,
+                'original_price' as const,
                 'unit_price' as const,
                 'price_unit' as const,
                 'quota' as const,
@@ -2132,6 +2133,16 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 label = '次數'
                 if (!Number.isInteger(+value) || +value < 1) invalid()
                 service[field] = +value
+                ok()
+                break
+              case 'original_price':
+                label = '原價'
+                if (value.startsWith('$')) {
+                  let val = +value.substring(1)
+                  if (!val && val != 0) invalid()
+                  value = val.toString()
+                }
+                service[field] = value
                 ok()
                 break
               case 'unit_price':
