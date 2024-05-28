@@ -410,7 +410,11 @@ function confirmReschedule${booking.id}() {
         <div class="ion-margin-horizontal">
           <Link
             tagName="ion-button"
-            href={service_url}
+            href={
+              service_url +
+              '?tel=' +
+              (booking.user!.tel?.replace('+852', '') || '')
+            }
             class="ion-margin-bottom"
             expand="block"
           >

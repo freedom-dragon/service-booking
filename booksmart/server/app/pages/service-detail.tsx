@@ -158,6 +158,9 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let user = getAuthUser(context)
   let is_shop_owner = user && user.id == shop.owner_id
 
+  let params = new URLSearchParams(context.routerMatch?.search)
+  let tel = params.get('tel')
+
   // address_remark = ''
 
   let booking =
@@ -346,9 +349,17 @@ function selectOption(button){
                     name="tel"
                     minlength="8"
                     maxlength="8"
+                    value={tel}
                     oninput="this.value.length == 8 && emit('/check-tel', this.value)"
                   />
                 </ion-item>
+                {tel
+                  ? Script(/* javascript */ `
+                  setTimeout(function(){
+                    emit('/check-tel', ${JSON.stringify(tel)})
+                  })
+                  `)
+                  : null}
                 <div id="guestInfo"></div>
               </>
             ) : (
