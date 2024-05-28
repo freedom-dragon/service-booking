@@ -377,13 +377,6 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
   )
 }
 
-let addServiceParser = object({
-  args: object({
-    0: object({
-      shop_slug: string(),
-    }),
-  }),
-})
 function AddService(attrs: { shop: Shop }, context: DynamicContext) {
   if (context.type != 'ws') {
     throw new Error('expect ws mode')
