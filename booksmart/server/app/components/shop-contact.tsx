@@ -14,6 +14,7 @@ export let ShopContactsStyle = Style(/* css */ `
 .img-icon--text {
   margin-inline-start: 1rem;
   word-break: break-word;
+  text-align: start;
 }
 .social-media-buttons {
   flex-direction: column;
