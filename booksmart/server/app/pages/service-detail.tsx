@@ -290,10 +290,10 @@ function selectOption(button){
                 }
               />
               <ion-label slot="end">{service.price_unit}</ion-label>
-              <div slot="helper">
-                上限: {quota} {service.price_unit}
-              </div>
             </ion-item>
+            <ion-note class="item--hint">
+              上限: {quota} {service.price_unit}
+            </ion-note>
             <ion-item>
               <div slot="start">
                 <ion-icon name="hourglass-outline"></ion-icon> 時長
@@ -910,9 +910,9 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               onchange={`emit('${serviceUrl}/update','slug',this.value)`}
             />
           </ion-item>
-          <div class="item--hint" id="urlPreview">
+          <ion-note class="item--hint" id="urlPreview">
             {env.ORIGIN + serviceUrl}
-          </div>
+          </ion-note>
           <ion-item>
             <div slot="start">
               <ion-icon name="people-outline"></ion-icon> 標題
@@ -935,8 +935,8 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                 onchange={`emit('${serviceUrl}/update','times',this.value)`}
               />
             </div>
-            <div slot="helper">如：一次付費，三次服務的套票</div>
           </ion-item>
+          <ion-note class="item--hint">如：一次付費，三次服務的套票</ion-note>
           <ion-item>
             <div slot="start">
               <ion-icon name="cash-outline"></ion-icon> 原價
@@ -968,10 +968,10 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                 onchange={`emit('${serviceUrl}/update','price_unit',this.value)`}
               />
             </div>
-            <div slot="helper">
-              如: $100/人 、 $150/對情侶 、 📐 量身訂做/位
-            </div>
           </ion-item>
+          <ion-note class="item--hint">
+            如: $100/人 、 $150/對情侶 、 📐 量身訂做/位
+          </ion-note>
           <ion-item>
             <div slot="start">
               <ion-icon name="people-outline"></ion-icon> 人數
@@ -985,8 +985,8 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                 onchange={`emit('${serviceUrl}/update','quota',this.value)`}
               />
             </div>
-            <div slot="helper">如: 6(人) / 2(對情侶)</div>
           </ion-item>
+          <ion-note class="item--hint">如: 6(人) / 2(對情侶)</ion-note>
           <ion-item>
             <div slot="start">
               <ion-icon name="hourglass-outline"></ion-icon> 時長 (顯示)
@@ -996,8 +996,10 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               placeholder="如: 2.5 - 3 小時"
               onchange={`emit('${serviceUrl}/update','hours',this.value)`}
             />
-            <div slot="helper">作顯示用途。可以是範圍，如: 2.5 - 3 小時</div>
           </ion-item>
+          <ion-note class="item--hint">
+            作顯示用途。可以是範圍，如: 2.5 - 3 小時
+          </ion-note>
           <ion-item>
             <div slot="start">
               <ion-icon name="hourglass-outline"></ion-icon> 時長 (計算)
@@ -1010,10 +1012,10 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               type="number"
               min="1"
             />
-            <div slot="helper">
-              系統會以這個分鐘數作為計算。建議輸入每節最長時間。
-            </div>
           </ion-item>
+          <ion-note class="item--hint">
+            系統會以這個分鐘數作為計算。建議輸入每節最長時間。
+          </ion-note>
           <ion-item>
             <div slot="start">
               <ion-icon name="map-outline"></ion-icon> 地址 (街道)
@@ -1023,29 +1025,28 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               placeholder={shop.address}
               onchange={`emit('${serviceUrl}/update','address',this.value)`}
             />
-            {address ? (
-              <div
-                slot="helper"
-                style1="display: flex; align-items: center; gap: 1rem"
-                class="w-100"
-              >
-                預覽
-                <ion-button
-                  fill="block"
-                  color="primary"
-                  size="normal"
-                  href={
-                    'https://www.google.com/maps/search/' +
-                    encodeURIComponent(address)
-                  }
-                  target="_blank"
-                >
-                  <ion-icon name="map-outline" slot="start"></ion-icon>
-                  View on Map
-                </ion-button>
-              </div>
-            ) : null}
           </ion-item>
+          {address ? (
+            <ion-note
+              style1="display: flex; align-items: center; gap: 1rem"
+              class="w-100 item--hint"
+            >
+              預覽
+              <ion-button
+                fill="block"
+                color="primary"
+                size="normal"
+                href={
+                  'https://www.google.com/maps/search/' +
+                  encodeURIComponent(address)
+                }
+                target="_blank"
+              >
+                <ion-icon name="map-outline" slot="start"></ion-icon>
+                View on Map
+              </ion-button>
+            </ion-note>
+          ) : null}
           {address ? (
             <ion-item-divider
               style="
