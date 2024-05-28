@@ -1052,6 +1052,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
       border-radius: 0.5rem;
       width: calc(100vw - 2rem);
       height: calc(100vw - 2rem);
+      object-fit: cover;
     "
         />
         <div class="text-center">
