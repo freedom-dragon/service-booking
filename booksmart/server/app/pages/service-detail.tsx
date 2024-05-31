@@ -53,7 +53,7 @@ import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { Router } from 'express'
 import { HttpError } from '../../http-error.js'
-import { join } from 'path'
+import { basename, join } from 'path'
 import { existsSync, renameSync, unlinkSync } from 'fs'
 import { EarlyTerminate, MessageException, toRouteUrl } from '../helpers.js'
 import { nodeToVNode } from '../jsx/vnode.js'
@@ -726,12 +726,14 @@ let ManageServiceStyle = Style(/* css */ `
   margin-top: 0.5rem;
   margin-bottom: 0.25rem;
 }
+#ManageService .more-item img,
 #ManageService .service-option img {
   margin: 0 1rem 0.5rem;
   margin-bottom: 0;
   width: calc(100vw - 64px);
   height: calc(100vw - 64px);
   border-radius: 0.25rem;
+  object-fit: cover;
 }
 #ManageService ion-item-divider {
   margin: 0 1rem;
@@ -815,7 +817,7 @@ async function editCoverImage() {
   uploadCoverImageButton.disabled = false
 }
 async function editOptionImage(editButton) {
-  let serviceOption = editButton.closest('.service-option')
+  let serviceOption = editButton.closest('.more-item') || editButton.closest('.service-option')
   let previewImage = serviceOption.querySelector('.preview-image')
   let uploadButton = serviceOption.querySelector('.upload-button')
   let image = await selectServiceImage()
@@ -831,10 +833,9 @@ async function uploadCoverImage() {
   uploadImage(uploadCoverImageButton, coverImage.file)
 }
 async function uploadOptionImage(button) {
-  let serviceOption = button.closest('.service-option')
+  let serviceOption = button.closest('.more-item') || button.closest('.service-option')
   let previewImage = serviceOption.querySelector('.preview-image')
   uploadImage(button, previewImage.file)
-
 }
 async function uploadImage(button, file) {
   if (!file) return
@@ -862,6 +863,10 @@ function saveOptionName(button) {
   let id = button.dataset.id
   let value = input.value
   emit(url,id,value)
+}
+// TODO impl add item for more photo and service-option
+// TODO impl del item for more photo and service-option
+function addOption() {
 }
 `)}
   </>
@@ -903,6 +908,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
       },
     }),
   )
+  let images = getServiceImages(shop_slug, service_slug)
   return (
     <>
       {ServiceDetailStyle}
@@ -1190,6 +1196,57 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
           </ion-button>
         </div>
 
+        <h2 class="ion-margin">更多相片</h2>
+        <ion-list inset="true" class="more-list">
+          {mapArray(images.more, (image, i) => (
+            <div class="more-item">
+              {i > 0 ? <ion-item-divider></ion-item-divider> : null}
+              <ion-item lines="none">
+                <ion-input
+                  label={'相片' + (i + 1)}
+                  value={basename(image)}
+                  readonly
+                />
+                <ion-buttons slot="end">
+                  <ion-button onclick="editOptionImage(this)" color="primary">
+                    <ion-icon name="create" slot="icon-only" />
+                  </ion-button>
+                  <ion-button color="danger">
+                    <ion-icon name="trash" slot="icon-only" />
+                  </ion-button>
+                </ion-buttons>
+              </ion-item>
+              <img src={image} class="preview-image" />
+              <div class="text-center">
+                <ion-button
+                  hidden
+                  onclick="uploadOptionImage(this)"
+                  data-url={
+                    serviceUrl + '/image?name=more&file=' + basename(image)
+                  }
+                  class="upload-button"
+                >
+                  <ion-icon name="cloud-upload" slot="start"></ion-icon>
+                  <span class="button-text">Upload</span>
+                </ion-button>
+              </div>
+            </div>
+          ))}
+          <ion-item-divider class="list-description" color="light">
+            <p>
+              {options.length > 0
+                ? `共 ${options.length} 相片`
+                : `未有更多相片`}
+            </p>
+          </ion-item-divider>
+          <div class="text-center">
+            <ion-button onclick="addOption()">
+              <ion-icon name="cloud-upload" slot="start"></ion-icon>
+              加更多相片
+            </ion-button>
+          </div>
+        </ion-list>
+
         <h2 class="ion-margin">款式</h2>
         <ion-list inset="true" class="service-option-list">
           {mapArray(options, (option, i) => (
@@ -1207,10 +1264,10 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                     data-url={serviceUrl + '/option/name'}
                     data-id={option.id}
                   >
-                    <ion-icon name="save" />
+                    <ion-icon name="save" slot="icon-only" />
                   </ion-button>
                   <ion-button color="danger">
-                    <ion-icon name="trash" />
+                    <ion-icon name="trash" slot="icon-only" />
                   </ion-button>
                 </ion-buttons>
               </ion-item>
@@ -1587,15 +1644,16 @@ function attachRoutes(app: Router) {
       try {
         let {
           params: { shop_slug, service_slug },
-          query: { name: field_name, id: option_id },
+          query: { name: field_name, id: option_id, file: more_file },
         } = object({
           params: object({
             shop_slug: string({ nonEmpty: true }),
             service_slug: string({ nonEmpty: true }),
           }),
           query: object({
-            name: values(['cover', 'option']),
+            name: values(['cover', 'more', 'option']),
             id: optional(id()),
+            file: optional(string()),
           }),
         }).parse(req)
         let shop = find(proxy.shop, { slug: shop_slug })
@@ -1622,6 +1680,18 @@ function attachRoutes(app: Router) {
           )
         }
 
+        let filename: string = ''
+
+        if (field_name == 'cover') {
+          filename = 'cover.webp'
+        }
+
+        if (field_name == 'more') {
+          if (!more_file) throw new HttpError(400, 'missing more_file')
+          more_file = basename(more_file)
+          filename = more_file
+        }
+
         if (field_name == 'option') {
           if (!option_id) throw new HttpError(400, 'missing option_id')
 
@@ -1630,11 +1700,16 @@ function attachRoutes(app: Router) {
 
           if (option.service_id !== service.id!)
             throw new HttpError(400, 'service option not belong to the service')
+
+          filename = `option-${option_id}.webp`
+        }
+
+        if (!filename) {
+          throw new HttpError(501, 'filename not determined')
         }
 
         let dir = join('public', 'assets', 'shops', shop_slug, service_slug)
-        let filename =
-          field_name == 'cover' ? 'cover.webp' : `option-${option_id}.webp`
+
         let form = createUploadForm({
           uploadDir: dir,
           filename: filename + '.tmp',
