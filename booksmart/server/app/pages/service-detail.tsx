@@ -726,6 +726,7 @@ let ManageServiceStyle = Style(/* css */ `
   margin-top: 0.5rem;
   margin-bottom: 0.25rem;
 }
+#ManageService .add-container .preview-image,
 #ManageService .more-item img,
 #ManageService .service-option img {
   margin: 0 1rem 0.5rem;
@@ -864,9 +865,37 @@ function saveOptionName(button) {
   let value = input.value
   emit(url,id,value)
 }
-// TODO impl add item for more photo and service-option
 // TODO impl del item for more photo and service-option
-function addOption() {
+async function addOption(button) {
+  let image = await selectServiceImage()
+  let previewImage = button.closest('.add-container').querySelector('.preview-image')
+  let addButton = button.closest('.add-container').querySelector('.add-button')
+  let uploadButton = button.closest('.add-container').querySelector('.upload-button')
+  let cancelButton = button.closest('.add-container').querySelector('.cancel-button')
+  addButton.file = image.file
+  previewImage.src = image.dataUrl
+  previewImage.hidden = false
+  addButton.hidden = true
+  uploadButton.hidden = false
+  cancelButton.hidden = false
+}
+function cancelNewOptionImage(button) {
+  let previewImage = button.closest('.add-container').querySelector('.preview-image')
+  let addButton = button.closest('.add-container').querySelector('.add-button')
+  let uploadButton = button.closest('.add-container').querySelector('.upload-button')
+  let cancelButton = button.closest('.add-container').querySelector('.cancel-button')
+  previewImage.src = ''
+  previewImage.hidden = true
+  addButton.hidden = false
+  uploadButton.hidden = true
+  cancelButton.hidden = true
+}
+async function uploadNewOptionImage(button) {
+  let addButton = button.closest('.add-container').querySelector('.add-button')
+  let file = addButton.file
+  await uploadImage(addButton, file)
+  cancelNewOptionImage(button)
+  // TODO show new item
 }
 `)}
   </>
@@ -1239,10 +1268,35 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                 : `未有更多相片`}
             </p>
           </ion-item-divider>
-          <div class="text-center">
-            <ion-button onclick="addOption()">
+          <div class="text-center add-container">
+            <div>
+              <img class="preview-image" hidden />
+            </div>
+            <ion-button
+              onclick="addOption(this)"
+              class="add-button"
+              data-url={serviceUrl + '/image?name=more&new=1'}
+            >
               <ion-icon name="cloud-upload" slot="start"></ion-icon>
-              加更多相片
+              <span class="button-text">加更多相片</span>
+            </ion-button>
+            <ion-button
+              onclick="cancelNewOptionImage(this)"
+              color="medium"
+              class="cancel-button"
+              hidden
+            >
+              <ion-icon name="trash" slot="start"></ion-icon>
+              <span class="button-text">Cancel</span>
+            </ion-button>
+            <ion-button
+              onclick="uploadNewOptionImage(this)"
+              color="dark"
+              class="upload-button"
+              hidden
+            >
+              <ion-icon name="cloud-upload" slot="start"></ion-icon>
+              <span class="button-text">Upload</span>
             </ion-button>
           </div>
         </ion-list>
@@ -1301,10 +1355,35 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               {options.length > 0 ? `共 ${options.length} 款` : `未有任何款式`}
             </p>
           </ion-item-divider>
-          <div class="text-center">
-            <ion-button onclick="addOption()">
+          <div class="text-center add-container">
+            <div>
+              <img class="preview-image" hidden />
+            </div>
+            <ion-button
+              onclick="addOption(this)"
+              class="add-button"
+              data-url={serviceUrl + '/image?name=option&new=1'}
+            >
               <ion-icon name="cloud-upload" slot="start"></ion-icon>
-              加款式
+              <span class="button-text">加款式</span>
+            </ion-button>
+            <ion-button
+              onclick="cancelNewOptionImage(this)"
+              color="medium"
+              class="cancel-button"
+              hidden
+            >
+              <ion-icon name="trash" slot="start"></ion-icon>
+              <span class="button-text">Cancel</span>
+            </ion-button>
+            <ion-button
+              onclick="uploadNewOptionImage(this)"
+              color="dark"
+              class="upload-button"
+              hidden
+            >
+              <ion-icon name="cloud-upload" slot="start"></ion-icon>
+              <span class="button-text">Upload</span>
             </ion-button>
           </div>
         </ion-list>
@@ -1644,7 +1723,12 @@ function attachRoutes(app: Router) {
       try {
         let {
           params: { shop_slug, service_slug },
-          query: { name: field_name, id: option_id, file: more_file },
+          query: {
+            name: field_name,
+            id: option_id,
+            file: more_file,
+            new: is_new,
+          },
         } = object({
           params: object({
             shop_slug: string({ nonEmpty: true }),
@@ -1654,6 +1738,7 @@ function attachRoutes(app: Router) {
             name: values(['cover', 'more', 'option']),
             id: optional(id()),
             file: optional(string()),
+            new: optional(int()),
           }),
         }).parse(req)
         let shop = find(proxy.shop, { slug: shop_slug })
@@ -1687,12 +1772,33 @@ function attachRoutes(app: Router) {
         }
 
         if (field_name == 'more') {
+          if (is_new) {
+            let images = getServiceImages(shop_slug, service_slug).more.map(
+              file => basename(file),
+            )
+            for (let i = 1; ; i++) {
+              more_file = `more-${i}.webp`
+              console.log({ images, more_file })
+              if (images.includes(more_file)) {
+                continue
+              }
+              break
+            }
+          }
+
           if (!more_file) throw new HttpError(400, 'missing more_file')
           more_file = basename(more_file)
           filename = more_file
         }
 
         if (field_name == 'option') {
+          if (is_new) {
+            option_id = proxy.service_option.push({
+              service_id: service.id!,
+              name: '',
+            })
+          }
+
           if (!option_id) throw new HttpError(400, 'missing option_id')
 
           let option = proxy.service_option[option_id]
