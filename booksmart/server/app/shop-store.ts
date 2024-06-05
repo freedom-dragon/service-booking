@@ -58,6 +58,14 @@ export function getServiceOptionImage(
   return `/assets/shops/${shop_slug}/${service_slug}/option-${option_id}.webp`
 }
 
+export function getServiceMoreImage(
+  shop_slug: string,
+  service_slug: string,
+  filename: string,
+) {
+  return `/assets/shops/${shop_slug}/${service_slug}/${filename}`
+}
+
 export function getServiceImages(shop_slug: string, service_slug: string) {
   let dir = `assets/shops/${shop_slug}/${service_slug}`
   let filenames: string[]
