@@ -142,7 +142,14 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           src={getShopCoverImage(shop_slug)}
         />
 
-        <h2 class="ion-margin" style="margin-bottom: 0.5rem">
+        <h2
+          class="ion-margin"
+          style="
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+          "
+        >
           {/* {owner_name} {locale.service} */}
           Booking
           {shop.owner_id == user?.id ? (
@@ -150,7 +157,11 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
               <Link
                 href={`/shop/${shop_slug}/add-service`}
                 tagName="ion-button"
-                style="margin-inline-start: 1rem"
+                style="
+                  margin-inline-start: 1rem;
+                  margin-top: auto;
+                  margin-bottom: auto;
+                "
                 size="small"
               >
                 新增服務
