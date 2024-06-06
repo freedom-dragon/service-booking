@@ -996,8 +996,53 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
               onchange={`emit('${serviceUrl}/update','slug',this.value)`}
             />
           </ion-item>
-          <ion-note class="item--hint" id="urlPreview">
-            {env.ORIGIN + serviceUrl}
+          <ion-note class="item--hint" style="margin:0">
+            <div class="ion-margin-horizontal">
+              格式：
+              {mapArray(
+                [
+                  'a-z',
+                  'A-Z',
+                  '0-9',
+                  '- (hyphen)',
+                  '_ (underscore)',
+                  '. (dot)',
+                ],
+                s => (
+                  <span style="display:inline-block">{s}</span>
+                ),
+                <>
+                  , <wbr />
+                </>,
+              )}
+            </div>
+            <div class="ion-margin">
+              預覽：
+              <code
+                id="urlPreview"
+                style="
+                  color: #111;
+                  background: #eee;
+                  padding: 0.5rem;
+                  border-radius: 0.5rem;
+                  display: inline-block;
+                  word-break: break-word;
+                "
+                onclick="copyUrl()"
+              >
+                {env.ORIGIN + serviceUrl}
+              </code>
+              {Script(/* javascript */ `
+function copyUrl() {
+  let range = document.createRange();
+  range.selectNode(urlPreview);
+  window.getSelection().removeAllRanges();
+  window.getSelection().addRange(range);
+  let result = document.execCommand('copy');
+  showToast('已複製到剪貼簿', 'info')
+}
+`)}
+            </div>
           </ion-note>
           <ion-item>
             <div slot="start">
