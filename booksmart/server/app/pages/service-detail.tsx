@@ -88,7 +88,6 @@ import {
 } from '../booking-store.js'
 import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
-import { VNode } from '../../../client/jsx/types.js'
 import { nodeToHTML } from '../jsx/html.js'
 
 let pageTitle = 'Service Detail'
@@ -1356,20 +1355,22 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
 }
 function MoreItem(attrs: { serviceUrl: string; index: number; image: string }) {
   let { serviceUrl, index, image } = attrs
+  let filename = basename(image)
   return (
-    <div class="more-item">
+    <div class="more-item" data-more-index={index}>
       {index > 0 ? <ion-item-divider></ion-item-divider> : null}
       <ion-item lines="none">
-        <ion-input
-          label={'相片' + (index + 1)}
-          value={basename(image)}
-          readonly
-        />
+        <ion-input label={'相片' + (index + 1)} value={filename} readonly />
         <ion-buttons slot="end">
           <ion-button onclick="editOptionImage(this)" color="primary">
             <ion-icon name="create" slot="icon-only" />
           </ion-button>
-          <ion-button color="danger">
+          <ion-button
+            color="danger"
+            onclick={`emit(${JSON.stringify(
+              serviceUrl + `/more/${filename}/delete?index=${index}`,
+            )})`}
+          >
             <ion-icon name="trash" slot="icon-only" />
           </ion-button>
         </ion-buttons>
@@ -2592,6 +2593,49 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               `showToast(${JSON.stringify(String(error))},'error')`,
             ])
           }
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/more/:filename/delete': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'update service details',
+          node: 'This api is only available over ws',
+        }
+      }
+      let auth = getAuthRole(context)
+      let { filename } = context.routerMatch?.params
+      let index = new URLSearchParams(context.routerMatch?.search).get('index')!
+      return resolveServiceRoute(
+        context,
+        ({ service, shop_slug, service_slug }) => {
+          if (auth.shop?.id != service.shop_id) {
+            throw new MessageException([
+              'eval',
+              `showToast('Only shop owner can update the service','error')`,
+            ])
+          }
+          filename = basename(filename)
+          let url = getServiceMoreImage(shop_slug, service_slug, filename)
+          let file = join('public', url)
+          try {
+            unlinkSync(file)
+          } catch (error) {
+            // file already deleted?
+          }
+          throw new MessageException([
+            'batch',
+            [
+              ['remove', `.more-item[data-more-index="${index}"]`],
+              [
+                'eval',
+                `showToast(${JSON.stringify(`刪除了相片${+index + 1}`)},'info')`,
+              ],
+            ],
+          ])
         },
       )
     },
