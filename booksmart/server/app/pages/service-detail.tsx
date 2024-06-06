@@ -1397,7 +1397,7 @@ function ServiceOptionItem(attrs: {
 }) {
   let { serviceUrl, index, image, option } = attrs
   return (
-    <div class="service-option">
+    <div class="service-option" data-option-id={option.id}>
       {index > 0 ? <ion-item-divider></ion-item-divider> : null}
       <ion-item>
         <ion-input
@@ -1413,7 +1413,12 @@ function ServiceOptionItem(attrs: {
           >
             <ion-icon name="save" slot="icon-only" />
           </ion-button>
-          <ion-button color="danger">
+          <ion-button
+            color="danger"
+            onclick={`emit(${JSON.stringify(
+              serviceUrl + `/option/${option.id}/delete`,
+            )})`}
+          >
             <ion-icon name="trash" slot="icon-only" />
           </ion-button>
         </ion-buttons>
@@ -2587,6 +2592,80 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               `showToast(${JSON.stringify(String(error))},'error')`,
             ])
           }
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/option/:option_id/delete': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'update service details',
+          node: 'This api is only available over ws',
+        }
+      }
+      let auth = getAuthRole(context)
+      let { option_id } = context.routerMatch?.params
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          if (auth.shop?.id != service.shop_id) {
+            throw new MessageException([
+              'eval',
+              `showToast('Only shop owner can update the service','error')`,
+            ])
+          }
+          let url = getServiceOptionImage(shop_slug, service_slug, option_id)
+          let file = join('public', url)
+          let option = proxy.service_option[option_id]
+          if (!option) {
+            throw new MessageException([
+              'eval',
+              `showToast('option not found','error')`,
+            ])
+          }
+          console.log({
+            'option.service_id': option.service_id,
+            'service.id': service.id,
+          })
+          if (option.service_id != service.id) {
+            throw new MessageException([
+              'eval',
+              `showToast('option not belong to the service','error')`,
+            ])
+          }
+
+          let name = option.name
+          name = name ? `「${name}」` : ` #${option_id}`
+          try {
+            delete proxy.service_option[option_id]
+          } catch (error) {
+            throw new MessageException([
+              'batch',
+              [
+                [
+                  'eval',
+                  `showToast(${JSON.stringify(`款式「${name}」已經有相關預訂`)},'error')`,
+                ],
+              ],
+            ])
+          }
+          try {
+            unlinkSync(file)
+          } catch (error) {
+            // file already deleted?
+          }
+          throw new MessageException([
+            'batch',
+            [
+              ['remove', `.service-option[data-option-id="${option_id}"]`],
+              [
+                'eval',
+                `showToast(${JSON.stringify(`刪除了款式${name}`)},'info')`,
+              ],
+            ],
+          ])
         },
       )
     },
