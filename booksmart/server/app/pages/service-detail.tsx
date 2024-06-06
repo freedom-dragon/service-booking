@@ -2476,9 +2476,12 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               case 'slug':
                 label = '網址'
                 if (service_slug == value) throw EarlyTerminate
-                if (value.includes('/')) {
-                  invalid('網址不可包括 "/"')
+                for (let char of ['/', '%', '"', "'"]) {
+                  if (value.includes(char)) {
+                    invalid('網址不可包括 ' + char)
+                  }
                 }
+                value = value.replaceAll(' ', '')
                 if (
                   find(proxy.service, {
                     shop_id: service.shop_id,
