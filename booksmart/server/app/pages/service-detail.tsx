@@ -2039,7 +2039,7 @@ function attachRoutes(app: Router) {
               <ion-button onclick="submitModal.dismiss()">返回</ion-button>,
             ],
             ['update-text', '.receiptMessage', receiptMessage],
-            ['eval', `showToast(${JSON.stringify(receiptMessage)},'info')`],
+            ['eval', `showAlert(${JSON.stringify(receiptMessage)},'info')`],
             ['update-in', '#receiptNavButtons', receiptNavButton],
           )
         }
