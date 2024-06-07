@@ -442,7 +442,7 @@ function confirmReschedule${booking.id}() {
             class="ion-margin-bottom"
             expand="block"
           >
-            查看{locale.service}詳情
+            {attrs.can_reschedule ? `查看${locale.service}詳情` : `再次預約`}
           </Link>
         </div>
       </div>
