@@ -218,7 +218,7 @@ function BookingDetails(attrs: {
   let { used } = countBooking({ service, user: booking.user })
   let need_pay = used == 0
   return (
-    <ion-card>
+    <ion-card data-booking-id={booking.id}>
       <ion-card-content>
         <div class="booking--header">
           <div>
@@ -245,17 +245,15 @@ function BookingDetails(attrs: {
         {need_pay ? (
           <details open={attrs.open_receipt} class="ion-margin-bottom">
             <summary>
-              {receipts.length == 0 ? (
-                <span class="ion-margin-bottom">未有上載收據</span>
-              ) : (
-                <span class="ion-margin-bottom">
-                  上載了 {receipts.length} 張收據
-                </span>
-              )}
+              <span class="ion-margin-bottom receipt-desc">
+                {receipts.length == 0
+                  ? '未有上載收據'
+                  : `上載了 ${receipts.length} 張收據`}
+              </span>
               <div>
                 <ion-button
                   color="primary"
-                  onclick={`uploadReceipt('${serviceUrl}/receipt?booking_id=${booking.id}')`}
+                  onclick={`uploadReceipt('${serviceUrl}/receipt?booking_id=${booking.id}&from=booking')`}
                   size="small"
                 >
                   <ion-icon name="cloud-upload" slot="start"></ion-icon>
@@ -263,14 +261,9 @@ function BookingDetails(attrs: {
                 </ion-button>
               </div>
             </summary>
-            {mapArray(receipts, receipt => (
-              <div>
-                <img
-                  src={`/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt.filename}`}
-                  loading="lazy"
-                />
-              </div>
-            ))}
+            {mapArray(receipts, receipt =>
+              ReceiptImageItem(shop_slug, service_slug, receipt.filename),
+            )}
           </details>
         ) : null}
         <div class="booking--buttons">
@@ -454,6 +447,20 @@ function confirmReschedule${booking.id}() {
         </div>
       </div>
     </ion-card>
+  )
+}
+export function ReceiptImageItem(
+  shop_slug: string,
+  service_slug: string,
+  receipt_filename: string,
+) {
+  return (
+    <div>
+      <img
+        src={`/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt_filename}`}
+        loading="lazy"
+      />
+    </div>
   )
 }
 

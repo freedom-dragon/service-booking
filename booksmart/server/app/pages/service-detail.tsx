@@ -85,6 +85,7 @@ import { countBooking, selectAvailableQuota } from '../booking-store.js'
 import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
 import { nodeToHTML } from '../jsx/html.js'
+import { ReceiptImageItem } from './booking.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -634,7 +635,7 @@ function PaymentModal(
               <ion-button
                 fill="block"
                 color="primary"
-                onclick={`uploadReceipt('${serviceUrl}/receipt?booking_id=${booking.id}')`}
+                onclick={`uploadReceipt('${serviceUrl}/receipt?booking_id=${booking.id}&from=service-detail')`}
               >
                 <ion-icon name="cloud-upload" slot="start"></ion-icon>
                 上傳付款證明
@@ -1967,7 +1968,7 @@ function attachRoutes(app: Router) {
       try {
         let {
           params: { shop_slug, service_slug },
-          query: { booking_id },
+          query: { booking_id, from },
         } = object({
           params: object({
             shop_slug: string({ nonEmpty: true }),
@@ -1975,6 +1976,7 @@ function attachRoutes(app: Router) {
           }),
           query: object({
             booking_id: id(),
+            from: values(['service-detail' as const, 'booking' as const]),
           }),
         }).parse(req)
         let shop = find(proxy.shop, { slug: shop_slug })
@@ -2020,24 +2022,45 @@ function attachRoutes(app: Router) {
             filename: file.newFilename,
             upload_time: Date.now(),
           })
+          if (from == 'booking') {
+            return ReceiptImageItem(shop_slug, service_slug, file.newFilename)
+          }
           return ReceiptFigure({ receipt: proxy.receipt[id] }, context)
         })
         let messages: ServerMessage[] = []
         if (nodes.length > 0) {
-          noticeBookingReceiptSubmit(booking, context)
-          let receiptMessage = ReceiptMessage.paid(shop)
           // TODO support updating in the booking tab
-          messages.push(
-            ['append', '#receiptImageList', nodeToVNode([nodes], context)],
-            [
-              'update-in',
-              '#submitModal ion-header ion-buttons',
-              <ion-button onclick="submitModal.dismiss()">返回</ion-button>,
-            ],
-            ['update-text', '.receiptMessage', receiptMessage],
-            ['eval', `showAlert(${JSON.stringify(receiptMessage)},'info')`],
-            ['update-in', '#receiptNavButtons', receiptNavButton],
-          )
+          if (from == 'service-detail') {
+            noticeBookingReceiptSubmit(booking, context)
+            let receiptMessage = ReceiptMessage.paid(shop)
+            messages.push(
+              ['append', '#receiptImageList', nodeToVNode([nodes], context)],
+              [
+                'update-in',
+                '#submitModal ion-header ion-buttons',
+                <ion-button onclick="submitModal.dismiss()">返回</ion-button>,
+              ],
+              ['update-text', '.receiptMessage', receiptMessage],
+              ['eval', `showAlert(${JSON.stringify(receiptMessage)},'info')`],
+              ['update-in', '#receiptNavButtons', receiptNavButton],
+            )
+          }
+          if (from == 'booking') {
+            let receipt_count = count(proxy.receipt, { booking_id })
+            messages.push(
+              [
+                'update-text',
+                `ion-card[data-booking-id="${booking.id}"] .receipt-desc`,
+                `上載了 ${receipt_count} 張收據`,
+              ],
+              [
+                'append',
+                `ion-card[data-booking-id="${booking.id}"] details`,
+                nodeToVNode([nodes], context),
+              ],
+              ['eval', `showAlert('已上載付款證明','info')`],
+            )
+          }
         }
         let message: ServerMessage = ['batch', messages]
         res.json({
