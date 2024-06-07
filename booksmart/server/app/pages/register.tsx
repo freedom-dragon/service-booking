@@ -2,8 +2,13 @@ import { LayoutType, apiEndpointTitle, config, title } from '../../config.js'
 import { commonTemplatePageText } from '../components/common-template.js'
 import { Link } from '../components/router.js'
 import Style from '../components/style.js'
-import { Context, getContextFormBody, WsContext } from '../context.js'
-import { EarlyTerminate, getStringCasual } from '../helpers.js'
+import {
+  Context,
+  getContextFormBody,
+  getStringCasual,
+  WsContext,
+} from '../context.js'
+import { EarlyTerminate } from '../../exception.js'
 import { o } from '../jsx/jsx.js'
 import { find } from 'better-sqlite3-proxy'
 import {
@@ -596,6 +601,7 @@ async function submit(context: InputContext): Promise<Node> {
       email: input.email,
       tel: null,
       avatar: null,
+      nickname: null,
     })
 
     let main: Node

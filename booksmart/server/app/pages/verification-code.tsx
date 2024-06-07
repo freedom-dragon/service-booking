@@ -1,7 +1,7 @@
 import { Random, digits } from '@beenotung/tslib/random.js'
 import { MINUTE } from '@beenotung/tslib/time.js'
 import { db } from '../../../db/db.js'
-import { HttpError } from '../../http-error.js'
+import { HttpError } from '../../exception.js'
 import { User, proxy } from '../../../db/proxy.js'
 import { ParseResult, boolean, email, object, optional, string } from 'cast.ts'
 import { sendEmail } from '../../email.js'
@@ -23,7 +23,7 @@ import { debugLog } from '../../debug.js'
 import { filter, find, unProxy } from 'better-sqlite3-proxy'
 import { writeUserIdToCookie } from '../auth/user.js'
 import { env } from '../../env.js'
-import { EarlyTerminate, MessageException } from '../helpers.js'
+import { EarlyTerminate, MessageException } from '../../exception.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 
 let log = debugLog('app:verification-code')

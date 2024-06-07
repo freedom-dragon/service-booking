@@ -11,11 +11,11 @@ import open from 'open'
 import { cookieMiddleware } from './app/cookie.js'
 import { listenWSSCookie } from './app/cookie.js'
 import { print } from 'listening-on'
-import { HttpError } from './http-error.js'
+import { HttpError } from './exception.js'
 import { logRequest } from './app/log.js'
 import { clearInvalidUserId } from './app/auth/user.js'
 import { env } from './env.js'
-import { EarlyTerminate } from './app/helpers.js'
+import { EarlyTerminate } from './exception.js'
 
 const log = debugLog('index.ts')
 log.enabled = true

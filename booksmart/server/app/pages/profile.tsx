@@ -12,7 +12,6 @@ import {
 } from '../auth/user.js'
 import { Router } from 'express'
 import { createUploadForm } from '../upload.js'
-import { HttpError } from '../../http-error.js'
 import Style from '../components/style.js'
 import { renderError } from '../components/error.js'
 import { Raw } from '../components/raw.js'

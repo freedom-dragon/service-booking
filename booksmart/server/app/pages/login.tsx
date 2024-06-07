@@ -8,7 +8,7 @@ import { getContextFormBody } from '../context.js'
 import { renderError } from '../components/error.js'
 import { proxy } from '../../../db/proxy.js'
 import { find } from 'better-sqlite3-proxy'
-import { getStringCasual } from '../helpers.js'
+import { getStringCasual } from '../context.js'
 import { comparePassword } from '../../hash.js'
 import { UserMessageInGuestView } from './profile.js'
 import {
