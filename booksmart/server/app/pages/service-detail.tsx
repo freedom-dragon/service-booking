@@ -81,11 +81,7 @@ import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
 import { getAuthRole } from '../auth/role.js'
 import { toDatePart } from '../format/date.js'
-import {
-  countBooking,
-  selectAvailableHours,
-  selectAvailableQuota,
-} from '../booking-store.js'
+import { countBooking, selectAvailableQuota } from '../booking-store.js'
 import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
 import { nodeToHTML } from '../jsx/html.js'
@@ -586,13 +582,12 @@ function PaymentModal(
   let shop_slug = shop.slug
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let receipts = filter(proxy.receipt, { booking_id: booking.id! })
-  let { used, times } = countBooking({ service, user })
+  let { used } = countBooking({ service, user })
   let total_price = booking.total_price
   let is_free = +total_price! === 0
   let has_paid = receipts.length > 0
   let need_pay = used == 0
   let is_shop_owner = getAuthUser(context)?.id == shop.owner_id
-  let locale = getShopLocale(shop.id!)
   return (
     <>
       <ion-header>

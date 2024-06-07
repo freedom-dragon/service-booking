@@ -76,7 +76,7 @@ having (count(service_timeslot.id) > 0 or shop.owner_id = :user_id)
 
 function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   let { shop } = attrs
-  let { name, slug: shop_slug, owner_name } = shop
+  let { name, slug: shop_slug } = shop
   let user = getAuthUser(context)
   let services = select_service.all({
     shop_id: shop.id!,

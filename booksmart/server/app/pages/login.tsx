@@ -1,5 +1,4 @@
 import { LayoutType, apiEndpointTitle, config, title } from '../../config.js'
-import { commonTemplatePageText } from '../components/common-template.js'
 import { Link, Redirect } from '../components/router.js'
 import { Context, DynamicContext, ExpressContext } from '../context.js'
 import { o } from '../jsx/jsx.js'

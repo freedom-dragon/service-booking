@@ -1,5 +1,4 @@
 import { config } from '../../config.js'
-import { env } from '../../env.js'
 import type { Raw } from '../jsx/types'
 import * as esbuild from 'esbuild'
 

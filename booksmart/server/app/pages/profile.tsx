@@ -1,5 +1,4 @@
 import { apiEndpointTitle, title } from '../../config.js'
-import { commonTemplatePageText } from '../components/common-template.js'
 import { Link, Redirect } from '../components/router.js'
 import { DynamicContext, ExpressContext } from '../context.js'
 import { o } from '../jsx/jsx.js'
@@ -16,7 +15,6 @@ import Style from '../components/style.js'
 import { renderError } from '../components/error.js'
 import { Raw } from '../components/raw.js'
 import { loadClientPlugin } from '../../client-plugin.js'
-import { client_config } from '../../../client/client-config.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 

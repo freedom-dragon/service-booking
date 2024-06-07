@@ -15,7 +15,6 @@ export function calcBookingTotalFee(booking: Booking): {
     booking.amount >= service.peer_amount
       ? +service.peer_price
       : +service.unit_price!)
-  let total_fee = fee_val
   if (fee_val == 0) {
     return {
       total_fee: '0',

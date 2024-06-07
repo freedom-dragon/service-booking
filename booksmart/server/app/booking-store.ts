@@ -8,7 +8,7 @@ import {
   toDatePart,
   toTimePart,
 } from './format/date.js'
-import { d2, toDateString } from 'cast.ts'
+import { d2 } from 'cast.ts'
 import { TimezoneDate } from 'timezone-date.ts'
 
 export type ServiceAvailableDateRow = Record<

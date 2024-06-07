@@ -1,20 +1,17 @@
 import { DAY, MINUTE } from '@beenotung/tslib/time.js'
-import { db } from '../../../db/db.js'
 import { Service, proxy } from '../../../db/proxy.js'
 import { Script } from './script.js'
 import { o } from '../jsx/jsx.js'
-import { fromDatePart, fromTimePart, toTimePart } from '../format/date.js'
+import { fromDatePart } from '../format/date.js'
 import { ResolvedPageRoue, Routes } from '../routes.js'
-import { resolveServiceRoute } from '../shop-route.js'
 import { apiEndpointTitle } from '../../config.js'
 import { find } from 'better-sqlite3-proxy'
 import { EarlyTerminate } from '../../exception.js'
 import { HttpError } from '../../exception.js'
-import { d2, dateString, object, string } from 'cast.ts'
-import { Context, DynamicContext, ExpressContext } from '../context.js'
+import { dateString } from 'cast.ts'
+import { DynamicContext } from '../context.js'
 import {
   AvailableHour,
-  isOverlap,
   selectAvailableDates,
   selectAvailableHours,
 } from '../booking-store.js'

@@ -494,7 +494,7 @@ function AdminPageContent(
       : []
   let bookings = booking_ids.map(id => proxy.booking[id])
 
-  let { booking_count, submitted, confirmed, completed, cancelled, colors } =
+  let { submitted, confirmed, completed, cancelled, colors } =
     groupAppointments({ bookings, date })
 
   let segmentButtons = (
