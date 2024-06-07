@@ -1218,6 +1218,19 @@ function copyUrl() {
               </div>
             </div>
           </ion-item>
+          <ion-item>
+            <div>
+              <ion-icon name="map-outline"></ion-icon> 額外問題
+              <div>
+                <ion-textarea
+                  value={service.question}
+                  placeholder="可選輸入"
+                  auto-grow
+                  onchange={`emit('${serviceUrl}/update','question',this.value)`}
+                />
+              </div>
+            </div>
+          </ion-item>
         </ion-list>
 
         <h2 class="ion-margin">可預約時段</h2>
@@ -2466,6 +2479,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 'book_duration_minute' as const,
                 'address' as const,
                 'address_remark' as const,
+                'question' as const,
               ]),
               1: string({ trim: true, nonEmpty: false }),
             }).parse(context.args)
@@ -2603,6 +2617,11 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 break
               case 'address_remark':
                 label = '地址 (備註)'
+                service[field] = value || null
+                ok()
+                break
+              case 'question':
+                label = '額外問題'
                 service[field] = value || null
                 ok()
                 break
