@@ -97,6 +97,11 @@ let page = (
       {selectIonTab('booking')}
     </ion-footer>
     {fitIonFooter}
+    {
+      loadClientPlugin({
+        entryFile: 'dist/client/image.js',
+      }).node
+    }
     {Script(/* javascript */ `
 calendarPicker.addEventListener('ionChange', event => {
   let value = event.detail.value.split('T')[0]
@@ -124,6 +129,22 @@ function showLoading() {
 function hideLoading() {
   window.loadings?.forEach(loading => loading.dismiss())
   window.loadings = []
+}
+async function uploadReceipt(url) {
+  let images = await selectReceiptImages()
+  let formData = new FormData()
+  for (let image of images) {
+    formData.append('file', image.file)
+  }
+  let res = await upload(url, formData)
+  let json = await res.json()
+  if (json.error) {
+    showToast(json.error, 'error')
+    return
+  }
+  if (json.message) {
+    onServerMessage(json.message)
+  }
 }
 `)}
   </>
@@ -192,7 +213,7 @@ function BookingDetails(attrs: {
   let service = booking.service!
   let shop_slug = service.shop!.slug
   let service_slug = service.slug
-  let service_url = `/shop/${shop_slug}/service/${service_slug}`
+  let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let locale = getShopLocale(service.shop_id)
   let { used } = countBooking({ service, user: booking.user })
   let need_pay = used == 0
@@ -231,6 +252,16 @@ function BookingDetails(attrs: {
                   上載了 {receipts.length} 張收據
                 </span>
               )}
+              <div>
+                <ion-button
+                  color="primary"
+                  onclick={`uploadReceipt('${serviceUrl}/receipt?booking_id=${booking.id}')`}
+                  size="small"
+                >
+                  <ion-icon name="cloud-upload" slot="start"></ion-icon>
+                  上傳付款證明
+                </ion-button>
+              </div>
             </summary>
             {mapArray(receipts, receipt => (
               <div>
@@ -411,7 +442,7 @@ function confirmReschedule${booking.id}() {
           <Link
             tagName="ion-button"
             href={
-              service_url +
+              serviceUrl +
               '?tel=' +
               (booking.user!.tel?.replace('+852', '') || '')
             }

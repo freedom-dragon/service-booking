@@ -1997,7 +1997,7 @@ function attachRoutes(app: Router) {
 
         let user = getAuthUser(context)
         if (!user) throw new HttpError(401, 'need to login as user')
-        if (booking.user_id != user.id)
+        if (booking.user_id != user.id && shop.owner_id != user.id)
           throw new HttpError(403, 'not your own booking')
 
         let dir = join(
@@ -2026,6 +2026,7 @@ function attachRoutes(app: Router) {
         if (nodes.length > 0) {
           noticeBookingReceiptSubmit(booking, context)
           let receiptMessage = ReceiptMessage.paid(shop)
+          // TODO support updating in the booking tab
           messages.push(
             ['append', '#receiptImageList', nodeToVNode([nodes], context)],
             [
