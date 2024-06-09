@@ -2854,7 +2854,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
 
           throw new MessageException([
             'eval',
-                `showToast('更新了款式標題','info')`,
+            `showToast('更新了款式標題','info')`,
           ])
         },
       )
