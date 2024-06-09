@@ -1158,6 +1158,19 @@ function copyUrl() {
             系統會以這個分鐘數作為計算。建議輸入每節最長時間。
           </ion-note>
           <ion-item>
+            <div>
+              <ion-icon name="map-outline"></ion-icon> 活動詳情
+              <div>
+                <ion-textarea
+                  value={service.desc}
+                  placeholder="可選輸入"
+                  auto-grow
+                  onchange={`emit('${serviceUrl}/update','desc',this.value)`}
+                />
+              </div>
+            </div>
+          </ion-item>
+          <ion-item>
             <div slot="start">
               <ion-icon name="map-outline"></ion-icon> 地址 (街道)
             </div>
@@ -2465,6 +2478,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 'address' as const,
                 'address_remark' as const,
                 'question' as const,
+                'desc' as const,
               ]),
               1: string({ trim: true, nonEmpty: false }),
             }).parse(context.args)
@@ -2607,6 +2621,11 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 break
               case 'question':
                 label = '額外問題'
+                service[field] = value || null
+                ok()
+                break
+              case 'desc':
+                label = '活動詳情'
                 service[field] = value || null
                 ok()
                 break
