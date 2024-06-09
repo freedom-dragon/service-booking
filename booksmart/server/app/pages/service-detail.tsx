@@ -1211,6 +1211,7 @@ function copyUrl() {
                 fill="block"
                 color="primary"
                 size="normal"
+                class="ion-margin-horizontal"
                 href={
                   'https://www.google.com/maps/search/' +
                   encodeURIComponent(address)
