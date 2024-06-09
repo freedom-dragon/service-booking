@@ -2701,7 +2701,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       if (context.type !== 'ws') {
         return {
           title: apiEndpointTitle,
-          description: 'update service details',
+          description: 'delete service more photo',
           node: 'This api is only available over ws',
         }
       }
@@ -2744,7 +2744,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       if (context.type !== 'ws') {
         return {
           title: apiEndpointTitle,
-          description: 'update service details',
+          description: 'delete service option',
           node: 'This api is only available over ws',
         }
       }
