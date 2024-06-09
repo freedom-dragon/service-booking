@@ -1,6 +1,6 @@
 import httpStatus from 'http-status'
 import { o } from '../jsx/jsx.js'
-import { Routes } from '../routes.js'
+import { Routes, redirectDict } from '../routes.js'
 import { apiEndpointTitle, title } from '../../config.js'
 import Style from '../components/style.js'
 import {
@@ -87,6 +87,7 @@ import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
 import { nodeToHTML } from '../jsx/html.js'
 import { ReceiptImageItem } from './booking.js'
+import { toServiceUrl } from '../app-url'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -908,12 +909,20 @@ async function uploadNewOptionImage(button) {
 }
 function updateListCount(name, count){
   let list = document.querySelector('ion-list[data-list-name="'+name+'"]')
+
+  // update list item total count
   let listDescription = list.querySelector('.list-description')
   let p = listDescription.querySelector('p')
   p.textContent = count > 0
     ? listDescription.dataset.nonEmptyMessage
       .replace('{count}', count)
     : listDescription.dataset.emptyMessage
+
+  // update list item index
+  let nodes = list.querySelectorAll('[data-role="index"]')
+  for (let i = 0; i < nodes.length; i++) {
+    nodes[i].textContent = i + 1
+  }
 }
 `)}
   </>
@@ -1476,7 +1485,9 @@ function ServiceRemarkItem(attrs: {
   return (
     <div class="service-remark" data-remark-id={remark.id}>
       {index > 0 ? <ion-item-divider></ion-item-divider> : null}
-      <div class="ion-margin-start">{'注意事項 ' + (index + 1)}</div>
+      <div class="ion-margin-start">
+        注意事項 <span data-role="index">{index + 1}</span>
+      </div>
       <ion-item>
         <ion-input
           label="標題"
@@ -2775,6 +2786,60 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               `showToast(${JSON.stringify(String(error))},'error')`,
             ])
           }
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/remark/add': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'add service remark',
+          node: 'This api is only available over ws',
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          let { user } = getAuthRole(context)
+          let is_shop_owner = user?.id == shop.owner_id
+          if (!is_shop_owner) {
+            throw new MessageException([
+              'eval',
+              `showToast('only shop owner can add timeslot','error')`,
+            ])
+          }
+
+          let remark_id = proxy.service_remark.push({
+            service_id: service.id!,
+            title: '',
+            content: '',
+          })
+          let remark = proxy.service_remark[remark_id]
+          let new_count = count(proxy.service_remark, {
+            service_id: service.id!,
+          })
+          let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
+          context.ws.send([
+            'batch',
+            [
+              [
+                'insert-before',
+                '[data-list-name="service-remark"] .list-description',
+                nodeToVNode(
+                  ServiceRemarkItem({
+                    index: new_count - 1,
+                    remark,
+                    serviceUrl,
+                  }),
+                  context,
+                ),
+              ],
+              ['eval', `updateListCount('service-remark',${new_count})`],
+            ],
+          ])
+          throw EarlyTerminate
         },
       )
     },
