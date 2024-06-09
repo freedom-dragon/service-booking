@@ -857,14 +857,6 @@ async function uploadImage(button, file) {
   button.disabled = true
   return json
 }
-function saveOptionName(button) {
-  let item = button.closest('ion-item')
-  let input = item.querySelector('ion-input')
-  let url = button.dataset.url
-  let id = button.dataset.id
-  let value = input.value
-  emit(url,id,value)
-}
 // TODO impl del item for more photo and service-option
 async function addOption(button) {
   let image = await selectServiceImage()
@@ -1458,16 +1450,9 @@ function ServiceOptionItem(attrs: {
         <ion-input
           label={'款式 ' + (index + 1) + ' 標題'}
           value={option.name}
+          onchange={`emit('${serviceUrl}/option/name',${option.id},this.value)`}
         />
         <ion-buttons slot="end">
-          <ion-button
-            color="success"
-            onclick="saveOptionName(this)"
-            data-url={serviceUrl + '/option/name'}
-            data-id={option.id}
-          >
-            <ion-icon name="save" slot="icon-only" />
-          </ion-button>
           <ion-button
             color="danger"
             onclick={`emit(${JSON.stringify(
