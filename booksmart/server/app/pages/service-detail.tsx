@@ -1159,6 +1159,27 @@ function copyUrl() {
           </ion-note>
           <ion-item>
             <div>
+              <ion-icon name="map-outline"></ion-icon> 備註 (額外問題)
+              <div>
+                <ion-textarea
+                  value={service.question}
+                  placeholder="可選輸入"
+                  auto-grow
+                  onchange={`emit('${serviceUrl}/update','question',this.value)`}
+                />
+              </div>
+            </div>
+          </ion-item>
+        </ion-list>
+
+        <h2 class="ion-margin">活動詳情</h2>
+        <ion-list
+          lines="full"
+          inset="true"
+          style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;"
+        >
+          <ion-item>
+            <div>
               <ion-icon name="map-outline"></ion-icon> 活動詳情
               <div>
                 <ion-textarea
@@ -1219,19 +1240,6 @@ function copyUrl() {
                   placeholder={shop.address_remark}
                   auto-grow
                   onchange={`emit('${serviceUrl}/update','address_remark',this.value)`}
-                />
-              </div>
-            </div>
-          </ion-item>
-          <ion-item>
-            <div>
-              <ion-icon name="map-outline"></ion-icon> 額外問題
-              <div>
-                <ion-textarea
-                  value={service.question}
-                  placeholder="可選輸入"
-                  auto-grow
-                  onchange={`emit('${serviceUrl}/update','question',this.value)`}
                 />
               </div>
             </div>
