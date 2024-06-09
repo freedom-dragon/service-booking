@@ -906,6 +906,15 @@ async function uploadNewOptionImage(button) {
     buttons.addButton.disabled = false
   }, 1500)
 }
+function updateListCount(name, count){
+  let list = document.querySelector('ion-list[data-list-name="'+name+'"]')
+  let listDescription = list.querySelector('.list-description')
+  let p = listDescription.querySelector('p')
+  p.textContent = count > 0
+    ? listDescription.dataset.nonEmptyMessage
+      .replace('{count}', count)
+    : listDescription.dataset.emptyMessage
+}
 `)}
   </>
 )
@@ -1252,6 +1261,7 @@ function copyUrl() {
 
         <h2 class="ion-margin">注意事項</h2>
         <ion-list
+          data-list-name="service-remark"
           lines="full"
           inset="true"
           style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;"
@@ -1263,7 +1273,12 @@ function copyUrl() {
               remark,
             }),
           )}
-          <ion-item-divider class="list-description" color="light">
+          <ion-item-divider
+            class="list-description"
+            color="light"
+            data-non-empty-message="共 {count} 條注意事項"
+            data-empty-message="未有任何注意事項"
+          >
             <p>
               {remarks.length > 0
                 ? `共 ${remarks.length} 條注意事項`
@@ -2760,6 +2775,61 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               `showToast(${JSON.stringify(String(error))},'error')`,
             ])
           }
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/remark/:remark_id/delete': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'delete service remark',
+          node: 'This api is only available over ws',
+        }
+      }
+      let auth = getAuthRole(context)
+      let { remark_id } = context.routerMatch?.params
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          if (auth.shop?.id != service.shop_id) {
+            throw new MessageException([
+              'eval',
+              `showToast('Only shop owner can update the service','error')`,
+            ])
+          }
+          let remark = proxy.service_remark[remark_id]
+          if (!remark) {
+            throw new MessageException([
+              'eval',
+              `showToast('remark not found','error')`,
+            ])
+          }
+          if (remark.service_id != service.id) {
+            throw new MessageException([
+              'eval',
+              `showToast('remark not belong to the service','error')`,
+            ])
+          }
+
+          let name = remark.title
+          name = name ? `「${name}」` : ` #${remark_id}`
+          delete proxy.service_remark[remark_id]
+          let new_count = count(proxy.service_remark, {
+            service_id: service.id!,
+          })
+          throw new MessageException([
+            'batch',
+            [
+              ['remove', `.service-remark[data-remark-id="${remark_id}"]`],
+              ['eval', `updateListCount('service-remark',${new_count})`],
+              [
+                'eval',
+                `showToast(${JSON.stringify(`刪除了注意事項${name}`)},'info')`,
+              ],
+            ],
+          ])
         },
       )
     },
