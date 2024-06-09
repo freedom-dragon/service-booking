@@ -30,6 +30,7 @@ import {
   Receipt,
   Service,
   ServiceOption,
+  ServiceRemark,
   ServiceTimeslot,
   Shop,
   TimeslotHour,
@@ -152,6 +153,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let address_remark = service.address_remark || shop.address_remark
   let options = filter(proxy.service_option, { service_id: service.id! })
   let remarks = filter(proxy.service_remark, { service_id: service.id! })
+  remarks = remarks.filter(remark => remark.title || remark.content)
   let locale = getShopLocale(shop.id!)
   let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let images = getServiceImages(shop_slug, service_slug)
@@ -921,6 +923,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
   if (!is_shop_owner) {
     return <Redirect href={serviceUrl} />
   }
+  let remarks = filter(proxy.service_remark, { service_id: service.id! })
   let dateRange = getDateRange()
   let service_timeslot_rows = filter(proxy.service_timeslot, {
     service_id: service.id!,
@@ -1247,6 +1250,34 @@ function copyUrl() {
           </ion-item>
         </ion-list>
 
+        <h2 class="ion-margin">注意事項</h2>
+        <ion-list
+          lines="full"
+          inset="true"
+          style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;"
+        >
+          {mapArray(remarks, (remark, index) =>
+            ServiceRemarkItem({
+              serviceUrl,
+              index,
+              remark,
+            }),
+          )}
+          <ion-item-divider class="list-description" color="light">
+            <p>
+              {remarks.length > 0
+                ? `共 ${remarks.length} 條注意事項`
+                : `未有任何注意事項`}
+            </p>
+          </ion-item-divider>
+          <div class="text-center">
+            <ion-button onclick={`emit('${serviceUrl}/remark/add')`}>
+              <ion-icon name="add" slot="start"></ion-icon>
+              加注意事項
+            </ion-button>
+          </div>
+        </ion-list>
+
         <h2 class="ion-margin">可預約時段</h2>
         <ion-list
           lines="full"
@@ -1419,6 +1450,43 @@ function copyUrl() {
       </ion-content>
       {ManageServiceScripts}
     </>
+  )
+}
+function ServiceRemarkItem(attrs: {
+  serviceUrl: string
+  index: number
+  remark: ServiceRemark
+}) {
+  let { serviceUrl, index, remark } = attrs
+  return (
+    <div class="service-remark" data-remark-id={remark.id}>
+      {index > 0 ? <ion-item-divider></ion-item-divider> : null}
+      <div class="ion-margin-start">{'注意事項 ' + (index + 1)}</div>
+      <ion-item>
+        <ion-input
+          label="標題"
+          value={remark.title}
+          onchange={`emit('${serviceUrl}/remark/title',${remark.id},this.value,'標題')`}
+        />
+        <ion-buttons slot="end">
+          <ion-button
+            color="danger"
+            onclick={`emit(${JSON.stringify(
+              serviceUrl + `/remark/${remark.id}/delete`,
+            )})`}
+          >
+            <ion-icon name="trash" slot="icon-only" />
+          </ion-button>
+        </ion-buttons>
+      </ion-item>
+      <ion-item>
+        <ion-textarea
+          label="細節"
+          value={remark.content}
+          onchange={`emit('${serviceUrl}/remark/content',${remark.id},this.value,'細節')`}
+        />
+      </ion-item>
+    </div>
   )
 }
 function MoreItem(attrs: { serviceUrl: string; index: number; image: string }) {
@@ -2692,6 +2760,60 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               `showToast(${JSON.stringify(String(error))},'error')`,
             ])
           }
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/remark/:field': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'update service remark name',
+          node: 'This api is only available over ws',
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          let { user } = getAuthRole(context)
+          let is_shop_owner = user?.id == shop.owner_id
+          if (!is_shop_owner) {
+            throw new MessageException([
+              'eval',
+              `showAlert('not shop owner','error')`,
+            ])
+          }
+          let {
+            args: { '0': remark_id, 1: value, 2: label },
+            routerMatch: {
+              params: { field },
+            },
+          } = object({
+            type: literal('ws'),
+            args: object({ 0: id(), 1: string(), 2: string() }),
+            routerMatch: object({
+              params: object({
+                field: values(['title' as const, 'content' as const]),
+              }),
+            }),
+          }).parse(context)
+          let remark = find(proxy.service_remark, {
+            id: +remark_id!,
+            service_id: service.id!,
+          })
+          if (!remark) {
+            throw new MessageException([
+              'eval',
+              `showAlert('remark #${remark_id} not found','error')`,
+            ])
+          }
+          remark[field] = value
+
+          throw new MessageException([
+            'eval',
+            `showToast('更新了注意事項${label}','info')`,
+          ])
         },
       )
     },
