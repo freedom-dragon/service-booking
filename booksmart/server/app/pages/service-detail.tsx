@@ -12,6 +12,7 @@ import {
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import {
+  array,
   date,
   email,
   id,
@@ -30,6 +31,7 @@ import {
   Receipt,
   Service,
   ServiceOption,
+  ServiceQuestion,
   ServiceRemark,
   ServiceTimeslot,
   Shop,
@@ -76,7 +78,10 @@ import {
   BookingPreview,
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
-import { calcBookingTotalFee } from '../../../db/service-store.js'
+import {
+  calcBookingTotalFee,
+  getServiceQuestions,
+} from '../../../db/service-store.js'
 import { env } from '../../env.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
@@ -166,6 +171,8 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let tel = params.get('tel')
 
   // address_remark = ''
+
+  let questions = getServiceQuestions(service)
 
   let booking =
     user &&
@@ -321,17 +328,18 @@ function selectOption(button){
             />
             <ion-item-divider style="min-height:2px"></ion-item-divider>
 
-            {service.question ? (
+            {mapArray(questions, (row, index) => (
               <ion-item>
                 <div slot="start">
-                  <ion-icon name="help-circle-outline"></ion-icon> 備註
+                  <ion-icon name="help-circle-outline"></ion-icon> 備註{' '}
+                  {index + 1}
                 </div>
                 <div>
-                  <ion-label>{service.question}</ion-label>
+                  <ion-label>{row.question}</ion-label>
                   <ion-textarea name="answer" auto-grow />
                 </div>
               </ion-item>
-            ) : null}
+            ))}
 
             {/*
             For guest: ask tel
@@ -944,6 +952,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
   if (!is_shop_owner) {
     return <Redirect href={serviceUrl} />
   }
+  let questions = getServiceQuestions(service)
   let remarks = filter(proxy.service_remark, { service_id: service.id! })
   let dateRange = getDateRange()
   let service_timeslot_rows = filter(proxy.service_timeslot, {
@@ -1168,19 +1177,40 @@ function copyUrl() {
           <ion-note class="item--hint">
             系統會以這個分鐘數作為計算。建議輸入每節最長時間。
           </ion-note>
-          <ion-item>
-            <div>
-              <ion-icon name="map-outline"></ion-icon> 備註 (額外問題)
-              <div>
-                <ion-textarea
-                  value={service.question}
-                  placeholder="可選輸入"
-                  auto-grow
-                  onchange={`emit('${serviceUrl}/update','question',this.value)`}
-                />
-              </div>
-            </div>
-          </ion-item>
+        </ion-list>
+
+        <h2 class="ion-margin">備註 (額外問題)</h2>
+        <ion-list
+          data-list-name="service-question"
+          lines="full"
+          inset="true"
+          style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;"
+        >
+          {mapArray(questions, (question, index) =>
+            ServiceQuestionItem({
+              serviceUrl,
+              index,
+              question,
+            }),
+          )}
+          <ion-item-divider
+            class="list-description"
+            color="light"
+            data-non-empty-message="共 {count} 條額外問題"
+            data-empty-message="未有任何額外問題"
+          >
+            <p>
+              {questions.length > 0
+                ? `共 ${questions.length} 條額外問題`
+                : `未有任何額外問題`}
+            </p>
+          </ion-item-divider>
+          <div class="text-center">
+            <ion-button onclick={`emit('${serviceUrl}/question/add')`}>
+              <ion-icon name="add" slot="start"></ion-icon>
+              加問題
+            </ion-button>
+          </div>
         </ion-list>
 
         <h2 class="ion-margin">活動詳情</h2>
@@ -1464,6 +1494,39 @@ function copyUrl() {
       </ion-content>
       {ManageServiceScripts}
     </>
+  )
+}
+function ServiceQuestionItem(attrs: {
+  serviceUrl: string
+  index: number
+  question: ServiceQuestion
+}) {
+  let { serviceUrl, index, question } = attrs
+  return (
+    <div class="service-question" data-question-id={question.id}>
+      {index > 0 ? <ion-item-divider></ion-item-divider> : null}
+      <div class="ion-margin-start">
+        問題 <span data-role="index">{index + 1}</span>
+      </div>
+      <ion-item>
+        <ion-textarea
+          placeholder="如: 會否帶寵物來？如有請填寫明品種和體形。"
+          auto-grow
+          value={question.question}
+          onchange={`emit('${serviceUrl}/question',${question.id},this.value,'問題')`}
+        />
+        <ion-buttons slot="end">
+          <ion-button
+            color="danger"
+            onclick={`emit(${JSON.stringify(
+              serviceUrl + `/question/${question.id}/delete`,
+            )})`}
+          >
+            <ion-icon name="trash" slot="icon-only" />
+          </ion-button>
+        </ion-buttons>
+      </ion-item>
+    </div>
   )
 }
 function ServiceRemarkItem(attrs: {
@@ -2187,7 +2250,8 @@ let submitBookingParser = object({
   amount: int({ min: 1 }),
   option_id: id(),
   tel: string(),
-  answer: string(),
+  answer: array(string(), { maybeSingle: true }),
+  answer: array(string(), { maybeSingle: true }),
 })
 
 let routes = {
@@ -2330,6 +2394,8 @@ let routes = {
               total_price: null,
               answer: input.answer,
             })
+            for (let answer of input.answer) {
+            }
             let booking = proxy.booking[booking_id]
             let fee = calcBookingTotalFee(booking)
             booking.total_price = fee.total_fee
@@ -2569,7 +2635,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 'book_duration_minute' as const,
                 'address' as const,
                 'address_remark' as const,
-                'question' as const,
                 'desc' as const,
               ]),
               1: string({ trim: true, nonEmpty: false }),
@@ -2706,11 +2771,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 service[field] = value || null
                 ok()
                 break
-              case 'question':
-                label = '額外問題'
-                service[field] = value || null
-                ok()
-                break
               case 'desc':
                 label = '活動詳情'
                 service[field] = value || null
@@ -2770,6 +2830,163 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               `showToast(${JSON.stringify(String(error))},'error')`,
             ])
           }
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/question/add': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'add service question',
+          node: 'This api is only available over ws',
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          let { user } = getAuthRole(context)
+          let is_shop_owner = user?.id == shop.owner_id
+          if (!is_shop_owner) {
+            throw new MessageException([
+              'eval',
+              `showToast('only shop owner can add timeslot','error')`,
+            ])
+          }
+
+          let question_id = proxy.service_question.push({
+            service_id: service.id!,
+            question: '',
+          })
+          let question = proxy.service_question[question_id]
+          let new_count = count(proxy.service_question, {
+            service_id: service.id!,
+          })
+          let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
+          context.ws.send([
+            'batch',
+            [
+              [
+                'insert-before',
+                '[data-list-name="service-question"] .list-description',
+                nodeToVNode(
+                  ServiceQuestionItem({
+                    index: new_count - 1,
+                    question,
+                    serviceUrl,
+                  }),
+                  context,
+                ),
+              ],
+              ['eval', `updateListCount('service-question',${new_count})`],
+            ],
+          ])
+          throw EarlyTerminate
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/question/:question_id/delete': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'delete service question',
+          node: 'This api is only available over ws',
+        }
+      }
+      let auth = getAuthRole(context)
+      let { question_id } = context.routerMatch?.params
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          if (auth.shop?.id != service.shop_id) {
+            throw new MessageException([
+              'eval',
+              `showToast('Only shop owner can update the service','error')`,
+            ])
+          }
+          let question = proxy.service_question[question_id]
+          if (!question) {
+            throw new MessageException([
+              'eval',
+              `showToast('question not found','error')`,
+            ])
+          }
+          if (question.service_id != service.id) {
+            throw new MessageException([
+              'eval',
+              `showToast('question not belong to the service','error')`,
+            ])
+          }
+
+          let name = question.question
+          name = name ? `「${name}」` : ` #${question_id}`
+          delete proxy.service_question[question_id]
+          let new_count = count(proxy.service_question, {
+            service_id: service.id!,
+          })
+          throw new MessageException([
+            'batch',
+            [
+              [
+                'remove',
+                `.service-question[data-question-id="${question_id}"]`,
+              ],
+              ['eval', `updateListCount('service-question',${new_count})`],
+              [
+                'eval',
+                `showToast(${JSON.stringify(`刪除了問題${name}`)},'info')`,
+              ],
+            ],
+          ])
+        },
+      )
+    },
+  },
+  '/shop/:shop_slug/service/:service_slug/question': {
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: apiEndpointTitle,
+          description: 'update service question name',
+          node: 'This api is only available over ws',
+        }
+      }
+      return resolveServiceRoute(
+        context,
+        ({ service, shop, shop_slug, service_slug }) => {
+          let { user } = getAuthRole(context)
+          let is_shop_owner = user?.id == shop.owner_id
+          if (!is_shop_owner) {
+            throw new MessageException([
+              'eval',
+              `showAlert('not shop owner','error')`,
+            ])
+          }
+          let {
+            args: { '0': question_id, 1: value },
+          } = object({
+            type: literal('ws'),
+            args: object({ 0: id(), 1: string() }),
+          }).parse(context)
+          let question = find(proxy.service_question, {
+            id: +question_id!,
+            service_id: service.id!,
+          })
+          if (!question) {
+            throw new MessageException([
+              'eval',
+              `showAlert('question #${question_id} not found','error')`,
+            ])
+          }
+          question.question = value
+
+          throw new MessageException([
+            'eval',
+            `showToast('更新了問題內容','info')`,
+          ])
         },
       )
     },

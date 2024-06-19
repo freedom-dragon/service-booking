@@ -1,4 +1,4 @@
-import { filter, seedRow } from 'better-sqlite3-proxy'
+import { del, filter, seedRow } from 'better-sqlite3-proxy'
 import { Service, ServiceTimeslot, proxy } from './proxy'
 import { calcBookingTotalFee as calcBookingFee } from './service-store'
 
@@ -95,9 +95,17 @@ function seedService(
       hours: string
     })[]
     remarks: { title: string | null; content: string }[]
+    questions: string[]
   },
 ) {
-  let { id: service_id, options, timeslots, remarks, ...service } = data
+  let {
+    id: service_id,
+    options,
+    timeslots,
+    remarks,
+    questions,
+    ...service
+  } = data
   proxy.service[service_id!] = { ...service, archive_time: null }
   for (let option of options) {
     option_id++
@@ -113,6 +121,10 @@ function seedService(
       title: remark.title,
       content: remark.content,
     }
+  }
+  del(proxy.service_question, { service_id: service_id! })
+  for (let question of questions) {
+    proxy.service_question.push({ service_id: service_id!, question })
   }
   for (let _timeslot of timeslots) {
     let { hours, ...timeslot } = _timeslot
@@ -150,7 +162,7 @@ seedService({
   quota: 6,
   address: null,
   address_remark: null,
-  question: '會否帶寵物來？如有請填寫明品種和體形。',
+  questions: ['會否帶寵物來？如有請填寫明品種和體形。'],
   desc: `加入我們的繪畫工作坊，享受獨特的藝術探險！ 我們的藝術家指導員將帶領您通過一系列的步驟，教導您不同的技術和技巧，幫助您創作出自己獨特的繪畫作品。
 
 在工作坊中，您將有機會運用各種高品質的材料和供應，包括精緻的畫板、筆和顏料。 您還將有機會嘗試不同的畫風和技巧，從傳統的風景畫到現代抽象藝術。
@@ -215,7 +227,7 @@ seedService({
   quota: 6,
   address: null,
   address_remark: null,
-  question: '是否對花粉敏感？',
+  questions: ['是否對花粉敏感？'],
   desc: null,
   remarks: [],
   timeslots: [
@@ -251,7 +263,7 @@ seedService({
   quota: 2,
   address: null,
   address_remark: null,
-  question: '是否需要輪椅？',
+  questions: ['是否需要輪椅？'],
   desc: null,
   remarks: [],
   timeslots: [
@@ -287,7 +299,7 @@ seedService({
   quota: 1,
   address: null,
   address_remark: null,
-  question: null,
+  questions: [],
   desc: null,
   remarks: [],
   timeslots: [

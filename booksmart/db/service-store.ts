@@ -1,4 +1,5 @@
-import { Booking } from './proxy'
+import { filter } from 'better-sqlite3-proxy'
+import { Booking, Service, proxy } from './proxy'
 
 // TODO support people amount based discount
 export function calcBookingTotalFee(booking: Booking): {
@@ -40,4 +41,10 @@ export function calcBookingTotalFee(booking: Booking): {
 
 export function isFree(fee: string): boolean {
   return fee == '$0'
+}
+
+export function getServiceQuestions(service: Service) {
+  return filter(proxy.service_question, { service_id: service.id! }).filter(
+    row => row.question.trim(),
+  )
 }

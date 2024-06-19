@@ -1,4 +1,6 @@
-import { Booking } from '../../../db/proxy.js'
+import { filter } from 'better-sqlite3-proxy'
+import { Booking, proxy } from '../../../db/proxy.js'
+import { getServiceQuestions } from '../../../db/service-store.js'
 import { countBooking } from '../booking-store.js'
 import { Context } from '../context.js'
 import { formatDuration } from '../format/duration.js'
@@ -34,6 +36,7 @@ export function BookingPreview(
   let service = booking.service!
   let service_option = booking.service_option
   let locale = getShopLocale(service.shop_id)
+  let answers = filter(proxy.booking_answer, { booking_id: booking.id! })
   let { used, times } = countBooking({ service, user })
   let table = (
     <table>
@@ -161,23 +164,23 @@ export function BookingPreview(
       style={attrs.style}
     >
       {table}
-      {service.question ? (
+      {mapArray(answers, (answer, index) => (
         <table>
           <tbody>
             <tr>
               <td style="vertical-align: baseline">
                 <ion-icon name="help-circle-outline"></ion-icon>
-                備註:
+                備註 {index + 1}:
               </td>
               <td>
-                <p>{service.question}</p>
+                <p>{answer.service_question?.question}</p>
                 <hr />
-                <p>{booking.answer || '(沒有回答)'}</p>
+                <p>{answer.answer || '(沒有回答)'}</p>
               </td>
             </tr>
           </tbody>
         </table>
-      ) : null}
+      ))}
     </div>
   )
 }

@@ -148,7 +148,20 @@ export type Service = {
   address_remark: null | string
   desc: null | string
   archive_time: null | number
-  question: null | string
+}
+
+export type ServiceQuestion = {
+  id?: null | number
+  service_id: number
+  service?: Service
+  question: string
+}
+
+export type ServiceOption = {
+  id?: null | number
+  service_id: number
+  service?: Service
+  name: string
 }
 
 export type ServiceRemark = {
@@ -159,11 +172,22 @@ export type ServiceRemark = {
   content: string
 }
 
-export type ServiceOption = {
+export type Booking = {
   id?: null | number
+  user_id: number
+  user?: User
   service_id: number
   service?: Service
-  name: string
+  service_option_id: number
+  service_option?: ServiceOption
+  submit_time: number
+  appointment_time: number
+  arrive_time: null | number
+  approve_time: null | number
+  reject_time: null | number
+  cancel_time: null | number
+  amount: number
+  total_price: null | string
 }
 
 export type ServiceTimeslot = {
@@ -183,23 +207,13 @@ export type TimeslotHour = {
   end_time: string
 }
 
-export type Booking = {
+export type BookingAnswer = {
   id?: null | number
-  user_id: number
-  user?: User
-  service_id: number
-  service?: Service
-  service_option_id: number
-  service_option?: ServiceOption
-  submit_time: number
-  appointment_time: number
-  arrive_time: null | number
-  approve_time: null | number
-  reject_time: null | number
-  cancel_time: null | number
-  amount: number
-  total_price: null | string
-  answer: null | string
+  booking_id: number
+  booking?: Booking
+  service_question_id: number
+  service_question?: ServiceQuestion
+  answer: string
 }
 
 export type Receipt = {
@@ -225,11 +239,13 @@ export type DBProxy = {
   verification_code: VerificationCode[]
   shop_locale: ShopLocale[]
   service: Service[]
-  service_remark: ServiceRemark[]
+  service_question: ServiceQuestion[]
   service_option: ServiceOption[]
+  service_remark: ServiceRemark[]
+  booking: Booking[]
   service_timeslot: ServiceTimeslot[]
   timeslot_hour: TimeslotHour[]
-  booking: Booking[]
+  booking_answer: BookingAnswer[]
   receipt: Receipt[]
 }
 
@@ -275,13 +291,23 @@ export let proxy = proxySchema<DBProxy>({
       /* foreign references */
       ['shop', { field: 'shop_id', table: 'shop' }],
     ],
-    service_remark: [
+    service_question: [
       /* foreign references */
       ['service', { field: 'service_id', table: 'service' }],
     ],
     service_option: [
       /* foreign references */
       ['service', { field: 'service_id', table: 'service' }],
+    ],
+    service_remark: [
+      /* foreign references */
+      ['service', { field: 'service_id', table: 'service' }],
+    ],
+    booking: [
+      /* foreign references */
+      ['user', { field: 'user_id', table: 'user' }],
+      ['service', { field: 'service_id', table: 'service' }],
+      ['service_option', { field: 'service_option_id', table: 'service_option' }],
     ],
     service_timeslot: [
       /* foreign references */
@@ -291,11 +317,10 @@ export let proxy = proxySchema<DBProxy>({
       /* foreign references */
       ['service_timeslot', { field: 'service_timeslot_id', table: 'service_timeslot' }],
     ],
-    booking: [
+    booking_answer: [
       /* foreign references */
-      ['user', { field: 'user_id', table: 'user' }],
-      ['service', { field: 'service_id', table: 'service' }],
-      ['service_option', { field: 'service_option_id', table: 'service_option' }],
+      ['booking', { field: 'booking_id', table: 'booking' }],
+      ['service_question', { field: 'service_question_id', table: 'service_question' }],
     ],
     receipt: [
       /* foreign references */

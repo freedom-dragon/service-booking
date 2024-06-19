@@ -163,7 +163,21 @@ address text NULL
 address_remark text NULL
 desc text NULL
 archive_time integer NULL
-question text NULL
+
+
+service_question
+----------------
+id
+service_id fk
+question text
+
+booking_answer
+--------------
+id
+booking_id fk
+service_question_id fk
+answer text
+
 
 
 service_remark
@@ -212,7 +226,6 @@ reject_time integer NULL
 cancel_time integer NULL
 amount integer
 total_price text NULL
-answer text NULL
 
 
 receipt
@@ -224,7 +237,7 @@ upload_time integer
 
 
 # zoom: 1.000
-# view: (-159, 734)
+# view: (252, 882)
 # text-bg: #6495ed
 # text-color: #000000
 # diagram-bg: #f5f5f5
@@ -245,9 +258,11 @@ upload_time integer
 # shop (43, 946)
 # shop_locale (-239, 1002)
 # service (518, 1019)
+# service_question (1085, 1846)
+# booking_answer (1477, 1204)
 # service_remark (1070, 1648)
-# service_option (1079, 1171)
+# service_option (1075, 1199)
 # service_timeslot (1081, 1399)
-# timeslot_hour (1424, 1434)
+# timeslot_hour (1453, 1445)
 # booking (1073, 787)
 # receipt (1513, 776)
