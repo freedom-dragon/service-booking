@@ -1,5 +1,5 @@
 import { filter } from 'better-sqlite3-proxy'
-import { Booking, Service, proxy } from './proxy'
+import { Booking, Service, proxy } from './proxy.js'
 
 // TODO support people amount based discount
 export function calcBookingTotalFee(booking: Booking): {

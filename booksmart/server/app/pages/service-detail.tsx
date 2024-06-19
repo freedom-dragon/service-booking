@@ -92,7 +92,6 @@ import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
 import { nodeToHTML } from '../jsx/html.js'
 import { ReceiptImageItem } from './booking.js'
-import { toServiceUrl } from '../app-url'
 import { formatDuration } from '../format/duration.js'
 
 let pageTitle = 'Service Detail'
@@ -336,10 +335,15 @@ function selectOption(button){
                 </div>
                 <div>
                   <ion-label>{row.question}</ion-label>
-                  <ion-textarea name="answer" auto-grow />
+                  <ion-textarea
+                    auto-grow
+                    data-question-id={row.id}
+                    data-index={index}
+                  />
                 </div>
               </ion-item>
             ))}
+            <input hidden name="answers" />
 
             {/*
             For guest: ask tel
@@ -557,6 +561,18 @@ function submitBooking() {
   if (!bookingForm.date.value) return showToast('請選擇日期', 'error')
   if (!bookingForm.time.value) return showToast('請選擇時間', 'error')
   if (!bookingForm.tel.value) return showToast('請提供電話號碼', 'error')
+  let questions = document.querySelectorAll('[data-question-id]')
+  let answers = []
+  for (let question of questions) {
+    let value = question.value
+    let index = +question.dataset.index + 1
+    if (!value) return showToast('請填寫備註' + index, 'error')
+    answers.push({
+      question_id: question.dataset.questionId,
+      answer: value,
+    })
+  }
+  bookingForm.answers.value = JSON.stringify(answers)
   bookingForm.appointment_time.value = new Date(
     bookingForm.date.value.split('T')[0]
     + ' ' +
@@ -2250,8 +2266,12 @@ let submitBookingParser = object({
   amount: int({ min: 1 }),
   option_id: id(),
   tel: string(),
-  answer: array(string(), { maybeSingle: true }),
-  answer: array(string(), { maybeSingle: true }),
+  answers: array(
+    object({
+      question_id: id(),
+      answer: string(),
+    }),
+  ),
 })
 
 let routes = {
@@ -2332,7 +2352,9 @@ let routes = {
       return resolveServiceRoute(
         context,
         ({ service, shop, service_slug, shop_slug }) => {
-          let body = getContextFormBody(context)
+          let body = getContextFormBody(context) as any
+          body.answers = JSON.parse(body.answers)
+          console.log('body:', body)
           let input = submitBookingParser.parse(body)
           let tel = to_full_hk_mobile_phone(input.tel)
           if (!tel) {
@@ -2392,9 +2414,13 @@ let routes = {
               service_option_id: input.option_id,
               user_id,
               total_price: null,
-              answer: input.answer,
             })
-            for (let answer of input.answer) {
+            for (let answer of input.answers) {
+              proxy.booking_answer.push({
+                booking_id,
+                service_question_id:answer.question_id,
+                answer: answer.answer
+              })
             }
             let booking = proxy.booking[booking_id]
             let fee = calcBookingTotalFee(booking)

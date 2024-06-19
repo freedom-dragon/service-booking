@@ -170,7 +170,7 @@ export function BookingPreview(
             <tr>
               <td style="vertical-align: baseline">
                 <ion-icon name="help-circle-outline"></ion-icon>
-                備註 {index + 1}:
+                備註{index + 1}:
               </td>
               <td>
                 <p>{answer.service_question?.question}</p>
