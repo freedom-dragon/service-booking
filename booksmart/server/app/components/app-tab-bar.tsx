@@ -8,14 +8,14 @@ export let appIonTabBar = (
       {
         tab: 'home',
         icon: 'planet',
-        label: '行程',
+        label: '預約',
         // href: '/app/home',
         href: '/shop/' + config.shop_slug,
       },
       {
         tab: 'booking',
         icon: 'calendar',
-        label: '訂單',
+        label: '行程',
         href: '/booking',
       },
       // {
