@@ -1081,7 +1081,7 @@ function copyUrl() {
           </ion-note>
           <ion-item>
             <div slot="start">
-              <ion-icon name="people-outline"></ion-icon> 標題
+              <ion-icon name="people-outline"></ion-icon> {locale.service}名稱
             </div>
             <ion-input
               placeholder="輸入一個簡短的標題"
