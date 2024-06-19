@@ -56,7 +56,8 @@ code.inline-code {
 }
 
 .item--hint {
-  margin-inline-start: 1rem;
+  display: block;
+  margin-inline: 1rem;
   margin-block: 0.25rem;
 }
 `
