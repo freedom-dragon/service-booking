@@ -339,6 +339,7 @@ function selectOption(button){
                     auto-grow
                     data-question-id={row.id}
                     data-index={index}
+                    placeholder="在此填寫"
                   />
                 </div>
               </ion-item>
