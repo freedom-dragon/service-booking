@@ -99,7 +99,7 @@ function selectBookedTimeslot(options: {
     }
   })
 
-  return { service_quota, hours, used }
+  return { service_quota, hours, used, service_duration }
 }
 
 export type AvailableHour = {
@@ -111,17 +111,18 @@ export function selectAvailableHours(options: {
   service_id: number
   dateString: string
 }): AvailableHour[] {
-  let { service_quota, hours, used } = selectBookedTimeslot(options)
+  let { service_quota, hours, used, service_duration } =
+    selectBookedTimeslot(options)
 
   let available: AvailableHour[] = []
 
   for (let hour of hours) {
     let date = fromTimePart(hour.start_time)
 
-    for (;;) {
+    for (; ; date.setTime(date.getTime() + booking_time_step_ms)) {
       let start_time = d2(date.getHours()) + ':' + d2(date.getMinutes())
-      date.setTime(date.getTime() + booking_time_step_ms)
-      let end_time = d2(date.getHours()) + ':' + d2(date.getMinutes())
+      let end_date = new Date(date.getTime() + service_duration)
+      let end_time = d2(end_date.getHours()) + ':' + d2(end_date.getMinutes())
       if (end_time > hour.end_time) break
 
       let slot_time = { start_time, end_time }
