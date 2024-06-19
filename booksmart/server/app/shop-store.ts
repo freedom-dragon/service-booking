@@ -281,3 +281,5 @@ export let shopFieldsParser = values([
   ...contactFields,
   'floating_contact_method',
 ])
+
+export let shopLocaleKeyParser = values(['tutor', 'service'])
