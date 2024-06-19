@@ -20,7 +20,9 @@ export function getShopLocale(shop_id: number): ShopLocales {
   locale = {
     tutor: find(proxy.shop_locale, { shop_id, key: 'tutor' })?.value || '導師',
     service:
-      find(proxy.shop_locale, { shop_id, key: 'service' })?.value || '服務',
+      find(proxy.shop_locale, { shop_id, key: 'service' })?.value ||
+      '活動' ||
+      '服務',
   }
   shop_locale_cache[shop_id] = locale
   return locale
