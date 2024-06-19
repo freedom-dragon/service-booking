@@ -1,6 +1,5 @@
 import { filter } from 'better-sqlite3-proxy'
 import { Booking, proxy } from '../../../db/proxy.js'
-import { getServiceQuestions } from '../../../db/service-store.js'
 import { countBooking } from '../booking-store.js'
 import { Context } from '../context.js'
 import { formatDuration } from '../format/duration.js'

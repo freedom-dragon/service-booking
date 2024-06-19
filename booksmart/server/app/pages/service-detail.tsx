@@ -78,10 +78,7 @@ import {
   BookingPreview,
   bookingPreviewStyle,
 } from '../components/booking-preview.js'
-import {
-  calcBookingTotalFee,
-  getServiceQuestions,
-} from '../../../db/service-store.js'
+import { calcBookingTotalFee } from '../../../db/service-store.js'
 import { env } from '../../env.js'
 import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
@@ -1994,6 +1991,12 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
   )
 }
 
+function getServiceQuestions(service: Service) {
+  return filter(proxy.service_question, { service_id: service.id! }).filter(
+    row => row.question.trim(),
+  )
+}
+
 function attachRoutes(app: Router) {
   app.post(
     '/shop/:shop_slug/service/:service_slug/image',
@@ -2419,8 +2422,8 @@ let routes = {
             for (let answer of input.answers) {
               proxy.booking_answer.push({
                 booking_id,
-                service_question_id:answer.question_id,
-                answer: answer.answer
+                service_question_id: answer.question_id,
+                answer: answer.answer,
               })
             }
             let booking = proxy.booking[booking_id]
