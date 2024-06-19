@@ -709,8 +709,10 @@ function ReceiptFigure(
 let ReceiptMessage = {
   not_paid:
     '請注意，你的預約在上載付款證明之後才會生效。在此之前，這個時段可能會被其他人預約。',
-  paid: (shop: Shop) => `已上載付款證明，請等待 ${shop.owner!.nickname} 確認`,
-  free: (shop: Shop) => `已提交預約申請，請等待 ${shop.owner!.nickname} 確認`,
+  paid: (shop: Shop) =>
+    `已上載付款證明，請等待 ${'商家' || shop.owner!.nickname} 確認`,
+  free: (shop: Shop) =>
+    `已提交預約申請，請等待 ${'商家' || shop.owner!.nickname} 確認`,
 }
 let receiptNavButton = nodeToVNode(
   <Link tagName="ion-button" expand="block" href="/booking" class="ion-margin">
