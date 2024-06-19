@@ -28,6 +28,7 @@ import { loadClientPlugin } from '../../client-plugin.js'
 import { randomUUID } from 'crypto'
 import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
+import { formatDuration } from '../format/duration.js'
 
 let pageTitle = 'The Balconi ARTLAB 香港'
 
@@ -214,7 +215,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                     ) : null}
                     <p class="card--field">
                       <ion-icon name="hourglass-outline" />
-                      &nbsp;時長: {service.hours}
+                      &nbsp;時長: {formatDuration(service)}
                     </p>
                     {service.original_price ? (
                       <p
@@ -423,7 +424,6 @@ function AddService(attrs: { shop: Shop }, context: DynamicContext) {
     slug: service_slug,
     name: '',
     times: null,
-    hours: '',
     book_duration_minute: 120,
     original_price: null,
     unit_price: null,

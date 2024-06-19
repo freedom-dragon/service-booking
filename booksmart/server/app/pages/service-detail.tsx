@@ -88,6 +88,7 @@ import { formatPrice } from '../format/price.js'
 import { nodeToHTML } from '../jsx/html.js'
 import { ReceiptImageItem } from './booking.js'
 import { toServiceUrl } from '../app-url'
+import { formatDuration } from '../format/duration.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -306,7 +307,7 @@ function selectOption(button){
               <div slot="start">
                 <ion-icon name="hourglass-outline"></ion-icon> 時長
               </div>
-              <ion-label>{service.hours}</ion-label>
+              <ion-label>{formatDuration(service)}</ion-label>
             </ion-item>
             <input name="appointment_time" hidden />
 
@@ -1151,20 +1152,7 @@ function copyUrl() {
           <ion-note class="item--hint">如: 6(人) / 2(對情侶)</ion-note>
           <ion-item>
             <div slot="start">
-              <ion-icon name="hourglass-outline"></ion-icon> 時長 (顯示)
-            </div>
-            <ion-input
-              value={service.hours}
-              placeholder="如: 2.5 - 3 小時"
-              onchange={`emit('${serviceUrl}/update','hours',this.value)`}
-            />
-          </ion-item>
-          <ion-note class="item--hint">
-            作顯示用途。可以是範圍，如: 2.5 - 3 小時
-          </ion-note>
-          <ion-item>
-            <div slot="start">
-              <ion-icon name="hourglass-outline"></ion-icon> 時長 (計算)
+              <ion-icon name="hourglass-outline"></ion-icon> 時長
             </div>
             <div slot="end">分鐘</div>
             <ion-input
@@ -2576,7 +2564,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 'peer_amount' as const,
                 'peer_price' as const,
                 'quota' as const,
-                'hours' as const,
                 'book_duration_minute' as const,
                 'address' as const,
                 'address_remark' as const,
@@ -2701,13 +2688,8 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 service[field] = +value
                 ok()
                 break
-              case 'hours':
-                label = '時長 (顯示)'
-                service[field] = value
-                ok()
-                break
               case 'book_duration_minute':
-                label = '時長 (計算)'
+                label = '時長'
                 if (!(+value > 0)) invalid()
                 service[field] = +value
                 ok()

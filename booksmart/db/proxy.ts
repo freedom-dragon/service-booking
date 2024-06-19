@@ -136,7 +136,6 @@ export type Service = {
   slug: string
   name: string
   times: null | number
-  hours: string
   book_duration_minute: number
   original_price: null | string
   unit_price: null | string
