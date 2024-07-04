@@ -4,6 +4,7 @@ import { Link } from '../components/router.js'
 import Style from '../components/style.js'
 import {
   Context,
+  DynamicContext,
   getContextFormBody,
   getStringCasual,
   WsContext,
@@ -31,6 +32,7 @@ import { getAuthUserId } from '../auth/user.js'
 import { UserMessageInGuestView } from './profile.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { wsStatus } from '../components/ws-status.js'
+import { loginRouteUrl } from './login.js'
 
 let style = Style(/* css */ `
 .oauth-provider-list a {
@@ -158,7 +160,7 @@ let emailFormBody = (
 let guestView = (
   <>
     <p>
-      Already have an account? <Link href="/login">Login</Link>
+      Already have an account? <Link href={loginRouteUrl(context)}>Login</Link>
     </p>
     <div class="flex-center flex-column"></div>
     <div>Register with:</div>
@@ -633,7 +635,9 @@ fetch('/login/submit',{
     } else {
       main = (
         <p>
-          You can now <a href="/login">login</a> to the system.
+          You can now{' '}
+          <a href={loginRouteUrl(context as DynamicContext)}>login</a> to the
+          system.
         </p>
       )
     }

@@ -20,6 +20,10 @@ import { IonBackButton } from '../components/ion-back-button.js'
 import { wsStatus } from '../components/ws-status.js'
 import { db } from '../../../db/db.js'
 import { loadClientPlugin } from '../../client-plugin.js'
+import { AppMoreBackButton } from './app-more.js'
+import { toRouteUrl } from '../../url.js'
+import shopHome from './shop-home.js'
+import { getContextShopSlug } from '../auth/shop.js'
 
 let style = Style(/* css */ `
 #login .field {
@@ -66,16 +70,14 @@ order by id desc
           <ion-toolbar color="primary">
             {shop ? (
               <IonBackButton
-                href={'/shop/' + shop.slug}
+                href={toRouteUrl(shopHome.routes, '/shop/:shop_slug', {
+                  params: { shop_slug: shop.slug },
+                })}
                 backText={'主頁'}
                 color="light"
               />
             ) : (
-              <IonBackButton
-                href={'/app/more'}
-                backText={'更多'}
-                color="light"
-              />
+              <AppMoreBackButton color="light" />
             )}
             <ion-title>登入</ion-title>
           </ion-toolbar>
@@ -255,12 +257,12 @@ async function submit(context: ExpressContext) {
       loginId.includes('@') ? { email: loginId } : { username: loginId },
     )
     if (!user || !user.id) {
-      return <Redirect href="/login?code=not_found" />
+      return <Redirect href={loginRouteUrl(context, { code: 'not_found' })} />
     }
 
     let password_hash = user.password_hash
     if (!password_hash) {
-      return <Redirect href="/login?code=no_pw" />
+      return <Redirect href={loginRouteUrl(context, { code: 'no_pw' })} />
     }
 
     let matched = await comparePassword({
@@ -269,24 +271,35 @@ async function submit(context: ExpressContext) {
     })
 
     if (!matched) {
-      return <Redirect href="/login?code=wrong" />
+      return <Redirect href={loginRouteUrl(context, { code: 'wrong' })} />
     }
 
     writeUserIdToCookie(context.res, user.id)
 
-    return <Redirect href="/login?code=ok" />
+    return <Redirect href={loginRouteUrl(context, { code: 'ok' })} />
   } catch (error) {
     return (
       <div>
         {renderError(error, context)}
-        <Link href="/login">Try again</Link>
+        <Link href={loginRouteUrl(context)}>Try again</Link>
       </div>
     )
   }
 }
 
-let routes: Routes = {
-  '/login': {
+export function loginRouteUrl(
+  context: DynamicContext,
+  query?: { code?: string },
+) {
+  let shop_slug = getContextShopSlug(context)
+  return toRouteUrl(routes, '/shop/:shop_slug/login', {
+    params: { shop_slug },
+    query,
+  })
+}
+
+let routes = {
+  '/shop/:shop_slug/login': {
     title: title('登入'),
     description: `Login to access exclusive content and functionality. Welcome back to our community on ${config.short_site_name}.`,
     menuText: 'Login',
@@ -304,6 +317,6 @@ let routes: Routes = {
       }
     },
   },
-}
+} satisfies Routes
 
 export default { routes }

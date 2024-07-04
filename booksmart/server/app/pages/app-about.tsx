@@ -1,10 +1,10 @@
 import { LayoutType, config, title } from '../../config.js'
 import { mapArray } from '../components/fragment.js'
-import { IonBackButton } from '../components/ion-back-button.js'
 import { wsStatus } from '../components/ws-status.js'
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
 import { themeColorNames } from '../styles/mobile-style.js'
+import { AppMoreBackButton } from './app-more.js'
 
 let pageTitle = 'About'
 
@@ -12,7 +12,7 @@ let aboutPage = (
   <>
     <ion-header>
       <ion-toolbar>
-        <IonBackButton href="/app/more" backText="More" />
+        <AppMoreBackButton />
         <ion-title role="heading" aria-level="1">
           {pageTitle}
         </ion-title>

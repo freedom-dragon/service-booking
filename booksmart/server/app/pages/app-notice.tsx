@@ -4,7 +4,7 @@ import { LayoutType, title } from '../../config.js'
 import Style from '../components/style.js'
 import { Context } from '../context.js'
 import { mapArray } from '../components/fragment.js'
-import { appIonTabBar } from '../components/app-tab-bar.js'
+import { AppTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { getAuthUser } from '../auth/user.js'
 import { find } from 'better-sqlite3-proxy'
@@ -34,7 +34,7 @@ let page = (
       <Main />
     </ion-content>
     <ion-footer>
-      {appIonTabBar}
+      <AppTabBar />
       {selectIonTab('notice')}
     </ion-footer>
     {fitIonFooter}
@@ -107,13 +107,13 @@ function Main(attrs: {}, context: Context) {
   )
 }
 
-let routes: Routes = {
-  '/app/notice': {
+let routes = {
+  '/shop/:shop_slug/notice': {
     title: title(pageTitle),
-    description: 'TODO',
+    description: 'Notices about the shop',
     node: page,
     layout_type: LayoutType.ionic,
   },
-}
+} satisfies Routes
 
 export default { routes }

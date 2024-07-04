@@ -25,6 +25,7 @@ import { writeUserIdToCookie } from '../auth/user.js'
 import { env } from '../../env.js'
 import { MessageException } from '../../exception.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
+import { loginRouteUrl } from './login.js'
 
 let log = debugLog('app:verification-code')
 log.enabled = true
@@ -281,7 +282,8 @@ function VerifyEmailPage(attrs: {}, context: DynamicContext) {
           <p>{title || '無法將驗證碼發送到您的電郵地址。'}.</p>
           {renderError(error, context)}
           <p>
-            您可以在「<Link href="/login">登入頁面</Link>」要求另一個驗證碼。
+            您可以在「<Link href={loginRouteUrl(context)}>登入頁面</Link>
+            」要求另一個驗證碼。
           </p>
         </>
       ) : (
@@ -542,7 +544,7 @@ async function checkEmailVerificationCode(
               ? `/shop/${lastBooking.shop_slug}/service/${lastBooking.service_slug}`
               : shop
                 ? `/shop/${shop.slug}`
-                : '/login?code=ok'
+                : loginRouteUrl(context, { code: 'ok' })
           }
         />
       ),

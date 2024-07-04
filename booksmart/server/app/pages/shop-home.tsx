@@ -19,7 +19,7 @@ import {
   getShopLogoImage,
 } from '../shop-store.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
-import { appIonTabBar } from '../components/app-tab-bar.js'
+import { AppTabBar } from '../components/app-tab-bar.js'
 import { ShopContacts, ShopContactsStyle } from '../components/shop-contact.js'
 import { countBooking } from '../booking-store.js'
 import { MessageException } from '../../exception.js'
@@ -30,6 +30,7 @@ import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
 import { formatDuration } from '../format/duration.js'
 import { getContextShop } from '../auth/shop.js'
+import { loginRouteUrl } from './login.js'
 
 let pageTitle = 'The Balconi ARTLAB 香港'
 
@@ -106,7 +107,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
               <Link
                 tagName="ion-button"
                 title={'登入後可新增' + locale.service}
-                href="/login"
+                href={loginRouteUrl(context)}
               >
                 <ion-icon slot="icon-only" name="person"></ion-icon>
               </Link>
@@ -282,7 +283,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         </div>
       </ion-content>
       <ion-footer>
-        {appIonTabBar}
+        <AppTabBar />
         {selectIonTab('home')}
       </ion-footer>
       {fitIonFooter}
@@ -353,7 +354,7 @@ let routes = {
               'eval',
               `showToast('login as shop owner to create service', 'warning')`,
             ],
-            ['redirect', '/login'],
+            ['redirect', loginRouteUrl(context)],
           ],
         ])
       }

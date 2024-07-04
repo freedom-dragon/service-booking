@@ -1,6 +1,6 @@
 import { loadClientPlugin } from '../../client-plugin.js'
 import { LayoutType, title } from '../../config.js'
-import { appIonTabBar } from '../components/app-tab-bar.js'
+import { AppTabBar } from '../components/app-tab-bar.js'
 import { mapArray } from '../components/fragment.js'
 import { Link } from '../components/router.js'
 import { wsStatus } from '../components/ws-status.js'
@@ -78,7 +78,7 @@ let homePage = (
       {wsStatus.safeArea}
     </ion-content>
     <ion-footer>
-      {appIonTabBar}
+      <AppTabBar />
       {selectIonTab('home')}
     </ion-footer>
     {fitIonFooter}

@@ -4,7 +4,7 @@ import { LayoutType, title } from '../../config.js'
 import Style from '../components/style.js'
 import { Context } from '../context.js'
 import { mapArray } from '../components/fragment.js'
-import { appIonTabBar } from '../components/app-tab-bar.js'
+import { AppTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 
 let pageTitle = 'Chat'
@@ -30,7 +30,7 @@ let page = (
       <Main />
     </ion-content>
     <ion-footer>
-      {appIonTabBar}
+      <AppTabBar />
       {selectIonTab('chat')}
     </ion-footer>
     {fitIonFooter}

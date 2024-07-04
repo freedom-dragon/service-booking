@@ -1,10 +1,10 @@
-import { proxy } from '../../../db/proxy.js'
-import { Context } from '../context.js'
+import { DynamicContext } from '../context.js'
+import { getContextShop } from './shop.js'
 import { getAuthUser } from './user.js'
-import { find } from 'better-sqlite3-proxy'
 
-export function getAuthRole(context: Context) {
+export function getAuthRole(context: DynamicContext) {
+  let shop = getContextShop(context)
   let user = getAuthUser(context)
-  let shop = user ? find(proxy.shop, { owner_id: user.id }) : null
-  return { user, shop }
+  let is_owner = user && user.id == shop.owner_id
+  return { shop, user, is_owner }
 }

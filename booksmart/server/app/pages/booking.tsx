@@ -16,7 +16,7 @@ import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
 import { TimezoneDate } from 'timezone-date.ts'
 import { DAY } from '@beenotung/tslib/time.js'
-import { appIonTabBar } from '../components/app-tab-bar.js'
+import { AppTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { getAuthRole } from '../auth/role.js'
 import { Booking, Shop, User, proxy } from '../../../db/proxy.js'
@@ -94,7 +94,7 @@ let page = (
     </ion-modal>
     <Page />
     <ion-footer>
-      {appIonTabBar}
+      <AppTabBar />
       {selectIonTab('booking')}
     </ion-footer>
     {fitIonFooter}
@@ -192,8 +192,8 @@ calendarPicker.highlightedDates = Array.from(appointment_dates)
 }
 
 function Page(attrs: {}, context: DynamicContext) {
-  let { user, shop } = getAuthRole(context)
-  return shop ? AdminPage(shop, context) : UserPage(user, context)
+  let { shop, user, is_owner } = getAuthRole(context)
+  return is_owner ? AdminPage(shop, context) : UserPage(user, context)
 }
 
 function BookingDetails(attrs: {
@@ -1182,19 +1182,12 @@ let filterParser = object({
 
 function Filter(attrs: {}, context: WsContext) {
   try {
-    let { user, shop } = getAuthRole(context)
-
-    // TODO get shop slug from url
-    let shop_slug = config.shop_slug
-    shop ||= find(proxy.shop, { slug: shop_slug })
-    if (!shop) throw 'Shop not found, slug: ' + shop_slug
+    let { shop, user, is_owner } = getAuthRole(context)
 
     let input = filterParser.parse({
       date: new URLSearchParams(context.routerMatch?.search).get('date'),
     })
     let date = input.date || null
-
-    let is_shop_owner = user?.id == shop.owner_id
 
     throw new MessageException([
       'batch',
@@ -1202,9 +1195,9 @@ function Filter(attrs: {}, context: WsContext) {
         [
           'update-text',
           'ion-title',
-          input.date ? '預約行程曆' : is_shop_owner ? '客戶的預約' : '我的預約',
+          input.date ? '預約行程曆' : is_owner ? '客戶的預約' : '我的預約',
         ],
-        ...(is_shop_owner
+        ...(is_owner
           ? AdminPageContent({ shop, date }, context).toUpdateMessages()
           : user
             ? UserPageContent({ user, date }, context).toUpdateMessages()
@@ -1239,10 +1232,10 @@ let manageBookingParser = object({
 
 function ManageBooking(attrs: {}, context: WsContext) {
   try {
-    let { user, shop } = getAuthRole(context)
+    let { user, shop, is_owner } = getAuthRole(context)
 
     if (!user) throw `You must be logged in to manage booking`
-    if (!shop) throw `You must be merchant to manage booking`
+    if (!is_owner) throw `You must be merchant to manage booking`
 
     let input = manageBookingParser.parse(context)
     let { action, booking_id } = input.routerMatch.params
@@ -1491,7 +1484,7 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
 }
 
 let routes = {
-  '/booking': {
+  '/shop/:shop_slug/booking': {
     title: title(pageTitle),
     description: 'manage your service booking',
     menuText: pageTitle,

@@ -3,7 +3,6 @@ import { Routes } from '../routes.js'
 import { title } from '../../config.js'
 import Style from '../components/style.js'
 import { mapArray } from '../components/fragment.js'
-import { IonBackButton } from '../components/ion-back-button.js'
 import { object, string } from 'cast.ts'
 import { Redirect } from '../components/router.js'
 import {
@@ -25,6 +24,9 @@ import { MessageException } from '../../exception.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { nodeToVNode } from '../jsx/vnode.js'
 import { ServerMessage } from '../../../client/types.js'
+import { getContextShop } from '../auth/shop.js'
+import { AppMoreBackButton } from './app-more.js'
+import { DynamicContext } from '../context.js'
 
 let pageTitle = '商戶管理'
 
@@ -82,7 +84,7 @@ type LocaleItem = {
 
 let defaultLocale = getShopLocale(0)
 
-function ShopAdmin(attrs: { shop: Shop }) {
+function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
   let { shop } = attrs
   let shop_slug = shop.slug
   let urlPrefix = `/shop/${shop_slug}/admin`
@@ -106,7 +108,7 @@ function ShopAdmin(attrs: { shop: Shop }) {
       {ShopContactsStyle}
       <ion-header>
         <ion-toolbar>
-          <IonBackButton href="/app/more" backText="更多" />
+          <AppMoreBackButton />
           <ion-title role="heading" aria-level="1">
             {pageTitle}
           </ion-title>
@@ -287,18 +289,10 @@ function ShopAdmin(attrs: { shop: Shop }) {
   )
 }
 
-let routes: Routes = {
-  '/shop/:slug/admin': {
+let routes = {
+  '/shop/:shop_slug/admin': {
     resolve(context) {
-      let slug = context.routerMatch?.params.slug
-      let shop = find(proxy.shop, { slug })
-      if (!shop) {
-        return {
-          title: title('shop not found'),
-          description: 'The shop is not found by slug',
-          node: <Redirect href="/" />,
-        }
-      }
+      let shop = getContextShop(context)
       let shop_name = shop.name
       return {
         title: title(shop_name),
@@ -424,6 +418,6 @@ let routes: Routes = {
       ])
     },
   },
-}
+} satisfies Routes
 
 export default { routes }

@@ -1,14 +1,18 @@
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
-import { LayoutType, config, title } from '../../config.js'
+import { LayoutType, title } from '../../config.js'
 import Style from '../components/style.js'
 import { Link } from '../components/router.js'
-import { appIonTabBar } from '../components/app-tab-bar.js'
+import { AppTabBar } from '../components/app-tab-bar.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { readFileSync } from 'fs'
-import { Context } from '../context.js'
+import { Context, DynamicContext } from '../context.js'
 import { getAuthUser } from '../auth/user.js'
 import { toUploadedUrl } from '../upload.js'
+import { getContextShopSlug } from '../auth/shop.js'
+import { toRouteUrl } from '../../url.js'
+import shopAdmin from './shop-admin.js'
+import { IonBackButton } from '../components/ion-back-button.js'
 
 let pageTitle = '更多'
 
@@ -36,10 +40,7 @@ let page = (
           <ion-icon slot="start" name="information" />
           <ion-label>關於我們</ion-label>
         </Link>
-        <Link tagName="ion-item" href={`/shop/${config.shop_slug}/admin`}>
-          <ion-icon slot="start" ios="cog" md="settings" />
-          <ion-label>商戶管理</ion-label>
-        </Link>
+        <ShopItems />
         <Link tagName="ion-item" href="/settings" hidden>
           <ion-icon slot="start" ios="cog" md="settings" />
           <ion-label>Settings</ion-label>
@@ -68,7 +69,7 @@ let page = (
       </div>
     </ion-content>
     <ion-footer>
-      {appIonTabBar}
+      <AppTabBar />
       {selectIonTab('more')}
     </ion-footer>
     {fitIonFooter}
@@ -122,13 +123,44 @@ function ProfileItems(attrs: {}, context: Context) {
   )
 }
 
-let routes: Routes = {
-  '/app/more': {
+function ShopItems(attrs: {}, context: DynamicContext) {
+  let shop_slug = getContextShopSlug(context)
+  return (
+    <Link
+      tagName="ion-item"
+      href={toRouteUrl(shopAdmin.routes, '/shop/:shop_slug/admin', {
+        params: { shop_slug },
+      })}
+    >
+      <ion-icon slot="start" ios="cog" md="settings" />
+      <ion-label>商戶管理</ion-label>
+    </Link>
+  )
+}
+
+export function AppMoreBackButton(
+  attrs: { color?: string },
+  context: DynamicContext,
+) {
+  let shop_slug = getContextShopSlug(context)
+  return (
+    <IonBackButton
+      href={toRouteUrl(routes, '/shop/:shop_slug/more', {
+        params: { shop_slug },
+      })}
+      backText="更多"
+      color={attrs.color}
+    />
+  )
+}
+
+let routes = {
+  '/shop/:shop_slug/more': {
     title: title(pageTitle),
     description: 'TODO',
     node: page,
     layout_type: LayoutType.ionic,
   },
-}
+} satisfies Routes
 
 export default { routes }

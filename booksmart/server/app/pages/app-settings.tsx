@@ -5,6 +5,7 @@ import Style from '../components/style.js'
 import { Context } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
+import { AppMoreBackButton } from './app-more.js'
 
 let pageTitle = 'App Settings'
 
@@ -19,7 +20,7 @@ let page = (
     {style}
     <ion-header>
       <ion-toolbar>
-        <IonBackButton href="/app/more" backText="More" />
+        <AppMoreBackButton />
         <ion-title role="heading" aria-level="1">
           {pageTitle}
         </ion-title>

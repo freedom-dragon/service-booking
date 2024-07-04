@@ -1874,79 +1874,11 @@ function getDateRange() {
   return { min, max }
 }
 
-let addPage = (
-  <>
-    {Style(/* css */ `
-`)}
-    <ion-header>
-      <ion-toolbar>
-        <IonBackButton href="/service-detail" backText={pageTitle} />
-        <ion-title role="heading" aria-level="1">
-          {addPageTitle}
-        </ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content id="AddServiceDetail" class="ion-padding">
-      <form
-        method="POST"
-        action="/service-detail/add/submit"
-        onsubmit="emitForm(event)"
-      >
-        <ion-list>
-          <ion-item>
-            <ion-input
-              name="title"
-              label="Title*:"
-              label-placement="floating"
-              required
-              minlength="3"
-              maxlength="50"
-            />
-          </ion-item>
-          <p class="item--hint">(3-50 characters)</p>
-          <ion-item>
-            <ion-input
-              name="slug"
-              label="Slug*: (unique url)"
-              label-placement="floating"
-              required
-              pattern="(\w|-|\.){1,32}"
-            />
-          </ion-item>
-          <p class="item--hint">
-            (1-32 characters of: <code>a-z A-Z 0-9 - _ .</code>)
-          </p>
-        </ion-list>
-        <div style="margin-inline-start: 1rem">
-          <ion-button type="submit">Submit</ion-button>
-        </div>
-        <p>
-          Remark:
-          <br />
-          *: mandatory fields
-        </p>
-      </form>
-    </ion-content>
-  </>
-)
-
-function AddPage(attrs: {}, context: DynamicContext) {
-  let user = getAuthUser(context)
-  if (!user) return <Redirect href="/login" />
-  return addPage
-}
-
-let submitParser = object({
-  title: string({ minLength: 3, maxLength: 50 }),
-  slug: string({ match: /^[\w-]{1,32}$/ }),
-})
-
 function Submit(attrs: {}, context: DynamicContext) {
   try {
     let user = getAuthUser(context)
     if (!user) throw 'You must be logged in to submit ' + pageTitle
     let body = getContextFormBody(context)
-    let input = submitParser.parse(body)
     let id = 1
     return <Redirect href={`/service-detail/result?id=${id}`} />
   } catch (error) {
@@ -2353,273 +2285,264 @@ let routes = {
   },
   '/shop/:shop_slug/service/:service_slug/booking/submit': {
     resolve(context) {
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, service_slug, shop_slug }) => {
-          let body = getContextFormBody(context) as any
-          body.answers = JSON.parse(body.answers)
-          console.log('body:', body)
-          let input = submitBookingParser.parse(body)
-          let tel = to_full_hk_mobile_phone(input.tel)
-          if (!tel) {
-            throw new MessageException([
-              'eval',
-              `showToast('請輸入香港的手提電話號碼','error')`,
-            ])
-          }
-          let availableQuota = selectAvailableQuota({
-            service_id: service.id!,
-            appointment_time: input.appointment_time.getTime(),
-          })
-          // TODO check confirmed booking to see if amount is too big
-          if (input.amount > availableQuota) {
-            throw new MessageException([
-              'eval',
-              availableQuota > 0
-                ? `showToast('所選擇時段只淨${availableQuota}${service.price_unit}','error')`
-                : `showToast('所選擇時段沒有空位','error')`,
-            ])
-          }
-          let user = getAuthUser(context)
-          let is_shop_owner = user && user.id == shop.owner_id
-          let should_verify_email = !user
-          if (!user || is_shop_owner) {
-            user = find(proxy.user, { tel }) || null
-          }
-          if (!user) {
-            let input = registerParser.parse(body)
-            if (find(proxy.user, { email: input.email })) {
-              throw new MessageException([
-                'eval',
-                `showToast('這個電郵已經註冊過了，請檢查您的電話號碼和電郵是否正確。','error')`,
-              ])
-            }
-            let user_id = proxy.user.push({
-              username: null,
-              nickname: input.nickname,
-              password_hash: null,
-              email: input.email,
-              tel: tel,
-              avatar: null,
-            })
-            user = proxy.user[user_id]
-          }
-          let user_id = user.id!
-          let booking: Booking = db.transaction(() => {
-            let booking_id = proxy.booking.push({
-              service_id: service.id!,
-              submit_time: Date.now(),
-              appointment_time: input.appointment_time.getTime(),
-              approve_time: null,
-              arrive_time: null,
-              reject_time: null,
-              cancel_time: null,
-              amount: input.amount,
-              service_option_id: input.option_id,
-              user_id,
-              total_price: null,
-            })
-            for (let answer of input.answers) {
-              proxy.booking_answer.push({
-                booking_id,
-                service_question_id: answer.question_id,
-                answer: answer.answer,
-              })
-            }
-            let booking = proxy.booking[booking_id]
-            let fee = calcBookingTotalFee(booking)
-            booking.total_price = fee.total_fee
-            if (fee.is_free) {
-              noticeBookingSubmit(booking, context)
-            }
-            return booking
-          })()
-          if (should_verify_email) {
-            let email = user.email!
-            let hint = maskEmailForHint(email)
-            let mailboxUrl = 'https://' + email.split('@').pop()
-            let passcode = generatePasscode()
-            proxy.verification_code.push({
-              passcode,
-              email,
-              request_time: Date.now(),
-              revoke_time: null,
-              match_id: null,
-              user_id,
-              shop_id: shop.id!,
-            })
-            let { html, text } = verificationCodeEmail(
-              { passcode, email },
-              context,
-            )
-            let email_success_messages: ServerMessage[] = is_shop_owner
-              ? [
-                  [
-                    'eval',
-                    `showToast('已發送電郵通知給 ${user.nickname}。','info')`,
-                  ],
-                  [
-                    'update-in',
-                    '#guestInfo .guestInfo--message',
-                    nodeToVNode(
-                      <p>已發送電郵通知給 {user.nickname}。</p>,
-                      context,
-                    ),
-                  ],
-                ]
-              : [
-                  [
-                    'eval',
-                    `showToast('請查看 ${hint} 郵箱，並點擊確認連接，以確認你的預約。','info')`,
-                  ],
-                  [
-                    'update-in',
-                    '#guestInfo .guestInfo--message',
-                    nodeToVNode(
-                      <p>
-                        請查看{' '}
-                        <a href={mailboxUrl} target="_blank">
-                          {hint}
-                        </a>{' '}
-                        郵箱，並點擊確認連接，以確認你的預約。
-                      </p>,
-                      context,
-                    ),
-                  ],
-                ]
-            sendEmail({
-              from: env.EMAIL_USER,
-              to: email,
-              subject: title(`${service.name} 預約確認`),
-              html,
-              text,
-            })
-              .then(info => {
-                if (context.type === 'ws') {
-                  context.ws.send(['batch', email_success_messages])
-                }
-              })
-              .catch(error => {
-                console.error('Failed to send email', error)
-                if (context.type === 'ws') {
-                  context.ws.send([
-                    'update-in',
-                    '#guestInfo .guestInfo--message',
-                    renderError(error, context),
-                  ])
-                }
-              })
-            throw EarlyTerminate
-          }
+      return resolveServiceRoute(context, ({ service, shop }) => {
+        let body = getContextFormBody(context) as any
+        body.answers = JSON.parse(body.answers)
+        console.log('body:', body)
+        let input = submitBookingParser.parse(body)
+        let tel = to_full_hk_mobile_phone(input.tel)
+        if (!tel) {
           throw new MessageException([
-            'batch',
-            [
-              [
-                'update-in',
-                '#submitModal',
-                nodeToVNode(
-                  PaymentModal({ booking: booking!, user }, context),
-                  context,
-                ),
-              ],
-              ['eval', 'submitModal.present()'],
-            ],
+            'eval',
+            `showToast('請輸入香港的手提電話號碼','error')`,
           ])
-        },
-      )
+        }
+        let availableQuota = selectAvailableQuota({
+          service_id: service.id!,
+          appointment_time: input.appointment_time.getTime(),
+        })
+        // TODO check confirmed booking to see if amount is too big
+        if (input.amount > availableQuota) {
+          throw new MessageException([
+            'eval',
+            availableQuota > 0
+              ? `showToast('所選擇時段只淨${availableQuota}${service.price_unit}','error')`
+              : `showToast('所選擇時段沒有空位','error')`,
+          ])
+        }
+        let user = getAuthUser(context)
+        let is_shop_owner = user && user.id == shop.owner_id
+        let should_verify_email = !user
+        if (!user || is_shop_owner) {
+          user = find(proxy.user, { tel }) || null
+        }
+        if (!user) {
+          let input = registerParser.parse(body)
+          if (find(proxy.user, { email: input.email })) {
+            throw new MessageException([
+              'eval',
+              `showToast('這個電郵已經註冊過了，請檢查您的電話號碼和電郵是否正確。','error')`,
+            ])
+          }
+          let user_id = proxy.user.push({
+            username: null,
+            nickname: input.nickname,
+            password_hash: null,
+            email: input.email,
+            tel: tel,
+            avatar: null,
+          })
+          user = proxy.user[user_id]
+        }
+        let user_id = user.id!
+        let booking: Booking = db.transaction(() => {
+          let booking_id = proxy.booking.push({
+            service_id: service.id!,
+            submit_time: Date.now(),
+            appointment_time: input.appointment_time.getTime(),
+            approve_time: null,
+            arrive_time: null,
+            reject_time: null,
+            cancel_time: null,
+            amount: input.amount,
+            service_option_id: input.option_id,
+            user_id,
+            total_price: null,
+          })
+          for (let answer of input.answers) {
+            proxy.booking_answer.push({
+              booking_id,
+              service_question_id: answer.question_id,
+              answer: answer.answer,
+            })
+          }
+          let booking = proxy.booking[booking_id]
+          let fee = calcBookingTotalFee(booking)
+          booking.total_price = fee.total_fee
+          if (fee.is_free) {
+            noticeBookingSubmit(booking, context)
+          }
+          return booking
+        })()
+        if (should_verify_email) {
+          let email = user.email!
+          let hint = maskEmailForHint(email)
+          let mailboxUrl = 'https://' + email.split('@').pop()
+          let passcode = generatePasscode()
+          proxy.verification_code.push({
+            passcode,
+            email,
+            request_time: Date.now(),
+            revoke_time: null,
+            match_id: null,
+            user_id,
+            shop_id: shop.id!,
+          })
+          let { html, text } = verificationCodeEmail(
+            { passcode, email },
+            context,
+          )
+          let email_success_messages: ServerMessage[] = is_shop_owner
+            ? [
+                [
+                  'eval',
+                  `showToast('已發送電郵通知給 ${user.nickname}。','info')`,
+                ],
+                [
+                  'update-in',
+                  '#guestInfo .guestInfo--message',
+                  nodeToVNode(
+                    <p>已發送電郵通知給 {user.nickname}。</p>,
+                    context,
+                  ),
+                ],
+              ]
+            : [
+                [
+                  'eval',
+                  `showToast('請查看 ${hint} 郵箱，並點擊確認連接，以確認你的預約。','info')`,
+                ],
+                [
+                  'update-in',
+                  '#guestInfo .guestInfo--message',
+                  nodeToVNode(
+                    <p>
+                      請查看{' '}
+                      <a href={mailboxUrl} target="_blank">
+                        {hint}
+                      </a>{' '}
+                      郵箱，並點擊確認連接，以確認你的預約。
+                    </p>,
+                    context,
+                  ),
+                ],
+              ]
+          sendEmail({
+            from: env.EMAIL_USER,
+            to: email,
+            subject: title(`${service.name} 預約確認`),
+            html,
+            text,
+          })
+            .then(() => {
+              if (context.type === 'ws') {
+                context.ws.send(['batch', email_success_messages])
+              }
+            })
+            .catch(error => {
+              console.error('Failed to send email', error)
+              if (context.type === 'ws') {
+                context.ws.send([
+                  'update-in',
+                  '#guestInfo .guestInfo--message',
+                  renderError(error, context),
+                ])
+              }
+            })
+          throw EarlyTerminate
+        }
+        throw new MessageException([
+          'batch',
+          [
+            [
+              'update-in',
+              '#submitModal',
+              nodeToVNode(
+                PaymentModal({ booking: booking!, user }, context),
+                context,
+              ),
+            ],
+            ['eval', 'submitModal.present()'],
+          ],
+        ])
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/booking/:booking_id/cancel': {
     resolve(context) {
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, service_slug, shop_slug }) => {
-          let booking_id = context.routerMatch?.params.booking_id
-          let booking = proxy.booking[booking_id]
-          if (!booking)
-            throw new MessageException([
-              'eval',
-              `showToast("找不到相應的預約，ID：${booking_id}","warning")`,
-            ])
-
-          let { user } = getAuthRole(context)
-          if (!user)
-            throw new MessageException([
-              'eval',
-              'showToast("請先登入","warning")',
-            ])
-
-          if (booking.user_id !== user.id && user.id !== shop.owner_id)
-            throw new MessageException([
-              'eval',
-              'showToast("不可以取消其他人的預約","warning")',
-            ])
-
-          booking.cancel_time = Date.now()
-
+      return resolveServiceRoute(context, ({ shop }) => {
+        let booking_id = context.routerMatch?.params.booking_id
+        let booking = proxy.booking[booking_id]
+        if (!booking)
           throw new MessageException([
-            'batch',
+            'eval',
+            `showToast("找不到相應的預約，ID：${booking_id}","warning")`,
+          ])
+
+        let { user } = getAuthRole(context)
+        if (!user)
+          throw new MessageException([
+            'eval',
+            'showToast("請先登入","warning")',
+          ])
+
+        if (booking.user_id !== user.id && user.id !== shop.owner_id)
+          throw new MessageException([
+            'eval',
+            'showToast("不可以取消其他人的預約","warning")',
+          ])
+
+        booking.cancel_time = Date.now()
+
+        throw new MessageException([
+          'batch',
+          [
+            ['eval', 'showToast("已取消預約","info")'],
             [
-              ['eval', 'showToast("已取消預約","info")'],
-              [
-                'eval',
-                /* javascript */ `
+              'eval',
+              /* javascript */ `
 document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
 `,
-              ],
             ],
-          ])
-        },
-      )
+          ],
+        ])
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/receipt/:receipt_id/delete': {
     resolve(context) {
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, service_slug, shop_slug }) => {
-          let user = getAuthUser(context)
+      return resolveServiceRoute(context, ({ service_slug, shop_slug }) => {
+        let user = getAuthUser(context)
 
-          let receipt_id = context.routerMatch?.params.receipt_id
-          let receipt = proxy.receipt[receipt_id]
-          let has_receipt = true
+        let receipt_id = context.routerMatch?.params.receipt_id
+        let receipt = proxy.receipt[receipt_id]
+        let has_receipt = true
 
-          if (receipt && user && receipt.booking?.user_id == user.id) {
-            let booking_id = receipt.booking_id!
-            let dir = join(
-              'public',
-              'assets',
-              'shops',
-              shop_slug,
-              service_slug,
-              'receipts',
-            )
-            let file = join(dir, receipt.filename)
-            if (existsSync(file)) {
-              unlinkSync(file)
-            }
-            delete proxy.receipt[receipt_id]
-            has_receipt = count(proxy.receipt, { booking_id }) > 0
+        if (receipt && user && receipt.booking?.user_id == user.id) {
+          let booking_id = receipt.booking_id!
+          let dir = join(
+            'public',
+            'assets',
+            'shops',
+            shop_slug,
+            service_slug,
+            'receipts',
+          )
+          let file = join(dir, receipt.filename)
+          if (existsSync(file)) {
+            unlinkSync(file)
           }
+          delete proxy.receipt[receipt_id]
+          has_receipt = count(proxy.receipt, { booking_id }) > 0
+        }
 
-          let receiptMessage = has_receipt
-            ? '已刪除收據相片'
-            : ReceiptMessage.not_paid
-          let messages: ServerMessage[] = [
-            ['remove', `.receipt--item[data-receipt-id="${receipt_id}"]`],
-            ['eval', `showToast(${JSON.stringify(receiptMessage)},"info")`],
-          ]
-          if (has_receipt) {
-            messages.push(['update-in', '#receiptNavButtons', receiptNavButton])
-          } else {
-            messages.push(
-              ['update-text', '.receiptMessage', receiptMessage],
-              ['update-text', '#receiptNavButtons', ''],
-            )
-          }
-          throw new MessageException(['batch', messages])
-        },
-      )
+        let receiptMessage = has_receipt
+          ? '已刪除收據相片'
+          : ReceiptMessage.not_paid
+        let messages: ServerMessage[] = [
+          ['remove', `.receipt--item[data-receipt-id="${receipt_id}"]`],
+          ['eval', `showToast(${JSON.stringify(receiptMessage)},"info")`],
+        ]
+        if (has_receipt) {
+          messages.push(['update-in', '#receiptNavButtons', receiptNavButton])
+        } else {
+          messages.push(
+            ['update-text', '.receiptMessage', receiptMessage],
+            ['update-text', '#receiptNavButtons', ''],
+          )
+        }
+        throw new MessageException(['batch', messages])
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/admin': {
@@ -2830,38 +2753,35 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
           node: 'This api is only available over ws',
         }
       }
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, shop_slug, service_slug }) => {
-          try {
-            let { user } = getAuthRole(context)
-            if (shop.owner_id != user?.id)
-              throw 'Only shop owner can archive the service'
+      return resolveServiceRoute(context, ({ service, shop, shop_slug }) => {
+        try {
+          let { user } = getAuthRole(context)
+          if (shop.owner_id != user?.id)
+            throw 'Only shop owner can archive the service'
 
-            let title = service.name || service.slug
-            title = concat_words('封存了', title)
+          let title = service.name || service.slug
+          title = concat_words('封存了', title)
 
-            // TODO remind if there are pending bookings
+          // TODO remind if there are pending bookings
 
-            service.archive_time = Date.now()
+          service.archive_time = Date.now()
 
-            throw new MessageException([
-              'batch',
-              [
-                ['eval', `showToast(${JSON.stringify(title)},'info')`],
-                ['redirect', `/shop/${shop_slug}`],
-              ],
-            ])
-          } catch (error) {
-            if (error instanceof MessageException) throw error
-            console.log(error)
-            throw new MessageException([
-              'eval',
-              `showToast(${JSON.stringify(String(error))},'error')`,
-            ])
-          }
-        },
-      )
+          throw new MessageException([
+            'batch',
+            [
+              ['eval', `showToast(${JSON.stringify(title)},'info')`],
+              ['redirect', `/shop/${shop_slug}`],
+            ],
+          ])
+        } catch (error) {
+          if (error instanceof MessageException) throw error
+          console.log(error)
+          throw new MessageException([
+            'eval',
+            `showToast(${JSON.stringify(String(error))},'error')`,
+          ])
+        }
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/question/add': {
@@ -2928,51 +2848,45 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       }
       let auth = getAuthRole(context)
       let { question_id } = context.routerMatch?.params
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, shop_slug, service_slug }) => {
-          if (auth.shop?.id != service.shop_id) {
-            throw new MessageException([
-              'eval',
-              `showToast('Only shop owner can update the service','error')`,
-            ])
-          }
-          let question = proxy.service_question[question_id]
-          if (!question) {
-            throw new MessageException([
-              'eval',
-              `showToast('question not found','error')`,
-            ])
-          }
-          if (question.service_id != service.id) {
-            throw new MessageException([
-              'eval',
-              `showToast('question not belong to the service','error')`,
-            ])
-          }
-
-          let name = question.question
-          name = name ? `「${name}」` : ` #${question_id}`
-          delete proxy.service_question[question_id]
-          let new_count = count(proxy.service_question, {
-            service_id: service.id!,
-          })
+      return resolveServiceRoute(context, ({ service }) => {
+        if (!auth.is_owner) {
           throw new MessageException([
-            'batch',
-            [
-              [
-                'remove',
-                `.service-question[data-question-id="${question_id}"]`,
-              ],
-              ['eval', `updateListCount('service-question',${new_count})`],
-              [
-                'eval',
-                `showToast(${JSON.stringify(`刪除了問題${name}`)},'info')`,
-              ],
-            ],
+            'eval',
+            `showToast('Only shop owner can update the service','error')`,
           ])
-        },
-      )
+        }
+        let question = proxy.service_question[question_id]
+        if (!question) {
+          throw new MessageException([
+            'eval',
+            `showToast('question not found','error')`,
+          ])
+        }
+        if (question.service_id != service.id) {
+          throw new MessageException([
+            'eval',
+            `showToast('question not belong to the service','error')`,
+          ])
+        }
+
+        let name = question.question
+        name = name ? `「${name}」` : ` #${question_id}`
+        delete proxy.service_question[question_id]
+        let new_count = count(proxy.service_question, {
+          service_id: service.id!,
+        })
+        throw new MessageException([
+          'batch',
+          [
+            ['remove', `.service-question[data-question-id="${question_id}"]`],
+            ['eval', `updateListCount('service-question',${new_count})`],
+            [
+              'eval',
+              `showToast(${JSON.stringify(`刪除了問題${name}`)},'info')`,
+            ],
+          ],
+        ])
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/question': {
@@ -2984,41 +2898,38 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
           node: 'This api is only available over ws',
         }
       }
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, shop_slug, service_slug }) => {
-          let { user } = getAuthRole(context)
-          let is_shop_owner = user?.id == shop.owner_id
-          if (!is_shop_owner) {
-            throw new MessageException([
-              'eval',
-              `showAlert('not shop owner','error')`,
-            ])
-          }
-          let {
-            args: { '0': question_id, 1: value },
-          } = object({
-            type: literal('ws'),
-            args: object({ 0: id(), 1: string() }),
-          }).parse(context)
-          let question = find(proxy.service_question, {
-            id: +question_id!,
-            service_id: service.id!,
-          })
-          if (!question) {
-            throw new MessageException([
-              'eval',
-              `showAlert('question #${question_id} not found','error')`,
-            ])
-          }
-          question.question = value
-
+      return resolveServiceRoute(context, ({ service, shop }) => {
+        let { user } = getAuthRole(context)
+        let is_shop_owner = user?.id == shop.owner_id
+        if (!is_shop_owner) {
           throw new MessageException([
             'eval',
-            `showToast('更新了問題內容','info')`,
+            `showAlert('not shop owner','error')`,
           ])
-        },
-      )
+        }
+        let {
+          args: { '0': question_id, 1: value },
+        } = object({
+          type: literal('ws'),
+          args: object({ 0: id(), 1: string() }),
+        }).parse(context)
+        let question = find(proxy.service_question, {
+          id: +question_id!,
+          service_id: service.id!,
+        })
+        if (!question) {
+          throw new MessageException([
+            'eval',
+            `showAlert('question #${question_id} not found','error')`,
+          ])
+        }
+        question.question = value
+
+        throw new MessageException([
+          'eval',
+          `showToast('更新了問題內容','info')`,
+        ])
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/remark/add': {
@@ -3086,48 +2997,45 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       }
       let auth = getAuthRole(context)
       let { remark_id } = context.routerMatch?.params
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, shop_slug, service_slug }) => {
-          if (auth.shop?.id != service.shop_id) {
-            throw new MessageException([
-              'eval',
-              `showToast('Only shop owner can update the service','error')`,
-            ])
-          }
-          let remark = proxy.service_remark[remark_id]
-          if (!remark) {
-            throw new MessageException([
-              'eval',
-              `showToast('remark not found','error')`,
-            ])
-          }
-          if (remark.service_id != service.id) {
-            throw new MessageException([
-              'eval',
-              `showToast('remark not belong to the service','error')`,
-            ])
-          }
-
-          let name = remark.title
-          name = name ? `「${name}」` : ` #${remark_id}`
-          delete proxy.service_remark[remark_id]
-          let new_count = count(proxy.service_remark, {
-            service_id: service.id!,
-          })
+      return resolveServiceRoute(context, ({ service }) => {
+        if (!auth.is_owner) {
           throw new MessageException([
-            'batch',
-            [
-              ['remove', `.service-remark[data-remark-id="${remark_id}"]`],
-              ['eval', `updateListCount('service-remark',${new_count})`],
-              [
-                'eval',
-                `showToast(${JSON.stringify(`刪除了注意事項${name}`)},'info')`,
-              ],
-            ],
+            'eval',
+            `showToast('Only shop owner can update the service','error')`,
           ])
-        },
-      )
+        }
+        let remark = proxy.service_remark[remark_id]
+        if (!remark) {
+          throw new MessageException([
+            'eval',
+            `showToast('remark not found','error')`,
+          ])
+        }
+        if (remark.service_id != service.id) {
+          throw new MessageException([
+            'eval',
+            `showToast('remark not belong to the service','error')`,
+          ])
+        }
+
+        let name = remark.title
+        name = name ? `「${name}」` : ` #${remark_id}`
+        delete proxy.service_remark[remark_id]
+        let new_count = count(proxy.service_remark, {
+          service_id: service.id!,
+        })
+        throw new MessageException([
+          'batch',
+          [
+            ['remove', `.service-remark[data-remark-id="${remark_id}"]`],
+            ['eval', `updateListCount('service-remark',${new_count})`],
+            [
+              'eval',
+              `showToast(${JSON.stringify(`刪除了注意事項${name}`)},'info')`,
+            ],
+          ],
+        ])
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/remark/:field': {
@@ -3139,49 +3047,46 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
           node: 'This api is only available over ws',
         }
       }
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, shop_slug, service_slug }) => {
-          let { user } = getAuthRole(context)
-          let is_shop_owner = user?.id == shop.owner_id
-          if (!is_shop_owner) {
-            throw new MessageException([
-              'eval',
-              `showAlert('not shop owner','error')`,
-            ])
-          }
-          let {
-            args: { '0': remark_id, 1: value, 2: label },
-            routerMatch: {
-              params: { field },
-            },
-          } = object({
-            type: literal('ws'),
-            args: object({ 0: id(), 1: string(), 2: string() }),
-            routerMatch: object({
-              params: object({
-                field: values(['title' as const, 'content' as const]),
-              }),
-            }),
-          }).parse(context)
-          let remark = find(proxy.service_remark, {
-            id: +remark_id!,
-            service_id: service.id!,
-          })
-          if (!remark) {
-            throw new MessageException([
-              'eval',
-              `showAlert('remark #${remark_id} not found','error')`,
-            ])
-          }
-          remark[field] = value
-
+      return resolveServiceRoute(context, ({ service, shop }) => {
+        let { user } = getAuthRole(context)
+        let is_shop_owner = user?.id == shop.owner_id
+        if (!is_shop_owner) {
           throw new MessageException([
             'eval',
-            `showToast('更新了注意事項${label}','info')`,
+            `showAlert('not shop owner','error')`,
           ])
-        },
-      )
+        }
+        let {
+          args: { '0': remark_id, 1: value, 2: label },
+          routerMatch: {
+            params: { field },
+          },
+        } = object({
+          type: literal('ws'),
+          args: object({ 0: id(), 1: string(), 2: string() }),
+          routerMatch: object({
+            params: object({
+              field: values(['title' as const, 'content' as const]),
+            }),
+          }),
+        }).parse(context)
+        let remark = find(proxy.service_remark, {
+          id: +remark_id!,
+          service_id: service.id!,
+        })
+        if (!remark) {
+          throw new MessageException([
+            'eval',
+            `showAlert('remark #${remark_id} not found','error')`,
+          ])
+        }
+        remark[field] = value
+
+        throw new MessageException([
+          'eval',
+          `showToast('更新了注意事項${label}','info')`,
+        ])
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/more/:filename/delete': {
@@ -3196,35 +3101,32 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       let auth = getAuthRole(context)
       let { filename } = context.routerMatch?.params
       let index = new URLSearchParams(context.routerMatch?.search).get('index')!
-      return resolveServiceRoute(
-        context,
-        ({ service, shop_slug, service_slug }) => {
-          if (auth.shop?.id != service.shop_id) {
-            throw new MessageException([
-              'eval',
-              `showToast('Only shop owner can update the service','error')`,
-            ])
-          }
-          filename = basename(filename)
-          let url = getServiceMoreImage(shop_slug, service_slug, filename)
-          let file = join('public', url)
-          try {
-            unlinkSync(file)
-          } catch (error) {
-            // file already deleted?
-          }
+      return resolveServiceRoute(context, ({ shop_slug, service_slug }) => {
+        if (!auth.is_owner) {
           throw new MessageException([
-            'batch',
-            [
-              ['remove', `.more-item[data-more-index="${index}"]`],
-              [
-                'eval',
-                `showToast(${JSON.stringify(`刪除了相片${+index + 1}`)},'info')`,
-              ],
-            ],
+            'eval',
+            `showToast('Only shop owner can update the service','error')`,
           ])
-        },
-      )
+        }
+        filename = basename(filename)
+        let url = getServiceMoreImage(shop_slug, service_slug, filename)
+        let file = join('public', url)
+        try {
+          unlinkSync(file)
+        } catch (error) {
+          // file already deleted?
+        }
+        throw new MessageException([
+          'batch',
+          [
+            ['remove', `.more-item[data-more-index="${index}"]`],
+            [
+              'eval',
+              `showToast(${JSON.stringify(`刪除了相片${+index + 1}`)},'info')`,
+            ],
+          ],
+        ])
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/option/:option_id/delete': {
@@ -3240,8 +3142,8 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       let { option_id } = context.routerMatch?.params
       return resolveServiceRoute(
         context,
-        ({ service, shop, shop_slug, service_slug }) => {
-          if (auth.shop?.id != service.shop_id) {
+        ({ service, shop_slug, service_slug }) => {
+          if (!auth.is_owner) {
             throw new MessageException([
               'eval',
               `showToast('Only shop owner can update the service','error')`,
@@ -3310,42 +3212,39 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
           node: 'This api is only available over ws',
         }
       }
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, shop_slug, service_slug }) => {
-          let { user } = getAuthRole(context)
-          let is_shop_owner = user?.id == shop.owner_id
-          if (!is_shop_owner) {
-            throw new MessageException([
-              'eval',
-              `showAlert('not shop owner','error')`,
-            ])
-          }
-
-          let {
-            args: { '0': option_id, 1: option_name },
-          } = object({
-            type: literal('ws'),
-            args: object({ 0: id(), 1: string({ nonEmpty: true }) }),
-          }).parse(context)
-          let option = find(proxy.service_option, {
-            id: +option_id!,
-            service_id: service.id!,
-          })
-          if (!option) {
-            throw new MessageException([
-              'eval',
-              `showAlert('option #${option_id} not found','error')`,
-            ])
-          }
-          option.name = option_name
-
+      return resolveServiceRoute(context, ({ service, shop }) => {
+        let { user } = getAuthRole(context)
+        let is_shop_owner = user?.id == shop.owner_id
+        if (!is_shop_owner) {
           throw new MessageException([
             'eval',
-            `showToast('更新了款式標題','info')`,
+            `showAlert('not shop owner','error')`,
           ])
-        },
-      )
+        }
+
+        let {
+          args: { '0': option_id, 1: option_name },
+        } = object({
+          type: literal('ws'),
+          args: object({ 0: id(), 1: string({ nonEmpty: true }) }),
+        }).parse(context)
+        let option = find(proxy.service_option, {
+          id: +option_id!,
+          service_id: service.id!,
+        })
+        if (!option) {
+          throw new MessageException([
+            'eval',
+            `showAlert('option #${option_id} not found','error')`,
+          ])
+        }
+        option.name = option_name
+
+        throw new MessageException([
+          'eval',
+          `showToast('更新了款式標題','info')`,
+        ])
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/timeslot/:timeslot_id/update': {
@@ -3357,70 +3256,67 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
           node: 'This api is only available over ws',
         }
       }
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, shop_slug, service_slug }) => {
-          let { user } = getAuthRole(context)
-          let is_shop_owner = user?.id == shop.owner_id
-          if (!is_shop_owner) {
+      return resolveServiceRoute(context, ({ service, shop }) => {
+        let { user } = getAuthRole(context)
+        let is_shop_owner = user?.id == shop.owner_id
+        if (!is_shop_owner) {
+          throw new MessageException([
+            'eval',
+            `showToast('only shop owner can update timeslot','error')`,
+          ])
+        }
+
+        let timeslot_id = context.routerMatch?.params.timeslot_id
+        let timeslot = find(proxy.service_timeslot, {
+          service_id: service.id!,
+          id: timeslot_id,
+        })
+        if (!timeslot) {
+          throw new MessageException([
+            'eval',
+            `showToast('timeslot not found','error')`,
+          ])
+        }
+
+        let { 0: field, 1: value } = object({
+          0: values([
+            'start_date' as const,
+            'end_date' as const,
+            'weekdays' as const,
+          ]),
+          1: string(),
+        }).parse(context.args)
+
+        switch (field) {
+          case 'start_date':
+            timeslot.start_date = toDatePart(
+              new TimezoneDate(date().parse(value).getTime()),
+            )
             throw new MessageException([
               'eval',
-              `showToast('only shop owner can update timeslot','error')`,
+              `showToast('更新了開始日期','info')`,
             ])
-          }
-
-          let timeslot_id = context.routerMatch?.params.timeslot_id
-          let timeslot = find(proxy.service_timeslot, {
-            service_id: service.id!,
-            id: timeslot_id,
-          })
-          if (!timeslot) {
+          case 'end_date':
+            timeslot.end_date = toDatePart(
+              new TimezoneDate(date().parse(value).getTime()),
+            )
             throw new MessageException([
               'eval',
-              `showToast('timeslot not found','error')`,
+              `showToast('更新了結束日期','info')`,
             ])
-          }
-
-          let { 0: field, 1: value } = object({
-            0: values([
-              'start_date' as const,
-              'end_date' as const,
-              'weekdays' as const,
-            ]),
-            1: string(),
-          }).parse(context.args)
-
-          switch (field) {
-            case 'start_date':
-              timeslot.start_date = toDatePart(
-                new TimezoneDate(date().parse(value).getTime()),
-              )
-              throw new MessageException([
-                'eval',
-                `showToast('更新了開始日期','info')`,
-              ])
-            case 'end_date':
-              timeslot.end_date = toDatePart(
-                new TimezoneDate(date().parse(value).getTime()),
-              )
-              throw new MessageException([
-                'eval',
-                `showToast('更新了結束日期','info')`,
-              ])
-            case 'weekdays':
-              timeslot.weekdays = value
-              throw new MessageException([
-                'eval',
-                `showToast('更新了可選擇星期','info')`,
-              ])
-            default:
-              throw new MessageException([
-                'eval',
-                `showToast('unknown field ${field satisfies never}','error')`,
-              ])
-          }
-        },
-      )
+          case 'weekdays':
+            timeslot.weekdays = value
+            throw new MessageException([
+              'eval',
+              `showToast('更新了可選擇星期','info')`,
+            ])
+          default:
+            throw new MessageException([
+              'eval',
+              `showToast('unknown field ${field satisfies never}','error')`,
+            ])
+        }
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/timeslot/:timeslot_id/remove': {
@@ -3432,64 +3328,61 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
           node: 'This api is only available over ws',
         }
       }
-      return resolveServiceRoute(
-        context,
-        ({ service, shop, shop_slug, service_slug }) => {
-          let { user } = getAuthRole(context)
-          let is_shop_owner = user?.id == shop.owner_id
-          if (!is_shop_owner) {
-            throw new MessageException([
-              'eval',
-              `showToast('only shop owner can remove timeslot','error')`,
-            ])
-          }
-
-          let new_timeslot_count =
-            count(proxy.service_timeslot, {
-              service_id: service.id!,
-            }) - 1
-          if (new_timeslot_count === 0) {
-            throw new MessageException([
-              'eval',
-              `showToast('需要至少一個時段','error')`,
-            ])
-          }
-
-          let timeslot_id = context.routerMatch?.params.timeslot_id
-
-          let timeslot = find(proxy.service_timeslot, {
-            service_id: service.id!,
-            id: timeslot_id,
-          })
-          if (!timeslot) {
-            throw EarlyTerminate
-          }
-
-          del(proxy.timeslot_hour, { service_timeslot_id: timeslot_id })
-          delete proxy.service_timeslot[timeslot_id]
-
-          context.ws.send([
-            'batch',
-            [
-              [
-                'remove',
-                `.available-timeslot--item[data-timeslot-id="${timeslot_id}"]`,
-              ],
-              ['eval', `showToast('取消了一組時段','warning')`],
-              [
-                'update-text',
-                '.available-timeslot--list .list-description p',
-                `共 ${new_timeslot_count} 組時段`,
-              ],
-              [
-                'remove',
-                '.available-timeslot--item:first-child ion-item-divider',
-              ],
-            ],
+      return resolveServiceRoute(context, ({ service, shop }) => {
+        let { user } = getAuthRole(context)
+        let is_shop_owner = user?.id == shop.owner_id
+        if (!is_shop_owner) {
+          throw new MessageException([
+            'eval',
+            `showToast('only shop owner can remove timeslot','error')`,
           ])
+        }
+
+        let new_timeslot_count =
+          count(proxy.service_timeslot, {
+            service_id: service.id!,
+          }) - 1
+        if (new_timeslot_count === 0) {
+          throw new MessageException([
+            'eval',
+            `showToast('需要至少一個時段','error')`,
+          ])
+        }
+
+        let timeslot_id = context.routerMatch?.params.timeslot_id
+
+        let timeslot = find(proxy.service_timeslot, {
+          service_id: service.id!,
+          id: timeslot_id,
+        })
+        if (!timeslot) {
           throw EarlyTerminate
-        },
-      )
+        }
+
+        del(proxy.timeslot_hour, { service_timeslot_id: timeslot_id })
+        delete proxy.service_timeslot[timeslot_id]
+
+        context.ws.send([
+          'batch',
+          [
+            [
+              'remove',
+              `.available-timeslot--item[data-timeslot-id="${timeslot_id}"]`,
+            ],
+            ['eval', `showToast('取消了一組時段','warning')`],
+            [
+              'update-text',
+              '.available-timeslot--list .list-description p',
+              `共 ${new_timeslot_count} 組時段`,
+            ],
+            [
+              'remove',
+              '.available-timeslot--item:first-child ion-item-divider',
+            ],
+          ],
+        ])
+        throw EarlyTerminate
+      })
     },
   },
   '/shop/:shop_slug/service/:service_slug/timeslot/add': {
@@ -3688,12 +3581,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       )
     },
   },
-  '/service-detail/add': {
-    title: title(addPageTitle),
-    description: 'TODO',
-    node: <AddPage />,
-    streaming: false,
-  },
   '/service-detail/add/submit': {
     title: apiEndpointTitle,
     description: 'TODO',
@@ -3709,5 +3596,3 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
 } satisfies Routes
 
 export default { routes, attachRoutes }
-
-declare var priceLabel: HTMLElement

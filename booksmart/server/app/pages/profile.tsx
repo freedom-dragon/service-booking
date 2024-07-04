@@ -17,6 +17,8 @@ import { Raw } from '../components/raw.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
+import { AppMoreBackButton } from './app-more.js'
+import { loginRouteUrl } from './login.js'
 
 let pageTitle = '聯絡資料'
 
@@ -43,7 +45,7 @@ let profilePage = (
   <>
     <ion-header>
       <ion-toolbar color="primary">
-        <IonBackButton href="/app/more" backText="更多" color="light" />
+        <AppMoreBackButton color="light" />
         <ion-title role="heading" aria-level="1">
           {pageTitle}
         </ion-title>
@@ -192,7 +194,7 @@ async function previewAvatar(input) {
 
 function Logout(_attrs: {}, context: ExpressContext) {
   eraseUserIdFromCookie(context.res)
-  return <Redirect href="/login" />
+  return <Redirect href={loginRouteUrl(context)} />
 }
 
 export function UserMessageInGuestView(attrs: { user_id: number }) {

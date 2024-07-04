@@ -1,15 +1,15 @@
-import { config } from '../../config.js'
 import { toRouteUrl } from '../../url.js'
-import { getContextShop } from '../auth/shop.js'
-import { Context, DynamicContext } from '../context.js'
+import { getContextShopSlug } from '../auth/shop.js'
+import { DynamicContext } from '../context.js'
 import { o } from '../jsx/jsx.js'
+import appMore from '../pages/app-more.js'
+import appNotice from '../pages/app-notice.js'
 import booking from '../pages/booking.js'
 import shopHome from '../pages/shop-home.js'
 import { IonTabBar } from './ion-tab-bar.js'
 
-function ShopTabBar(attrs: {}, context: DynamicContext) {
-  let shop = getContextShop(context)
-  let shop_slug = shop.slug
+export function AppTabBar(attrs: {}, context: DynamicContext) {
+  let shop_slug = getContextShopSlug(context)
   return (
     <IonTabBar
       tabs={[
@@ -25,9 +25,9 @@ function ShopTabBar(attrs: {}, context: DynamicContext) {
           tab: 'booking',
           icon: 'calendar',
           label: '行程',
-          href: 
-          toRouteUrl(booking.routes,'')
-          '/booking',
+          href: toRouteUrl(booking.routes, '/shop/:shop_slug/booking', {
+            params: { shop_slug },
+          }),
         },
         // {
         //   tab: 'shopping',
@@ -39,17 +39,19 @@ function ShopTabBar(attrs: {}, context: DynamicContext) {
           tab: 'notice',
           icon: 'notifications',
           label: '通知',
-          href: '/app/notice',
+          href: toRouteUrl(appNotice.routes, '/shop/:shop_slug/notice', {
+            params: { shop_slug },
+          }),
         },
         {
           tab: 'more',
           icon: 'ellipsis-horizontal',
           label: '更多',
-          href: '/app/more',
+          href: toRouteUrl(appMore.routes, '/shop/:shop_slug/more', {
+            params: { shop_slug },
+          }),
         },
       ]}
     />
   )
 }
-
-export let appIonTabBar = <ShopTabBar />
