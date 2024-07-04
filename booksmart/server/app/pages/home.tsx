@@ -1,7 +1,8 @@
 import { o } from '../jsx/jsx.js'
 import { prerender } from '../jsx/html.js'
 import SourceCode from '../components/source-code.js'
-import { config } from '../../config.js'
+import { mapArray } from '../components/fragment.js'
+import { proxy } from '../../../db/proxy.js'
 
 // Calling <Component/> will transform the JSX into AST for each rendering.
 // You can reuse a pre-compute AST like `let component = <Component/>`.
@@ -16,12 +17,19 @@ let content = (
       A booking system for shops of all sizes. From one-man micro startups to
       mid-size companies.
     </p>
-    <a href={'/shop/' + config.shop_slug}>Demo Shop</a>
+    <h2>Available Shops</h2>
+    <ShopList />
     <SourceCode page="home.tsx" />
   </div>
 )
 
+function ShopList() {
+  return mapArray(proxy.shop, shop => (
+    <a href={'/shop/' + shop.slug}>{shop.name}</a>
+  ))
+}
+
 // And it can be pre-rendered into html as well
-let Home = prerender(content)
+let Home = content
 
 export default Home

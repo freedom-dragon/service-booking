@@ -1490,7 +1490,7 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
   )
 }
 
-let routes: Routes = {
+let routes = {
   '/booking': {
     title: title(pageTitle),
     description: 'manage your service booking',
@@ -1527,6 +1527,6 @@ let routes: Routes = {
     node: <SubmitResult />,
     streaming: false,
   },
-}
+} satisfies Routes
 
 export default { routes }
