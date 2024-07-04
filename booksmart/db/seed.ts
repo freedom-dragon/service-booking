@@ -6,6 +6,8 @@ import { calcBookingTotalFee as calcBookingFee } from './service-store'
 //
 // You can setup the database with initial config and sample data via the db proxy.
 
+// TODO add shop_id in user
+
 proxy.user[1] = {
   username: null,
   nickname: 'BookSmart Admin',
@@ -70,6 +72,39 @@ proxy.shop[1] = {
   bank_name: null,
   bank_account_num: null,
   bank_account_name: null,
+}
+
+proxy.shop[2] = {
+  owner_id: 3,
+  name: 'Beeno Coding Studio',
+  slug: 'beeno.coding.studio',
+  bio: 'Software development training for all',
+  desc: 'Beeno Coding Studio 提供全面的軟件開發培訓，適合各種技能水平的個人。無論你是希望進入編程世界的初學者，還是希望擴展知識的經驗豐富的開發者，我們的課程都能滿足你的需求。加入我們，提升你的技能，推動你的科技行業職業發展。',
+  owner_name: 'Beeno',
+  address: '123 Tech Avenue, Suite 456, Innovation City',
+  address_remark: `
+- 位於科技區中心，交通便利
+- 公共交通方便，停車位充足
+- 設施現代，配備先進設備
+`.trim(),
+  tel: '98765432',
+  email: 'info@beenocodingstudio.com',
+  facebook: 'beenocodingstudio',
+  messenger: 'beenocodingstudio',
+  instagram: 'beenocodingstudio',
+  youtube: 'beenocodingstudio',
+  whatsapp: '98765432',
+  telegram: 'beenocodingstudio',
+  twitter: 'beenocoding',
+  floating_contact_method: 'email',
+  payme_tel: '98765432',
+  payme_link: 'https://payme.hsbc/beenocodingstudio',
+  fps_tel: '98765432',
+  fps_email: 'payments@beenocodingstudio.com',
+  fps_id: '98765432',
+  bank_name: 'Tech Bank',
+  bank_account_num: '123456789012',
+  bank_account_name: 'Beeno Coding Studio',
 }
 
 proxy.shop_locale[1] = {

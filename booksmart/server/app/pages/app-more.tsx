@@ -14,6 +14,7 @@ import { toRouteUrl } from '../../url.js'
 import shopAdmin from './shop-admin.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { loginRouteUrl } from './login.js'
+import profile from './profile.js'
 
 let pageTitle = '更多'
 
@@ -107,6 +108,7 @@ function ProfileHeader(attrs: {}, context: Context) {
 }
 
 function ProfileItems(attrs: {}, context: DynamicContext) {
+  let shop_slug = getContextShopSlug(context)
   let user = getAuthUser(context)
   if (!user) {
     return (
@@ -117,7 +119,12 @@ function ProfileItems(attrs: {}, context: DynamicContext) {
     )
   }
   return (
-    <Link tagName="ion-item" href="/profile">
+    <Link
+      tagName="ion-item"
+      href={toRouteUrl(profile.routes, '/shop/:shop_slug/profile', {
+        params: { shop_slug },
+      })}
+    >
       <ion-icon slot="start" name="person-outline" />
       <ion-label>聯絡資料</ion-label>
     </Link>

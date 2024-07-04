@@ -3,7 +3,7 @@ import { HttpError } from '../../exception.js'
 import type { DynamicContext } from '../context'
 import { find } from 'better-sqlite3-proxy'
 
-export function getContextShopSlug(context: DynamicContext) {
+export function getContextShopSlug(context: DynamicContext): string {
   let { shop_slug } = context.routerMatch?.params
   if (!shop_slug) throw new HttpError(400, 'missing shop slug')
   return shop_slug
