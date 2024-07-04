@@ -176,6 +176,9 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
             </>
           ) : null}
         </h2>
+        {services.length == 0 ? (
+          <p class="ion-margin-horizontal">未有{locale.service}</p>
+        ) : null}
         <ion-list>
           {mapArray(services, ({ id, timeslot_count }) => {
             let service = proxy.service[id]
