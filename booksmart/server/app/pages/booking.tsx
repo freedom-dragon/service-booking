@@ -984,11 +984,6 @@ function UserPageContent(
   }
 }
 
-let items = [
-  { title: 'Android', slug: 'md' },
-  { title: 'iOS', slug: 'ios' },
-]
-
 let calendarStyle = Style(/* css */ `
 .calendar--title {
   text-align: center;
@@ -1108,72 +1103,6 @@ function Main(attrs: {}, context: Context) {
       )}
     </>
   )
-}
-
-let addPage = (
-  <>
-    {Style(/* css */ `
-#AddCalendar .hint {
-  margin-inline-start: 1rem;
-  margin-block: 0.25rem;
-}
-`)}
-    <ion-header>
-      <ion-toolbar>
-        <IonBackButton href="/booking" backText={pageTitle} />
-        <ion-title role="heading" aria-level="1">
-          {addPageTitle}
-        </ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content id="AddCalendar" class="ion-padding">
-      <form
-        method="POST"
-        action="/booking/add/submit"
-        onsubmit="emitForm(event)"
-      >
-        <ion-list>
-          <ion-item>
-            <ion-input
-              name="title"
-              label="Title*:"
-              label-placement="floating"
-              required
-              minlength="3"
-              maxlength="50"
-            />
-          </ion-item>
-          <p class="hint">(3-50 characters)</p>
-          <ion-item>
-            <ion-input
-              name="slug"
-              label="Slug*: (unique url)"
-              label-placement="floating"
-              required
-              pattern="(\w|-|\.){1,32}"
-            />
-          </ion-item>
-          <p class="hint">
-            (1-32 characters of: <code>a-z A-Z 0-9 - _ .</code>)
-          </p>
-        </ion-list>
-        <div style="margin-inline-start: 1rem">
-          <ion-button type="submit">Submit</ion-button>
-        </div>
-        <p>
-          Remark:
-          <br />
-          *: mandatory fields
-        </p>
-      </form>
-    </ion-content>
-  </>
-)
-
-function AddPage(attrs: {}, context: DynamicContext) {
-  let user = getAuthUser(context)
-  if (!user) return <Redirect href="/login" />
-  return addPage
 }
 
 let filterParser = object({
@@ -1426,63 +1355,6 @@ ${booking.user!.nickname} 你好，
   }
 }
 
-let submitParser = object({
-  title: string({ minLength: 3, maxLength: 50 }),
-  slug: string({ match: /^[\w-]{1,32}$/ }),
-})
-
-function Submit(attrs: {}, context: DynamicContext) {
-  try {
-    let user = getAuthUser(context)
-    if (!user) throw 'You must be logged in to submit ' + pageTitle
-    let body = getContextFormBody(context)
-    let input = submitParser.parse(body)
-    let id = items.push({
-      title: input.title,
-      slug: input.slug,
-    })
-    return <Redirect href={`/booking/result?id=${id}`} />
-  } catch (error) {
-    return (
-      <Redirect
-        href={
-          '/booking/result?' + new URLSearchParams({ error: String(error) })
-        }
-      />
-    )
-  }
-}
-
-function SubmitResult(attrs: {}, context: DynamicContext) {
-  let params = new URLSearchParams(context.routerMatch?.search)
-  let error = params.get('error')
-  let id = params.get('id')
-  return (
-    <>
-      <ion-header>
-        <ion-toolbar>
-          <IonBackButton href="/booking/add" backText="Form" />
-          <ion-title role="heading" aria-level="1">
-            Submitted {pageTitle}
-          </ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content id="AddCalendar" class="ion-padding">
-        {error ? (
-          renderError(error, context)
-        ) : (
-          <>
-            <p>Your submission is received (#{id}).</p>
-            <Link href="/booking" tagName="ion-button">
-              Back to {pageTitle}
-            </Link>
-          </>
-        )}
-      </ion-content>
-    </>
-  )
-}
-
 let routes = {
   '/shop/:shop_slug/booking': {
     title: title(pageTitle),
@@ -1500,24 +1372,6 @@ let routes = {
     title: apiEndpointTitle,
     description: 'manage a booking by merchant',
     node: <ManageBooking />,
-    streaming: false,
-  },
-  '/booking/add': {
-    title: title(addPageTitle),
-    description: 'TODO',
-    node: <AddPage />,
-    streaming: false,
-  },
-  '/booking/add/submit': {
-    title: apiEndpointTitle,
-    description: 'TODO',
-    node: <Submit />,
-    streaming: false,
-  },
-  '/booking/result': {
-    title: apiEndpointTitle,
-    description: 'TODO',
-    node: <SubmitResult />,
     streaming: false,
   },
 } satisfies Routes
