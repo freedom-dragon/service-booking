@@ -122,7 +122,12 @@ function seedService(
       content: remark.content,
     }
   }
-  del(proxy.service_question, { service_id: service_id! })
+  for (let question of filter(proxy.service_question, {
+    service_id: service_id!,
+  })) {
+    del(proxy.booking_answer, { service_question_id: question.id! })
+    delete proxy.service_question[question.id!]
+  }
   for (let question of questions) {
     proxy.service_question.push({ service_id: service_id!, question })
   }
