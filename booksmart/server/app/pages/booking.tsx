@@ -45,6 +45,7 @@ import { Script } from '../components/script.js'
 import { formatHKDateString } from '../format/date.js'
 import { countBooking } from '../booking-store.js'
 import { formatDuration } from '../format/duration.js'
+import { loginRouteUrl } from './login.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -726,7 +727,7 @@ function UserPage(user: User | null, context: DynamicContext) {
         {!page ? (
           <>
             <p>
-              <Link href="/login">「登入」</Link>
+              <Link href={loginRouteUrl(context)}>「登入」</Link>
               後可查看預約
             </p>
           </>
@@ -1028,7 +1029,7 @@ function getWeeks(date: TimezoneDate) {
   return weeks
 }
 
-function Main(attrs: {}, context: Context) {
+function Main(attrs: {}, context: DynamicContext) {
   let user = getAuthUser(context)
   let date = new TimezoneDate()
   date.timezone = +8
@@ -1098,7 +1099,7 @@ function Main(attrs: {}, context: Context) {
       ) : (
         <p hidden>
           You can add event / available timeslot after{' '}
-          <Link href="/login">login</Link>.
+          <Link href={loginRouteUrl(context)}>login</Link>.
         </p>
       )}
     </>

@@ -32,7 +32,7 @@ import { getAuthUserId } from '../auth/user.js'
 import { UserMessageInGuestView } from './profile.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { wsStatus } from '../components/ws-status.js'
-import { loginRouteUrl } from './login.js'
+import { LoginLink, loginRouteUrl } from './login.js'
 
 let style = Style(/* css */ `
 .oauth-provider-list a {
@@ -160,7 +160,7 @@ let emailFormBody = (
 let guestView = (
   <>
     <p>
-      Already have an account? <Link href={loginRouteUrl(context)}>Login</Link>
+      Already have an account? <LoginLink />
     </p>
     <div class="flex-center flex-column"></div>
     <div>Register with:</div>

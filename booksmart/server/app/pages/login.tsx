@@ -298,6 +298,10 @@ export function loginRouteUrl(
   })
 }
 
+export function LoginLink(attrs: {}, context: DynamicContext) {
+  return <Link href={loginRouteUrl(context)}>Login</Link>
+}
+
 let routes = {
   '/shop/:shop_slug/login': {
     title: title('登入'),

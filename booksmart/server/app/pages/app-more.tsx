@@ -13,6 +13,7 @@ import { getContextShopSlug } from '../auth/shop.js'
 import { toRouteUrl } from '../../url.js'
 import shopAdmin from './shop-admin.js'
 import { IonBackButton } from '../components/ion-back-button.js'
+import { loginRouteUrl } from './login.js'
 
 let pageTitle = '更多'
 
@@ -105,11 +106,11 @@ function ProfileHeader(attrs: {}, context: Context) {
   )
 }
 
-function ProfileItems(attrs: {}, context: Context) {
+function ProfileItems(attrs: {}, context: DynamicContext) {
   let user = getAuthUser(context)
   if (!user) {
     return (
-      <Link tagName="ion-item" href="/login">
+      <Link tagName="ion-item" href={loginRouteUrl(context)}>
         <ion-icon slot="start" name="log-in" />
         <ion-label>登入</ion-label>
       </Link>

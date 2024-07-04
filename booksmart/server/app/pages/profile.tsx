@@ -67,7 +67,8 @@ function Main(attrs: {}, context: DynamicContext) {
       <>
         <p>正在以訪客身份瀏覽此頁。</p>
         <p>
-          你可以<Link href="/login">登入</Link>以管理你的聯絡資料。
+          你可以<Link href={loginRouteUrl(context)}>登入</Link>
+          以管理你的聯絡資料。
         </p>
       </>
     )

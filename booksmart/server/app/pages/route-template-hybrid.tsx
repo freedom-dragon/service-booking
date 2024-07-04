@@ -10,6 +10,7 @@ import { object, string } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { getAuthUser } from '../auth/user.js'
+import { loginRouteUrl } from './login.js'
 
 let pageTitle = '__title__'
 let addPageTitle = 'Add __title__'
@@ -210,7 +211,7 @@ if (config.layout_type === LayoutType.ionic) {
 }
 function AddPage(attrs: {}, context: DynamicContext) {
   let user = getAuthUser(context)
-  if (!user) return <Redirect href="/login" />
+  if (!user) return <Redirect href={loginRouteUrl(context)} />
   return addPage
 }
 
