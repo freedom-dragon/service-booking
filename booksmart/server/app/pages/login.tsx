@@ -23,7 +23,7 @@ import { loadClientPlugin } from '../../client-plugin.js'
 import { AppMoreBackButton } from './app-more.js'
 import { toRouteUrl } from '../../url.js'
 import shopHome from './shop-home.js'
-import { getContextShopSlug } from '../auth/shop.js'
+import { getContextShop, getContextShopSlug } from '../auth/shop.js'
 
 let style = Style(/* css */ `
 #login .field {
@@ -218,12 +218,14 @@ let guestView = (
       action="/verify/email/submit"
       onsubmit="emitForm(event)"
     >
+      <ShopSlugField />
       {emailFormBody}
     </form>
     <div class="or-line flex-center" hidden>
       or
     </div>
     <form method="post" action="/login/submit" hidden>
+      <ShopSlugField />
       {passwordFormBody}
     </form>
     <div>首次使用{config.short_site_name}？您可以在提交預約時自動註冊。</div>
@@ -233,6 +235,11 @@ let guestView = (
     </div>
   </>
 )
+
+function ShopSlugField(attrs: {}, context: DynamicContext) {
+  let shop_slug = getContextShopSlug(context)
+  return <input hidden name="shop_slug" value={shop_slug} />
+}
 
 let codes: Record<string, string> = {
   not_found: 'user not found',

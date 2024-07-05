@@ -6,6 +6,7 @@ import {
   Context,
   DynamicContext,
   getContextFormBody,
+  getId,
   getStringCasual,
   WsContext,
 } from '../context.js'
@@ -332,7 +333,7 @@ function ClearInputContext(_attrs: {}, context: InputContext) {
 
 type InputContext = Context & {
   contextError?: ContextError
-  values?: Record<string, string>
+  values?: Record<string, string | number>
 }
 type ContextError = Record<string, ValidateResult>
 
@@ -579,6 +580,7 @@ async function submit(context: InputContext): Promise<Node> {
   try {
     let body = getContextFormBody(context)
     let input = {
+      shop_id: getId(body, 'shop_id'),
       username: getStringCasual(body, 'username').trim().toLowerCase(),
       password: getStringCasual(body, 'password'),
       email: getStringCasual(body, 'email').trim().toLowerCase(),
@@ -604,6 +606,7 @@ async function submit(context: InputContext): Promise<Node> {
       tel: null,
       avatar: null,
       nickname: null,
+      shop_id: input.shop_id,
     })
 
     let main: Node

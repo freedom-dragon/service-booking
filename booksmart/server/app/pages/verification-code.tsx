@@ -75,6 +75,7 @@ let requestEmailVerificationParser = object({
   tel: optional(string()),
   email: optional(string()),
   include_link: optional(boolean()),
+  shop_slug: string(),
 })
 let email_parser = email()
 
@@ -84,6 +85,13 @@ async function requestEmailVerification(
   try {
     let body = getContextFormBody(context)
     let input = requestEmailVerificationParser.parse(body, { name: 'body' })
+    let shop = find(proxy.shop, { slug: input.shop_slug })
+    if (!shop) {
+      throw new MessageException([
+        'eval',
+        `showToast('Shop not found','error')`,
+      ])
+    }
 
     let user: User | undefined
 
@@ -97,7 +105,7 @@ async function requestEmailVerification(
           `showToast('請檢查電郵地址的形式','warning')`,
         ])
       }
-      user = find(proxy.user, { email })
+      user = find(proxy.user, { email, shop_id: shop.id })
       if (!user) {
         throw new MessageException([
           'eval',
@@ -112,7 +120,7 @@ async function requestEmailVerification(
           `showToast('請輸入香港的手提電話號碼','warning')`,
         ])
       }
-      user = find(proxy.user, { tel })
+      user = find(proxy.user, { tel, shop_id: shop.id })
       if (!user) {
         throw new MessageException([
           'eval',
@@ -142,7 +150,7 @@ async function requestEmailVerification(
       revoke_time: null,
       match_id: null,
       user_id: user.id || null,
-      shop_id: null,
+      shop_id: shop.id!,
     })
     let { html, text } = verificationCodeEmail(
       { passcode, email: input.include_link ? email : null },
@@ -510,6 +518,7 @@ async function checkEmailVerificationCode(
             tel: null,
             avatar: null,
             nickname: null,
+            shop_id: verification_code.shop_id,
           })
         break
       }

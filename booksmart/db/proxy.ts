@@ -53,27 +53,8 @@ export type User = {
   email: null | string
   tel: null | string
   avatar: null | string
-}
-
-export type RequestLog = {
-  id?: null | number
-  method_id: number
-  method?: Method
-  url_id: number
-  url?: Url
-  user_agent_id: null | number
-  user_agent?: UserAgent
-  request_session_id: null | number
-  request_session?: RequestSession
-  user_id: null | number
-  user?: User
-  timestamp: number
-}
-
-export type VerificationAttempt = {
-  id?: null | number
-  passcode: string // char(6)
-  email: string
+  shop_id: null | number
+  shop?: Shop
 }
 
 export type Shop = {
@@ -105,6 +86,27 @@ export type Shop = {
   bank_name: null | string
   bank_account_num: null | string
   bank_account_name: null | string
+}
+
+export type VerificationAttempt = {
+  id?: null | number
+  passcode: string // char(6)
+  email: string
+}
+
+export type RequestLog = {
+  id?: null | number
+  method_id: number
+  method?: Method
+  url_id: number
+  url?: Url
+  user_agent_id: null | number
+  user_agent?: UserAgent
+  request_session_id: null | number
+  request_session?: RequestSession
+  user_id: null | number
+  user?: User
+  timestamp: number
 }
 
 export type VerificationCode = {
@@ -233,9 +235,9 @@ export type DBProxy = {
   user_agent: UserAgent[]
   ua_stat: UaStat[]
   user: User[]
-  request_log: RequestLog[]
-  verification_attempt: VerificationAttempt[]
   shop: Shop[]
+  verification_attempt: VerificationAttempt[]
+  request_log: RequestLog[]
   verification_code: VerificationCode[]
   shop_locale: ShopLocale[]
   service: Service[]
@@ -263,7 +265,15 @@ export let proxy = proxySchema<DBProxy>({
       ['ua_bot', { field: 'ua_bot_id', table: 'ua_bot' }],
     ],
     ua_stat: [],
-    user: [],
+    user: [
+      /* foreign references */
+      ['shop', { field: 'shop_id', table: 'shop' }],
+    ],
+    shop: [
+      /* foreign references */
+      ['owner', { field: 'owner_id', table: 'user' }],
+    ],
+    verification_attempt: [],
     request_log: [
       /* foreign references */
       ['method', { field: 'method_id', table: 'method' }],
@@ -271,11 +281,6 @@ export let proxy = proxySchema<DBProxy>({
       ['user_agent', { field: 'user_agent_id', table: 'user_agent' }],
       ['request_session', { field: 'request_session_id', table: 'request_session' }],
       ['user', { field: 'user_id', table: 'user' }],
-    ],
-    verification_attempt: [],
-    shop: [
-      /* foreign references */
-      ['owner', { field: 'owner_id', table: 'user' }],
     ],
     verification_code: [
       /* foreign references */

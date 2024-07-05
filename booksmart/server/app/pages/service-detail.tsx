@@ -2331,6 +2331,7 @@ let routes = {
             email: input.email,
             tel: tel,
             avatar: null,
+            shop_id: shop.id!,
           })
           user = proxy.user[user_id]
         }

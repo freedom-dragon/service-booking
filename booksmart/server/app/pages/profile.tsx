@@ -19,6 +19,7 @@ import { IonBackButton } from '../components/ion-back-button.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 import { AppMoreBackButton } from './app-more.js'
 import { loginRouteUrl } from './login.js'
+import { HttpError } from '../../exception.js'
 
 let pageTitle = '聯絡資料'
 
@@ -194,6 +195,9 @@ async function previewAvatar(input) {
 }
 
 function Logout(_attrs: {}, context: ExpressContext) {
+  if (context.type !== 'express') {
+    throw new HttpError(500, 'This API only supports express context')
+  }
   eraseUserIdFromCookie(context.res)
   return <Redirect href={loginRouteUrl(context)} />
 }
