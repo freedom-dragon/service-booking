@@ -85,6 +85,7 @@ proxy.shop[1] = {
   bank_name: null,
   bank_account_num: null,
   bank_account_name: null,
+  accept_cash: true,
 }
 proxy.user[2].shop_id = 1
 
@@ -119,6 +120,7 @@ proxy.shop[2] = {
   bank_name: 'Tech Bank',
   bank_account_num: '123456789012',
   bank_account_name: 'Beeno Coding Studio',
+  accept_cash: true,
 }
 proxy.user[4].shop_id = 2
 
