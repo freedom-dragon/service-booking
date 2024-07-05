@@ -1,5 +1,5 @@
 import type express from 'express'
-import type { RouteParameters } from './app/utils/params'
+import type { RouteParameters } from './params'
 
 export function toAbsoluteHref(req: express.Request, href: string): string {
   if (href.startsWith('http://') || href.startsWith('https://')) {
@@ -29,12 +29,12 @@ export function toRouteUrl<R extends object, K extends string & keyof R>(
     json?: boolean
   },
 ): string {
-  return toUrl(key, options)
+  return toUrl<K>(key, options)
 }
 
 export function toUrl<K extends string>(
   /** @description the url template */
-  route: K,
+  key: K,
   /** @description the variables in url */
   options?: {
     params?: RouteParameters<K>
@@ -44,7 +44,7 @@ export function toUrl<K extends string>(
   },
 ): string {
   let params = options?.params as Record<string, string | number>
-  let url = route as string
+  let url = key as string
   for (let part of url.split('/')) {
     if (part[0] == ':') {
       let key = part.slice(1)

@@ -3,7 +3,7 @@ import { Service, proxy } from '../../../db/proxy.js'
 import { Script } from './script.js'
 import { o } from '../jsx/jsx.js'
 import { fromDatePart } from '../format/date.js'
-import { ResolvedPageRoue, Routes } from '../routes.js'
+import { ResolvedPageRoute, Routes } from '../routes.js'
 import { apiEndpointTitle } from '../../config.js'
 import { find } from 'better-sqlite3-proxy'
 import { EarlyTerminate } from '../../exception.js'
@@ -193,7 +193,7 @@ ${attrs.timeRadioGroup}.addEventListener('ionChange', event => {
 
 let dateStringParser = dateString()
 
-function getAvailableTimeslot(context: DynamicContext): ResolvedPageRoue {
+function getAvailableTimeslot(context: DynamicContext): ResolvedPageRoute {
   if (context.type != 'express') {
     return {
       title: apiEndpointTitle,

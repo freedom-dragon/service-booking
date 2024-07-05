@@ -1,7 +1,7 @@
 import { Service, Shop, proxy } from '../../db/proxy.js'
 import { title } from '../config.js'
 import { DynamicContext } from './context.js'
-import { ResolvedPageRoue } from './routes.js'
+import { ResolvedPageRoute } from './routes.js'
 import { find } from 'better-sqlite3-proxy'
 import { Redirect } from './components/router.js'
 import { o } from './jsx/jsx.js'
@@ -13,8 +13,8 @@ export function resolveServiceRoute(
     shop: Shop
     shop_slug: string
     service_slug: string
-  }) => ResolvedPageRoue,
-): ResolvedPageRoue {
+  }) => ResolvedPageRoute,
+): ResolvedPageRoute {
   let { shop_slug, service_slug } = context.routerMatch?.params
   let shop = find(proxy.shop, { slug: shop_slug })
   if (!shop) {

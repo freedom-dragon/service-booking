@@ -31,12 +31,14 @@ function showAlert(title: SweetAlertOptions['title'], icon: SweetAlertIcon) {
 
 async function showConfirm(options: {
   title: SweetAlertOptions['title']
+  text?: SweetAlertOptions['text']
   icon?: SweetAlertIcon
   confirmButtonText?: string
   cancelButtonText?: string
 }) {
   let result = await Swal.fire({
     title: options.title,
+    text: options.text,
     icon: options.icon,
     showConfirmButton: true,
     showCancelButton: true,

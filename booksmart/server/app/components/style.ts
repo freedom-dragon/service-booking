@@ -5,7 +5,7 @@ import { Element, Raw } from '../jsx/types.js'
 let cache = new Map<string, string>()
 
 export function Style(css: string): Element {
-  if (config.minify) {
+  if (config.production) {
     if (cache.has(css)) {
       css = cache.get(css) as string
     } else {

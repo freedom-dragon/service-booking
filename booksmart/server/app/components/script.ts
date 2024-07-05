@@ -36,7 +36,7 @@ export type ScriptFlag = 'no-minify' | 'minify'
  * @returns script element
  */
 export function Script(js: string, flag?: ScriptFlag): Raw {
-  if (flag == 'minify' || (flag != 'no-minify' && config.minify)) {
+  if (flag == 'minify' || (flag != 'no-minify' && config.production)) {
     js = minify(js)
   }
   return ['raw', `<script>${js}</script>`]
