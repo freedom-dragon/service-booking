@@ -86,6 +86,7 @@ export type Shop = {
   bank_name: null | string
   bank_account_num: null | string
   bank_account_name: null | string
+  accept_cash: null | boolean
 }
 
 export type VerificationAttempt = {

@@ -87,6 +87,7 @@ let defaultLocale = getShopLocale(0)
 function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
   let { shop } = attrs
   let shop_slug = shop.slug
+  let { accept_cash } = shop
   let urlPrefix = `/shop/${shop_slug}/admin`
   let contacts = getShopContacts(shop)
     .map(item => ({
@@ -144,6 +145,16 @@ function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
           </div>
           <div class="ion-margin-horizontal">請提供至少一種付款方法方法。</div>
         </ion-note>
+        <ion-list inset="true">
+          <ion-item
+            data-field="accept_cash"
+            data-value={shop.accept_cash ? 1 : 0}
+            onclick={`emit('${urlPrefix}/save/accept_cash', this.dataset.value=='1'?0:1, '現金付款')`}
+          >
+            <ion-label>{accept_cash ? '接受現金' : '不接受現金'}</ion-label>
+            <ion-checkbox slot="end" checked={shop.accept_cash} />
+          </ion-item>
+        </ion-list>
         {mapArray(paymentMethodGroups, group => (
           <ion-list inset="true">
             {mapArray(group.items as ShopPaymentMethod[], item => {
@@ -349,11 +360,38 @@ let routes = {
         throw new MessageException(['batch', messages])
       }
 
-      shop[field] = value
+      let messages: ServerMessage[] = []
 
-      let messages: ServerMessage[] = [
-        ['eval', `showToast('更新了${label}','info')`],
-      ]
+      if (field == 'accept_cash') {
+        shop.accept_cash = value == '1'
+        messages.push(
+          [
+            'eval',
+            value == '1'
+              ? `showToast('現接受現金','info')`
+              : `showToast('現不接受現金','info')`,
+          ],
+          [
+            'update-attrs',
+            '[data-field="accept_cash"]',
+            { 'data-value': value },
+          ],
+          [
+            'update-text',
+            '[data-field="accept_cash"] ion-label',
+            value == '1' ? '接受現金' : '不接受現金',
+          ],
+          [
+            'update-attrs',
+            '[data-field="accept_cash"] ion-checkbox',
+            { checked: value == '1' },
+          ],
+        )
+      } else {
+        shop[field] = value
+        messages.push(['eval', `showToast('更新了${label}','info')`])
+      }
+
       if (contactFields.includes(field as any)) {
         messages.push([
           'update-in',

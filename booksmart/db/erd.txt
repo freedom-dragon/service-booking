@@ -135,6 +135,7 @@ fps_id text NULL
 bank_name text NULL
 bank_account_num text NULL
 bank_account_name text NULL
+accept_cash boolean NULL
 
 
 shop_locale
