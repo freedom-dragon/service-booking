@@ -20,6 +20,8 @@ import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 import { AppMoreBackButton } from './app-more.js'
 import { loginRouteUrl } from './login.js'
 import { HttpError } from '../../exception.js'
+import { toRouteUrl } from '../../url.js'
+import { getContextShopSlug } from '../auth/shop.js'
 
 let pageTitle = '聯絡資料'
 
@@ -62,6 +64,7 @@ let profilePage = (
 )
 
 function Main(attrs: {}, context: DynamicContext) {
+  let shop_slug = getContextShopSlug(context)
   let user = getAuthUser(context)
   if (!user) {
     return (
@@ -181,7 +184,9 @@ async function previewAvatar(input) {
 `)}
       </form>
       <ion-button
-        href="/logout"
+        href={toRouteUrl(routes, '/shop/:shop_slug/logout', {
+          params: { shop_slug },
+        })}
         rel="nofollow"
         color="dark"
         expand="block"
@@ -275,7 +280,7 @@ let routes = {
     userOnly: true,
     node: profilePage,
   },
-  '/logout': {
+  '/shop/:shop_slug/logout': {
     title: apiEndpointTitle,
     description: 'logout your account',
     streaming: false,

@@ -652,6 +652,9 @@ function PaymentModal(
             <div id="totalPriceLabel"></div>
             <div>{formatPrice(total_price)}</div>
             <h1>付款方法</h1>
+            <ion-list>
+              <ion-item>現金</ion-item>
+            </ion-list>
             <ion-item>
               <ion-thumbnail slot="start">
                 <img src="/assets/payment-methods/payme.webp" />
@@ -2421,6 +2424,10 @@ let routes = {
                   ),
                 ],
               ]
+          email_success_messages.push([
+            'eval',
+            `alert('[dev] verification code: ${passcode}')`,
+          ])
           sendEmail({
             from: env.EMAIL_USER,
             to: email,

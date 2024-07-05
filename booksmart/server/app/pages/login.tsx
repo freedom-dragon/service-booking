@@ -9,21 +9,16 @@ import { proxy } from '../../../db/proxy.js'
 import { find } from 'better-sqlite3-proxy'
 import { getStringCasual } from '../context.js'
 import { comparePassword } from '../../hash.js'
-import { UserMessageInGuestView } from './profile.js'
-import {
-  getAuthUser,
-  getAuthUserId,
-  writeUserIdToCookie,
-} from '../auth/user.js'
+import { getAuthUser, writeUserIdToCookie } from '../auth/user.js'
 import Style from '../components/style.js'
-import { IonBackButton } from '../components/ion-back-button.js'
 import { wsStatus } from '../components/ws-status.js'
-import { db } from '../../../db/db.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { AppMoreBackButton } from './app-more.js'
 import { toRouteUrl } from '../../url.js'
 import shopHome from './shop-home.js'
 import { getContextShop, getContextShopSlug } from '../auth/shop.js'
+import { concat_words } from '@beenotung/tslib/string.js'
+import verificationCode from './verification-code.js'
 
 let style = Style(/* css */ `
 #login .field {
@@ -32,72 +27,69 @@ let style = Style(/* css */ `
 }
 `)
 
-let LoginPage = (
-  <div id="login">
-    {style}
-    <h1>Login to {config.short_site_name}</h1>
-    {/* <p>{commonTemplatePageText}</p> */}
-    <Main />
-  </div>
-)
-if (config.layout_type === LayoutType.ionic) {
-  LoginPage = (
-    <>
-      {style}
-      <Page />
-    </>
-  )
-  let select_shop_id = db
-    .prepare(
-      /* sql */ `
-select shop_id
-from verification_code
-where user_id = :user_id
-  and match_id is not null
-order by id desc
-`,
-    )
-    .pluck()
-  function Page(attrs: {}, context: Context) {
-    let user = getAuthUser(context)
-    let shop_id = user
-      ? (select_shop_id.get({ user_id: user.id }) as number)
-      : null
-    let shop = shop_id ? proxy.shop[shop_id] : null
+function LoginPage(attrs: {}, context: DynamicContext) {
+  let shop = getContextShop(context)
+  let user = getAuthUser(context)
+  if (user) {
     return (
-      <>
-        <ion-header>
-          <ion-toolbar color="primary">
-            {shop ? (
-              <IonBackButton
-                href={toRouteUrl(shopHome.routes, '/shop/:shop_slug', {
-                  params: { shop_slug: shop.slug },
-                })}
-                backText={'主頁'}
-                color="light"
-              />
-            ) : (
-              <AppMoreBackButton color="light" />
-            )}
-            <ion-title>登入</ion-title>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <div id="login">
-            <h1>歡迎回到 {config.short_site_name}</h1>
-            {/* <p>{commonTemplatePageText}</p> */}
-            <Main />
-          </div>
-          {wsStatus.safeArea}
-        </ion-content>
-      </>
+      <Redirect
+        href={toRouteUrl(shopHome.routes, '/shop/:shop_slug', {
+          params: { shop_slug: shop.slug },
+        })}
+      />
     )
   }
-}
-
-function Main(_attrs: {}, context: Context) {
-  let user_id = getAuthUserId(context)
-  return user_id ? <UserMessageInGuestView user_id={user_id} /> : guestView
+  return (
+    <>
+      {style}
+      <ion-header>
+        <ion-toolbar color="primary">
+          <AppMoreBackButton color="light" />
+          <ion-title>登入</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <div id="login">
+          <h1>
+            歡迎回到{' '}
+            <span style="display: inline-block">
+              {shop.name || config.short_site_name}
+            </span>
+          </h1>
+          <>
+            <div hidden>Login with:</div>
+            <form
+              method="POST"
+              action={toRouteUrl(
+                verificationCode.routes,
+                '/shop/:shop_slug/verify/email/submit',
+                { params: { shop_slug: shop.slug } },
+              )}
+              onsubmit="emitForm(event)"
+            >
+              <input hidden name="shop_slug" value={shop.slug} />
+              {emailFormBody}
+            </form>
+            <div class="or-line flex-center" hidden>
+              or
+            </div>
+            <form method="post" action="/login/submit" hidden>
+              <input hidden name="shop_slug" value={shop.slug} />
+              {passwordFormBody}
+            </form>
+            <div>
+              首次使用{config.short_site_name}？您可以在提交預約時自動註冊。
+            </div>
+            <div hidden>
+              New to {config.short_site_name}?{' '}
+              <Link href="/register">Create an account</Link>.
+            </div>
+          </>
+        </div>
+        {wsStatus.safeArea}
+      </ion-content>
+    </>
+  )
 }
 
 let emailFormBody =
@@ -210,37 +202,6 @@ let passwordFormBody =
     </>
   )
 
-let guestView = (
-  <>
-    <div hidden>Login with:</div>
-    <form
-      method="POST"
-      action="/verify/email/submit"
-      onsubmit="emitForm(event)"
-    >
-      <ShopSlugField />
-      {emailFormBody}
-    </form>
-    <div class="or-line flex-center" hidden>
-      or
-    </div>
-    <form method="post" action="/login/submit" hidden>
-      <ShopSlugField />
-      {passwordFormBody}
-    </form>
-    <div>首次使用{config.short_site_name}？您可以在提交預約時自動註冊。</div>
-    <div hidden>
-      New to {config.short_site_name}?{' '}
-      <Link href="/register">Create an account</Link>.
-    </div>
-  </>
-)
-
-function ShopSlugField(attrs: {}, context: DynamicContext) {
-  let shop_slug = getContextShopSlug(context)
-  return <input hidden name="shop_slug" value={shop_slug} />
-}
-
 let codes: Record<string, string> = {
   not_found: 'user not found',
   no_pw: 'password is not set, did you use social login?',
@@ -311,12 +272,15 @@ export function LoginLink(attrs: {}, context: DynamicContext) {
 
 let routes = {
   '/shop/:shop_slug/login': {
-    title: title('登入'),
-    description: `Login to access exclusive content and functionality. Welcome back to our community on ${config.short_site_name}.`,
-    menuText: 'Login',
-    menuUrl: '/login',
-    guestOnly: true,
-    node: LoginPage,
+    resolve(context) {
+      let shop = getContextShop(context)
+      let t = concat_words('登入', shop.name || config.short_site_name)
+      return {
+        title: title(t),
+        description: concat_words(t, '以在使用預約服務'),
+        node: <LoginPage />,
+      }
+    },
   },
   '/login/submit': {
     streaming: false,

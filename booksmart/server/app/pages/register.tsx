@@ -34,6 +34,9 @@ import { UserMessageInGuestView } from './profile.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { wsStatus } from '../components/ws-status.js'
 import { LoginLink, loginRouteUrl } from './login.js'
+import { toRouteUrl } from '../../url.js'
+import verificationCode from './verification-code.js'
+import { getContextShop } from '../auth/shop.js'
 
 let style = Style(/* css */ `
 .oauth-provider-list a {
@@ -111,9 +114,113 @@ if (config.layout_type === LayoutType.ionic) {
   )
 }
 
-function Main(_attrs: {}, context: Context) {
+function Main(_attrs: {}, context: DynamicContext) {
+  let shop = getContextShop(context)
   let user_id = getAuthUserId(context)
-  return user_id ? <UserMessageInGuestView user_id={user_id} /> : guestView
+  if (user_id) {
+    return <UserMessageInGuestView user_id={user_id} />
+  }
+  return (
+    <>
+      <p>
+        Already have an account? <LoginLink />
+      </p>
+      <div class="flex-center flex-column"></div>
+      <div>Register with:</div>
+      {useSocialLogin ? (
+        <>
+          <div class="flex-center flex-column">
+            <div class="oauth-provider-list">
+              <a>{googleLogo}&nbsp;Google</a>
+              <a>{appleLogo}&nbsp;Apple</a>
+              <a>{githubLogo}&nbsp;GitHub</a>
+              <a>{facebookLogo}&nbsp;Facebook</a>
+              <a>{instagramLogo}&nbsp;Instagram</a>
+            </div>
+          </div>
+          <div class="or-line flex-center">or</div>
+        </>
+      ) : (
+        <div style="height: 0.5rem"></div>
+      )}
+      <form
+        method="POST"
+        action={toRouteUrl(
+          verificationCode.routes,
+          '/shop/:shop_slug/verify/email/submit',
+          { params: { shop_slug: shop.slug } },
+        )}
+        // onsubmit="emitForm(event)"
+      >
+        {emailFormBody}
+      </form>
+      <div class="or-line flex-center">or</div>
+      <form method="POST" action="/register/submit" onsubmit="emitForm(event)">
+        <Field
+          label="Username"
+          name="username"
+          msgId="usernameMsg"
+          oninput="emit('/register/check-username', this.value)"
+          autocomplete="username"
+        />
+        <Field
+          label="Password"
+          type="password"
+          name="password"
+          msgId="passwordMsg"
+          oninput="emit('/register/check-password', this.value);this.form.confirm_password.value=''"
+          autocomplete="new-password"
+        />
+
+        <Field
+          label="Confirm password"
+          type="password"
+          name="confirm_password"
+          msgId="confirmPasswordMsg"
+          oninput="checkPassword(this.form||this.closest('form'))"
+          autocomplete="new-password"
+        />
+        {Raw(/* html */ `<script>
+function checkPassword (form) {
+  let c = form.confirm_password.value
+  if (c.length == 0) {
+    confirmPasswordMsg.textContent = ''
+    return
+  }
+  let p = form.password.value
+  if (p != c) {
+    confirmPasswordMsg.textContent = 'password not matched'
+    confirmPasswordMsg.style.color = 'red'
+    return
+  }
+  confirmPasswordMsg.textContent = 'password matched'
+  confirmPasswordMsg.style.color = 'green'
+}
+</script>`)}
+        {config.layout_type !== LayoutType.ionic ? (
+          <input type="submit" value="Register" />
+        ) : (
+          <ion-button
+            type="submit"
+            class="ion-margin"
+            fill="block"
+            color="primary"
+          >
+            Register
+          </ion-button>
+        )}
+        <ClearInputContext />
+      </form>
+      <div class="hint">
+        Your password is not be stored in plain text.
+        <br />
+        Instead, it is processed with{' '}
+        <a href="https://en.wikipedia.org/wiki/Bcrypt">bcrypt algorithm</a> to
+        protect your credential against data leak.
+      </div>
+      {wsStatus.safeArea}
+    </>
+  )
 }
 
 let useSocialLogin = true
@@ -155,104 +262,6 @@ let emailFormBody = (
         Verify
       </ion-button>
     )}
-  </>
-)
-
-let guestView = (
-  <>
-    <p>
-      Already have an account? <LoginLink />
-    </p>
-    <div class="flex-center flex-column"></div>
-    <div>Register with:</div>
-    {useSocialLogin ? (
-      <>
-        <div class="flex-center flex-column">
-          <div class="oauth-provider-list">
-            <a>{googleLogo}&nbsp;Google</a>
-            <a>{appleLogo}&nbsp;Apple</a>
-            <a>{githubLogo}&nbsp;GitHub</a>
-            <a>{facebookLogo}&nbsp;Facebook</a>
-            <a>{instagramLogo}&nbsp;Instagram</a>
-          </div>
-        </div>
-        <div class="or-line flex-center">or</div>
-      </>
-    ) : (
-      <div style="height: 0.5rem"></div>
-    )}
-    <form
-      method="POST"
-      action="/verify/email/submit"
-      // onsubmit="emitForm(event)"
-    >
-      {emailFormBody}
-    </form>
-    <div class="or-line flex-center">or</div>
-    <form method="POST" action="/register/submit" onsubmit="emitForm(event)">
-      <Field
-        label="Username"
-        name="username"
-        msgId="usernameMsg"
-        oninput="emit('/register/check-username', this.value)"
-        autocomplete="username"
-      />
-      <Field
-        label="Password"
-        type="password"
-        name="password"
-        msgId="passwordMsg"
-        oninput="emit('/register/check-password', this.value);this.form.confirm_password.value=''"
-        autocomplete="new-password"
-      />
-
-      <Field
-        label="Confirm password"
-        type="password"
-        name="confirm_password"
-        msgId="confirmPasswordMsg"
-        oninput="checkPassword(this.form||this.closest('form'))"
-        autocomplete="new-password"
-      />
-      {Raw(/* html */ `<script>
-function checkPassword (form) {
-  let c = form.confirm_password.value
-  if (c.length == 0) {
-    confirmPasswordMsg.textContent = ''
-    return
-  }
-  let p = form.password.value
-  if (p != c) {
-    confirmPasswordMsg.textContent = 'password not matched'
-    confirmPasswordMsg.style.color = 'red'
-    return
-  }
-  confirmPasswordMsg.textContent = 'password matched'
-  confirmPasswordMsg.style.color = 'green'
-}
-</script>`)}
-      {config.layout_type !== LayoutType.ionic ? (
-        <input type="submit" value="Register" />
-      ) : (
-        <ion-button
-          type="submit"
-          class="ion-margin"
-          fill="block"
-          color="primary"
-        >
-          Register
-        </ion-button>
-      )}
-      <ClearInputContext />
-    </form>
-    <div class="hint">
-      Your password is not be stored in plain text.
-      <br />
-      Instead, it is processed with{' '}
-      <a href="https://en.wikipedia.org/wiki/Bcrypt">bcrypt algorithm</a> to
-      protect your credential against data leak.
-    </div>
-    {wsStatus.safeArea}
   </>
 )
 
