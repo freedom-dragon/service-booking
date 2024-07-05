@@ -90,6 +90,7 @@ import { formatPrice } from '../format/price.js'
 import { nodeToHTML } from '../jsx/html.js'
 import { ReceiptImageItem } from './booking.js'
 import { formatDuration } from '../format/duration.js'
+import { client_config } from '../../../client/client-config.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -2066,6 +2067,7 @@ function attachRoutes(app: Router) {
         let form = createUploadForm({
           uploadDir: dir,
           filename: filename + '.tmp',
+          maxFileSize: client_config.max_image_size * 1.5,
         })
         let [fields, files] = await form.parse(req)
         let file = files.file?.[0].filepath
@@ -2133,6 +2135,7 @@ function attachRoutes(app: Router) {
         let form = createUploadForm({
           uploadDir: dir,
           maxFiles: 10,
+          maxFileSize: client_config.max_image_size * 1.5,
         })
         let [fields, files] = await form.parse(req)
         let nodes: Node[] = (files.file || []).map(file => {
