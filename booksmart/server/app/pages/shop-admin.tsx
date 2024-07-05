@@ -312,7 +312,7 @@ let routes = {
       }
     },
   },
-  '/shop/:slug/admin/save/:field': {
+  '/shop/:shop_slug/admin/save/:field': {
     resolve(context) {
       if (context.type !== 'ws') {
         return {
@@ -321,8 +321,8 @@ let routes = {
           node: 'this api is only for ws',
         }
       }
-      let { slug } = context.routerMatch?.params
-      let shop = find(proxy.shop, { slug })
+      let { shop_slug } = context.routerMatch?.params
+      let shop = find(proxy.shop, { slug: shop_slug })
       if (!shop) {
         return {
           title: title('shop not found'),
@@ -415,7 +415,7 @@ let routes = {
       throw new MessageException(['batch', messages])
     },
   },
-  '/shop/:slug/admin/locale/:key': {
+  '/shop/:shop_slug/admin/locale/:key': {
     resolve(context) {
       if (context.type !== 'ws') {
         return {
@@ -424,8 +424,8 @@ let routes = {
           node: 'this api is only for ws',
         }
       }
-      let { slug } = context.routerMatch?.params
-      let shop = find(proxy.shop, { slug })
+      let { shop_slug } = context.routerMatch?.params
+      let shop = find(proxy.shop, { slug: shop_slug })
       if (!shop) {
         return {
           title: title('shop not found'),

@@ -86,7 +86,7 @@ let homePage = (
 )
 
 // pre-render into html to reduce time to first contentful paint (FCP)
-homePage = prerender(homePage)
+// homePage = prerender(homePage)
 
 let routes: Routes = {
   '/app/home': {
