@@ -118,7 +118,11 @@ proxy.shop[2] = {
   fps_email: 'payments@beenocodingstudio.com',
   fps_id: '98765432',
   bank_name: 'Tech Bank',
-  bank_account_num: '123456789012',
+  bank_account_num:
+    // hang seng bank
+    '123 456789 012'.replaceAll(' ', ''),
+  // bank of chain
+  // '123456 1234567890123'.replaceAll(' ', ''),
   bank_account_name: 'Beeno Coding Studio',
   accept_cash: true,
 }
@@ -371,6 +375,72 @@ seedService({
       end_date: '2024-07-24',
       weekdays: '一三五',
       hours: '14:00-16:30',
+    },
+  ],
+})
+
+// TODO select the interval (instead of fixed 15 minutes)
+seedService({
+  id: 5,
+  shop_id: 2,
+  slug: 'ts-liveview',
+  name: '全端開發實作教學',
+  times: 1,
+  book_duration_minute: 60 * 3,
+  original_price: '350',
+  unit_price: '300',
+  price_unit: '位',
+  peer_amount: 2,
+  peer_price: '200',
+  time: '有指定可以book時間',
+  options: ['MacBook', 'Windows Laptop', 'Linux Laptop'],
+  quota: 3,
+  address: null,
+  address_remark: null,
+  questions: ['是否能理解英文教材？'],
+  desc: `
+  加入我們的全端開發實作教學，掌握現代網頁開發的核心技能！我們的專業導師將帶領您一步步學習前端和後端技術，從基礎到進階，幫助您打造完整的網頁應用。
+
+  在課程中，您將使用各種最新的開發工具和框架，包括HTML、CSS、JavaScript、Node.js、Express、React以及資料庫技術，如MongoDB和SQL。您還將學習如何部署和維護您的應用，確保其在真實環境中穩定運行。
+
+  我們的課程設計適合所有技能水平的學員，不論您是初學者還是有經驗的開發者。導師將提供個性化的指導和反饋，幫助您克服學習中的挑戰，實現您的開發目標。您還將有機會與其他學員合作，分享項目經驗和開發技巧，提升您的協作和問題解決能力。
+
+  課程結束後，您將擁有一個完整的全端項目作品集，展示您的技能並為您的職業生涯增色。不要錯過這個提升自我的機會，立即報名參加我們的全端開發實作教學！
+`,
+  remarks: [
+    {
+      title: '工具',
+      content: '提供最新的開發工具和框架，如React、Node.js、Express等。',
+    },
+    {
+      title: '指導',
+      content: '經驗豐富的開發者導師將帶領您透過一系列的實作步驟。',
+    },
+    {
+      title: '技術',
+      content: '學習前端和後端開發的核心技術和最佳實踐。',
+    },
+    {
+      title: '合作',
+      content: '與其他學員合作，分享項目經驗和開發技巧。',
+    },
+    {
+      title: '個性化指導',
+      content: '導師將為您提供個性化的指導和反饋，幫助您實現您的開發目標。',
+    },
+  ],
+  timeslots: [
+    {
+      start_date: '2024-02-11',
+      end_date: '2024-07-17',
+      weekdays: '一二三四五',
+      hours: '10:00-23:00',
+    },
+    {
+      start_date: '2024-02-18',
+      end_date: '2024-07-24',
+      weekdays: '日六',
+      hours: '14:00-23:30',
     },
   ],
 })

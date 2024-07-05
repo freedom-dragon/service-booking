@@ -91,6 +91,9 @@ import { nodeToHTML } from '../jsx/html.js'
 import { ReceiptImageItem } from './booking.js'
 import { formatDuration } from '../format/duration.js'
 import { client_config } from '../../../client/client-config.js'
+import { formatBankNumber } from '../format/bank.js'
+import { attrs } from '../../../client/jsx/types'
+import { Copyable } from '../components/copyable.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -145,6 +148,14 @@ ion-item [slot="start"] ion-icon {
   flex-grow: 1;
   text-align: center;
   padding: 0.25rem;
+}
+.payment-method--list .copyable-container code {
+  display: inline-block;
+}
+.payment-method--list .copyable-container button {
+  padding: 0.3rem;
+  border-radius: 0.25rem;
+  color: var(--ion-color-primary-shade);
 }
 `)
 
@@ -652,25 +663,55 @@ function PaymentModal(
             <div id="totalPriceLabel"></div>
             <div>{formatPrice(total_price)}</div>
             <h1>付款方法</h1>
-            <ion-list>
-              <ion-item>
-                <ion-thumbnail slot="start">
-                  <img src="/assets/payment-methods/cash.webp" />
-                </ion-thumbnail>
-                <ion-label>現金</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-thumbnail slot="start">
-                  <img src="/assets/payment-methods/fps.webp" />
-                </ion-thumbnail>
-                <ion-label>FPS: 98765432</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-thumbnail slot="start">
-                  <img src="/assets/payment-methods/payme.webp" />
-                </ion-thumbnail>
-                <ion-label>Payme: 98765432</ion-label>
-              </ion-item>
+            <ion-list class="payment-method--list">
+              {shop.accept_cash ? (
+                <ion-item>
+                  <ion-thumbnail slot="start">
+                    <img src="/assets/payment-methods/cash.webp" />
+                  </ion-thumbnail>
+                  <ion-label>現金</ion-label>
+                </ion-item>
+              ) : null}
+              <PaymentMethod
+                icon="payme"
+                label="PayMe 電話號碼"
+                value={shop.payme_tel}
+              />
+              <PaymentMethod
+                icon="payme"
+                label="PayMe Link"
+                value={shop.payme_link}
+              />
+              <PaymentMethod
+                icon="fps"
+                label="FPS 電話號碼"
+                value={shop.fps_tel}
+              />
+              <PaymentMethod
+                icon="fps"
+                label="FPS Email"
+                value={shop.fps_email}
+              />
+              <PaymentMethod icon="fps" label="FPS ID" value={shop.fps_id} />
+              {shop.bank_account_num ? (
+                <PaymentMethod
+                  icon="bank"
+                  label={shop.bank_name || '銀行轉帳'}
+                  value={
+                    <>
+                      <>
+                        {
+                          <Copyable
+                            text={formatBankNumber(shop.bank_account_num)}
+                          />
+                        }
+                      </>
+                      <br />
+                      <>{shop.bank_account_name}</>
+                    </>
+                  }
+                />
+              ) : null}
             </ion-list>
             <div class="ion-margin">
               <ion-button
@@ -702,6 +743,32 @@ function PaymentModal(
         </div>
       </ion-content>
     </>
+  )
+}
+function PaymentMethod(attrs: {
+  icon: string
+  label: string
+  value: null | string | Node
+}) {
+  let value = attrs.value
+  if (!value) return
+  let is_link = typeof value == 'string' && value.startsWith('https://')
+  return (
+    <ion-item href={is_link ? value : undefined} target="_blank">
+      <ion-thumbnail slot="start">
+        <img src={`/assets/payment-methods/${attrs.icon}.webp`} />
+      </ion-thumbnail>
+      <ion-label>
+        {attrs.label}:{' '}
+        {is_link ? (
+          value
+        ) : typeof value == 'string' ? (
+          <Copyable text={value} />
+        ) : (
+          value
+        )}
+      </ion-label>
+    </ion-item>
   )
 }
 function ReceiptFigure(
