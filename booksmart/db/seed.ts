@@ -17,6 +17,7 @@ proxy.user[1] = {
     'booksmart@mailinator.com',
   tel: '+85296385274',
   avatar: null,
+  shop_id: null,
 }
 
 proxy.user[2] = {
@@ -28,6 +29,7 @@ proxy.user[2] = {
     'the.balconi.artstudio@mailinator.com',
   tel: '+85262787635',
   avatar: null,
+  shop_id: null,
 }
 
 proxy.user[3] = {
@@ -39,6 +41,17 @@ proxy.user[3] = {
     'beeno@mailinator.com',
   tel: '+85298765432',
   avatar: null,
+  shop_id: null,
+}
+
+proxy.user[4] = {
+  username: null,
+  nickname: 'Beeno',
+  password_hash: null,
+  email: 'info@beenocodingstudio.com',
+  tel: '+85298765432',
+  avatar: null,
+  shop_id: null,
 }
 
 proxy.shop[1] = {
@@ -73,9 +86,10 @@ proxy.shop[1] = {
   bank_account_num: null,
   bank_account_name: null,
 }
+proxy.user[2].shop_id = 1
 
 proxy.shop[2] = {
-  owner_id: 3,
+  owner_id: 4,
   name: 'Beeno Coding Studio',
   slug: 'beeno.coding.studio',
   bio: 'Software development training for all',
@@ -106,6 +120,7 @@ proxy.shop[2] = {
   bank_account_num: '123456789012',
   bank_account_name: 'Beeno Coding Studio',
 }
+proxy.user[4].shop_id = 2
 
 proxy.shop_locale[1] = {
   shop_id: 1,
