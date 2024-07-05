@@ -653,14 +653,25 @@ function PaymentModal(
             <div>{formatPrice(total_price)}</div>
             <h1>付款方法</h1>
             <ion-list>
-              <ion-item>現金</ion-item>
+              <ion-item>
+                <ion-thumbnail slot="start">
+                  <img src="/assets/payment-methods/cash.webp" />
+                </ion-thumbnail>
+                <ion-label>現金</ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-thumbnail slot="start">
+                  <img src="/assets/payment-methods/fps.webp" />
+                </ion-thumbnail>
+                <ion-label>FPS: 98765432</ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-thumbnail slot="start">
+                  <img src="/assets/payment-methods/payme.webp" />
+                </ion-thumbnail>
+                <ion-label>Payme: 98765432</ion-label>
+              </ion-item>
             </ion-list>
-            <ion-item>
-              <ion-thumbnail slot="start">
-                <img src="/assets/payment-methods/payme.webp" />
-              </ion-thumbnail>
-              <ion-label>Payme / 98765432</ion-label>
-            </ion-item>
             <div class="ion-margin">
               <ion-button
                 fill="block"
