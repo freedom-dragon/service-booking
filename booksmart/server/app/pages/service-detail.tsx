@@ -94,6 +94,7 @@ import { client_config } from '../../../client/client-config.js'
 import { formatBankNumber } from '../format/bank.js'
 import { Copyable } from '../components/copyable.js'
 import { placeholderForAttachRoutes } from '../components/placeholder.js'
+import { updateUrlVersion } from '../image-version.js'
 
 let ServiceDetailStyle = Style(/* css */ `
 #ServiceDetail {
@@ -1996,7 +1997,6 @@ function attachRoutes(app: Router) {
         })
         if (!service) throw new HttpError(404, 'service not found')
 
-        debugger
         let context = resolveExpressContext(req, res, next)
         let { user } = getAuthRole(context)
         let is_shop_owner = user?.id == shop.owner_id
@@ -2014,6 +2014,7 @@ function attachRoutes(app: Router) {
 
         if (field_name == 'cover') {
           filename = 'cover.webp'
+          image_url = getServiceCoverImage(shop_slug, service_slug)
         }
 
         if (field_name == 'more') {
@@ -2088,6 +2089,9 @@ function attachRoutes(app: Router) {
         if (!filename) {
           throw new HttpError(501, 'filename not determined')
         }
+        if (!image_url) {
+          throw new HttpError(501, 'image_url not determined')
+        }
 
         let dir = join('public', 'assets', 'shops', shop_slug, service_slug)
 
@@ -2102,7 +2106,7 @@ function attachRoutes(app: Router) {
         renameSync(file, file.replace(/\.tmp$/, ''))
         res.json({
           image_count,
-          image_url,
+          image_url: updateUrlVersion(image_url),
           image_node,
         })
       } catch (error) {

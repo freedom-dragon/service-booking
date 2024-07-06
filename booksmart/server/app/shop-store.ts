@@ -2,6 +2,7 @@ import { find } from 'better-sqlite3-proxy'
 import { Shop, proxy } from '../../db/proxy.js'
 import { existsSync, readdirSync, renameSync } from 'fs'
 import { values } from 'cast.ts'
+import { toVersionedUrl } from './image-version.js'
 
 export type ShopLocales = {
   tutor: string
@@ -29,11 +30,11 @@ export function getShopLocale(shop_id: number): ShopLocales {
 }
 
 export function getShopLogoImage(shop_slug: string) {
-  return `/assets/shops/${shop_slug}/logo.webp`
+  return toVersionedUrl(`/assets/shops/${shop_slug}/logo.webp`)
 }
 
 export function getShopCoverImage(shop_slug: string) {
-  return `/assets/shops/${shop_slug}/cover.webp`
+  return toVersionedUrl(`/assets/shops/${shop_slug}/cover.webp`)
 }
 
 export function renameServiceSlug(
@@ -49,7 +50,7 @@ export function renameServiceSlug(
 }
 
 export function getServiceCoverImage(shop_slug: string, service_slug: string) {
-  return `/assets/shops/${shop_slug}/${service_slug}/cover.webp`
+  return toVersionedUrl(`/assets/shops/${shop_slug}/${service_slug}/cover.webp`)
 }
 
 export function getServiceOptionImage(
@@ -57,7 +58,9 @@ export function getServiceOptionImage(
   service_slug: string,
   option_id: number,
 ) {
-  return `/assets/shops/${shop_slug}/${service_slug}/option-${option_id}.webp`
+  return toVersionedUrl(
+    `/assets/shops/${shop_slug}/${service_slug}/option-${option_id}.webp`,
+  )
 }
 
 export function getServiceMoreImage(
@@ -65,7 +68,9 @@ export function getServiceMoreImage(
   service_slug: string,
   filename: string,
 ) {
-  return `/assets/shops/${shop_slug}/${service_slug}/${filename}`
+  return toVersionedUrl(
+    `/assets/shops/${shop_slug}/${service_slug}/${filename}`,
+  )
 }
 
 export function getServiceImages(shop_slug: string, service_slug: string) {
@@ -82,9 +87,9 @@ export function getServiceImages(shop_slug: string, service_slug: string) {
   let options: string[] = []
   for (let filename of filenames) {
     if (filename.startsWith('more-')) {
-      more.push(`/${dir}/${filename}`)
+      more.push(toVersionedUrl(`/${dir}/${filename}`))
     } else if (filename.startsWith('option-')) {
-      options.push(`/${dir}/${filename}`)
+      options.push(toVersionedUrl(`/${dir}/${filename}`))
     }
   }
   return { cover, more, options }
@@ -95,7 +100,9 @@ export function getReceiptImage(
   service_slug: string,
   receipt_filename: string,
 ) {
-  return `/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt_filename}`
+  return toVersionedUrl(
+    `/assets/shops/${shop_slug}/${service_slug}/receipts/${receipt_filename}`,
+  )
 }
 
 export let paymentMethodGroups = [
