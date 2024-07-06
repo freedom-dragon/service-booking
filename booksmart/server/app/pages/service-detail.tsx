@@ -2348,11 +2348,11 @@ let routes = {
         let is_shop_owner = user && user.id == shop.owner_id
         let should_verify_email = !user
         if (!user || is_shop_owner) {
-          user = find(proxy.user, { tel }) || null
+          user = find(proxy.user, { tel, shop_id: shop.id }) || null
         }
         if (!user) {
           let input = registerParser.parse(body)
-          if (find(proxy.user, { email: input.email })) {
+          if (find(proxy.user, { email: input.email, shop_id: shop.id })) {
             throw new MessageException([
               'eval',
               `showToast('這個電郵已經註冊過了，請檢查您的電話號碼和電郵是否正確。','error')`,
