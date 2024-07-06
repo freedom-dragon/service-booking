@@ -1956,55 +1956,6 @@ function getDateRange() {
   return { min, max }
 }
 
-function Submit(attrs: {}, context: DynamicContext) {
-  try {
-    let user = getAuthUser(context)
-    if (!user) throw 'You must be logged in to submit ' + pageTitle
-    let body = getContextFormBody(context)
-    let id = 1
-    return <Redirect href={`/service-detail/result?id=${id}`} />
-  } catch (error) {
-    return (
-      <Redirect
-        href={
-          '/service-detail/result?' +
-          new URLSearchParams({ error: String(error) })
-        }
-      />
-    )
-  }
-}
-
-function SubmitResult(attrs: {}, context: DynamicContext) {
-  let params = new URLSearchParams(context.routerMatch?.search)
-  let error = params.get('error')
-  let id = params.get('id')
-  return (
-    <>
-      <ion-header>
-        <ion-toolbar>
-          <IonBackButton href="/service-detail/add" backText="Form" />
-          <ion-title role="heading" aria-level="1">
-            Submitted {pageTitle}
-          </ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content id="AddServiceDetail" class="ion-padding">
-        {error ? (
-          renderError(error, context)
-        ) : (
-          <>
-            <p>Your submission is received (#{id}).</p>
-            <Link href="/service-detail" tagName="ion-button">
-              Back to {pageTitle}
-            </Link>
-          </>
-        )}
-      </ion-content>
-    </>
-  )
-}
-
 function getServiceQuestions(service: Service) {
   return filter(proxy.service_question, { service_id: service.id! }).filter(
     row => row.question.trim(),
@@ -3669,18 +3620,6 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
         },
       )
     },
-  },
-  '/service-detail/add/submit': {
-    title: apiEndpointTitle,
-    description: 'TODO',
-    node: <Submit />,
-    streaming: false,
-  },
-  '/service-detail/result': {
-    title: apiEndpointTitle,
-    description: 'TODO',
-    node: <SubmitResult />,
-    streaming: false,
   },
 } satisfies Routes
 
