@@ -196,7 +196,3 @@ if (config.setup_robots_txt) {
     console.log(Object.keys(routeDict).join('\n'))
   }, 1000)
 }
-
-export function placeholderForAttachRoutes(): never {
-  throw new Error('This route is placeholder for attachRoutes')
-}

@@ -1,12 +1,11 @@
 import httpStatus from 'http-status'
 import { o } from '../jsx/jsx.js'
-import { Routes, placeholderForAttachRoutes, redirectDict } from '../routes.js'
+import type { Routes } from '../routes'
 import { apiEndpointTitle, title } from '../../config.js'
 import Style from '../components/style.js'
 import {
   Context,
   DynamicContext,
-  ExpressContext,
   getContextFormBody,
   resolveExpressContext,
 } from '../context.js'
@@ -93,8 +92,8 @@ import { ReceiptImageItem } from './booking.js'
 import { formatDuration } from '../format/duration.js'
 import { client_config } from '../../../client/client-config.js'
 import { formatBankNumber } from '../format/bank.js'
-import { attrs } from '../../../client/jsx/types'
 import { Copyable } from '../components/copyable.js'
+import { placeholderForAttachRoutes } from '../components/placeholder.js'
 
 let pageTitle = 'Service Detail'
 let addPageTitle = 'Add Service Detail'
@@ -2577,12 +2576,8 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
       })
     },
   },
-  '/shop/:shop_slug/service/:service_slug/image': {
-    resolve: placeholderForAttachRoutes,
-  },
-  '/shop/:shop_slug/service/:service_slug/receipt': {
-    resolve: placeholderForAttachRoutes,
-  },
+  '/shop/:shop_slug/service/:service_slug/image': placeholderForAttachRoutes,
+  '/shop/:shop_slug/service/:service_slug/receipt': placeholderForAttachRoutes,
   '/shop/:shop_slug/service/:service_slug/admin': {
     resolve(context) {
       return resolveServiceRoute(context, ({ service, shop }) => {
