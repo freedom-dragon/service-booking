@@ -2098,7 +2098,7 @@ function attachRoutes(app: Router) {
         let form = createUploadForm({
           uploadDir: dir,
           filename: filename + '.tmp',
-          maxFileSize: client_config.max_image_size * 1.5,
+          maxFileSize: client_config.safe_max_image_size,
         })
         let [fields, files] = await form.parse(req)
         let file = files.file?.[0].filepath
@@ -2160,7 +2160,7 @@ function attachRoutes(app: Router) {
         let form = createUploadForm({
           uploadDir: dir,
           maxFiles: 10,
-          maxFileSize: client_config.max_image_size * 1.5,
+          maxFileSize: client_config.safe_max_image_size,
         })
         let [fields, files] = await form.parse(req)
         let nodes: Node[] = (files.file || []).map(file => {
