@@ -95,9 +95,6 @@ import { formatBankNumber } from '../format/bank.js'
 import { Copyable } from '../components/copyable.js'
 import { placeholderForAttachRoutes } from '../components/placeholder.js'
 
-let pageTitle = 'Service Detail'
-let addPageTitle = 'Add Service Detail'
-
 let ServiceDetailStyle = Style(/* css */ `
 #ServiceDetail {
 
