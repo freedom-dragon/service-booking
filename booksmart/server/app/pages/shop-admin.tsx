@@ -36,7 +36,7 @@ import { createUploadForm } from '../upload.js'
 import { join } from 'path'
 import { client_config } from '../../../client/client-config.js'
 import { renameSync } from 'fs'
-import { updateUrlVersion } from '../image-version.js'
+import { updateUrlVersion } from '../url-version.js'
 
 let pageTitle = '商戶管理'
 

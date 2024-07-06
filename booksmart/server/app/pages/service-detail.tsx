@@ -94,7 +94,7 @@ import { client_config } from '../../../client/client-config.js'
 import { formatBankNumber } from '../format/bank.js'
 import { Copyable } from '../components/copyable.js'
 import { placeholderForAttachRoutes } from '../components/placeholder.js'
-import { updateUrlVersion } from '../image-version.js'
+import { updateUrlVersion } from '../url-version.js'
 
 let ServiceDetailStyle = Style(/* css */ `
 #ServiceDetail {

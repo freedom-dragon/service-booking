@@ -2,7 +2,7 @@ import { find } from 'better-sqlite3-proxy'
 import { Shop, proxy } from '../../db/proxy.js'
 import { existsSync, readdirSync, renameSync } from 'fs'
 import { values } from 'cast.ts'
-import { toVersionedUrl } from './image-version.js'
+import { toVersionedUrl } from './url-version.js'
 
 export type ShopLocales = {
   tutor: string
