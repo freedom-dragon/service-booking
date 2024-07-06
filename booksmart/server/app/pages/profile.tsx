@@ -1,6 +1,10 @@
 import { apiEndpointTitle, title } from '../../config.js'
 import { Link, Redirect } from '../components/router.js'
-import { DynamicContext, ExpressContext } from '../context.js'
+import {
+  DynamicContext,
+  ExpressContext,
+  resolveExpressContext,
+} from '../context.js'
 import { o } from '../jsx/jsx.js'
 import { Routes, getContextSearchParams } from '../routes.js'
 import { proxy } from '../../../db/proxy.js'
@@ -225,13 +229,8 @@ export function UserMessageInGuestView(attrs: { user_id: number }) {
 function attachRoutes(app: Router) {
   app.post('/avatar', async (req, res, next) => {
     try {
-      let user_id = getAuthUserId({
-        type: 'express',
-        req,
-        res,
-        next,
-        url: req.url,
-      })
+      let context = resolveExpressContext(req, res, next)
+      let user_id = getAuthUserId(context)
       if (!user_id) throw 'not login'
 
       let user = proxy.user[user_id]

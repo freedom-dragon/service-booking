@@ -10,7 +10,7 @@ import { capitalize } from '@beenotung/tslib/string.js'
 import { Router } from 'url-router.ts'
 import { LayoutType, config, title } from '../config.js'
 import { Redirect } from './components/router.js'
-import type { Context, DynamicContext } from './context'
+import type { Context, DynamicContext, ExpressContext } from './context'
 import { o } from './jsx/jsx.js'
 import type { Node } from './jsx/types'
 import UserAgents from './pages/user-agents.js'
@@ -195,4 +195,8 @@ if (config.setup_robots_txt) {
   setTimeout(() => {
     console.log(Object.keys(routeDict).join('\n'))
   }, 1000)
+}
+
+export function placeholderForAttachRoutes(): never {
+  throw new Error('This route is placeholder for attachRoutes')
 }

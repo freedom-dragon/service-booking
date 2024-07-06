@@ -1,6 +1,6 @@
 import httpStatus from 'http-status'
 import { o } from '../jsx/jsx.js'
-import { Routes, redirectDict } from '../routes.js'
+import { Routes, placeholderForAttachRoutes, redirectDict } from '../routes.js'
 import { apiEndpointTitle, title } from '../../config.js'
 import Style from '../components/style.js'
 import {
@@ -8,6 +8,7 @@ import {
   DynamicContext,
   ExpressContext,
   getContextFormBody,
+  resolveExpressContext,
 } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
@@ -1967,7 +1968,7 @@ function getServiceQuestions(service: Service) {
 
 function attachRoutes(app: Router) {
   app.post(
-    '/shop/:shop_slug/service/:service_slug/image',
+    '/shop/:shop_slug/service/:service_slug/image' satisfies keyof typeof routes,
     async (req, res, next) => {
       try {
         let {
@@ -1999,13 +2000,8 @@ function attachRoutes(app: Router) {
         })
         if (!service) throw new HttpError(404, 'service not found')
 
-        let context: ExpressContext = {
-          type: 'express',
-          req,
-          res,
-          next,
-          url: req.url,
-        }
+        debugger
+        let context = resolveExpressContext(req, res, next)
         let { user } = getAuthRole(context)
         let is_shop_owner = user?.id == shop.owner_id
         if (!is_shop_owner) {
@@ -2119,7 +2115,7 @@ function attachRoutes(app: Router) {
     },
   )
   app.post(
-    '/shop/:shop_slug/service/:service_slug/receipt',
+    '/shop/:shop_slug/service/:service_slug/receipt' satisfies keyof typeof routes,
     async (req, res, next) => {
       try {
         let {
@@ -2145,13 +2141,7 @@ function attachRoutes(app: Router) {
         let booking = proxy.booking[booking_id]
         if (!booking) throw new HttpError(404, 'booking not found')
 
-        let context: ExpressContext = {
-          type: 'express',
-          req,
-          res,
-          next,
-          url: req.url,
-        }
+        let context = resolveExpressContext(req, res, next)
 
         let user = getAuthUser(context)
         if (!user) throw new HttpError(401, 'need to login as user')
@@ -2586,6 +2576,12 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
         throw new MessageException(['batch', messages])
       })
     },
+  },
+  '/shop/:shop_slug/service/:service_slug/image': {
+    resolve: placeholderForAttachRoutes,
+  },
+  '/shop/:shop_slug/service/:service_slug/receipt': {
+    resolve: placeholderForAttachRoutes,
   },
   '/shop/:shop_slug/service/:service_slug/admin': {
     resolve(context) {
