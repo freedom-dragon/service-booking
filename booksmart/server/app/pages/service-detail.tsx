@@ -662,6 +662,10 @@ function PaymentModal(
             <h1>總共費用</h1>
             <div id="totalPriceLabel"></div>
             <div>{formatPrice(total_price)}</div>
+          </>
+        ) : null}
+        {need_pay && !is_free ? (
+          <>
             <h1>付款方法</h1>
             <ion-list class="payment-method--list">
               {shop.accept_cash ? (
@@ -727,7 +731,7 @@ function PaymentModal(
               {mapArray(receipts, receipt =>
                 ReceiptFigure({ receipt }, context),
               )}
-            </div>{' '}
+            </div>
           </>
         ) : null}
 
