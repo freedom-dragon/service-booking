@@ -313,11 +313,10 @@ function selectOption(button){
                     : '')
                 }
               />
-              <ion-label slot="end">{service.price_unit}</ion-label>
+              <ion-label slot="end">
+                {service.price_unit} (上限: {quota} {service.price_unit})
+              </ion-label>
             </ion-item>
-            <ion-note class="item--hint">
-              上限: {quota} {service.price_unit}
-            </ion-note>
             <ion-item>
               <div slot="start">
                 <ion-icon name="hourglass-outline"></ion-icon> 時長
