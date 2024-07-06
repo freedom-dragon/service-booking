@@ -24,6 +24,10 @@ export let bookingPreviewStyle = Style(/* css */ `
   height: 1rem;
   margin-inline-end: 0.5rem;
 }
+.booking-preview p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
 `)
 
 export function BookingPreview(
