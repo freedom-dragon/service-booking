@@ -458,13 +458,11 @@ let checkEmailVerificationCodeParser = object({
 })
 
 type LastBookingRow = {
-  shop_slug: string
   service_slug: string
 }
 let select_last_booking_by_user_id = db.prepare(/* sql */ `
 select
-  shop.slug as shop_slug
-, service.slug as service_slug
+  service.slug as service_slug
 from booking
 inner join service on service.id = booking.service_id
 inner join shop on shop.id = service.shop_id
@@ -524,7 +522,7 @@ async function checkEmailVerificationCode(
         verification_code.revoke_time = now
         verification_code.match_id = attempt_id
         user_id =
-          find(proxy.user, { email: input.email })?.id ||
+          find(proxy.user, { email: input.email, shop_id: shop.id })?.id ||
           proxy.user.push({
             email: input.email,
             username: null,
@@ -552,10 +550,6 @@ async function checkEmailVerificationCode(
     let lastBooking =
       (select_last_booking_by_user_id.get({ user_id }) as LastBookingRow) ||
       null
-    let shop = !lastBooking ? find(proxy.shop, { owner_id: user_id }) : null
-    console.log('login user:', user_id)
-    console.log('last booking:', lastBooking?.shop_slug)
-    console.log('shop:', shop?.slug)
     return {
       title: apiEndpointTitle,
       description:
@@ -564,10 +558,10 @@ async function checkEmailVerificationCode(
         <Redirect
           href={
             lastBooking
-              ? `/shop/${lastBooking.shop_slug}/service/${lastBooking.service_slug}`
-              : shop
-                ? `/shop/${shop.slug}`
-                : loginRouteUrl(context, { code: 'ok' })
+              ? `/shop/${shop.slug}/service/${lastBooking.service_slug}`
+              : `/shop/${shop.slug}`
+            // TODO handle login flow for admin / sales
+            //  loginRouteUrl(context, { code: 'ok' })
           }
         />
       ),
