@@ -64,6 +64,25 @@ async function selectPhotos(
   )
 }
 
+async function selectShopLogo() {
+  let [photo] = await selectPhotos({
+    accept: '.jpg,.png,.webp,.heic,.gif',
+    multiple: false,
+    size: 150,
+  })
+  return photo
+}
+
+async function selectShopCoverImage() {
+  let [photo] = await selectPhotos({
+    accept: '.jpg,.png,.webp,.heic,.gif',
+    multiple: false,
+    width: 640,
+    height: 400,
+  })
+  return photo
+}
+
 async function selectServiceImage() {
   let [photo] = await selectPhotos({
     accept: '.jpg,.png,.webp,.heic,.gif',
@@ -102,6 +121,8 @@ Object.assign(window, {
   compressPhotos,
   selectPhotos,
   format_byte,
+  selectShopLogo,
+  selectShopCoverImage,
   selectServiceImage,
   selectReceiptImages,
 })

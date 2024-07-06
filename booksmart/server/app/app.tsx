@@ -43,6 +43,7 @@ import { updateRequestSession } from '../../db/request-log.js'
 import { Link } from './components/router.js'
 import verificationCode from './pages/verification-code.js'
 import ServiceDetail from './pages/service-detail.js'
+import shopAdmin from './pages/shop-admin.js'
 
 if (config.development) {
   scanTemplateDir('template')
@@ -200,6 +201,7 @@ export function attachRoutes(app: Router) {
   app.use(renewAuthCookieMiddleware)
   Profile.attachRoutes(app)
   ServiceDetail.attachRoutes(app)
+  shopAdmin.attachRoutes(app)
 
   // redirect routes
   Object.entries(redirectDict).forEach(([from, to]) =>

@@ -60,4 +60,14 @@ code.inline-code {
   margin-inline: 1rem;
   margin-block: 0.25rem;
 }
+
+.shop-logo {
+  max-width: 2.5rem;
+  max-height: 2.5rem;
+  border-radius: 0.2rem;
+}
+.shop-cover-image {
+  border-radius: 1rem;
+  width: calc(100% - 2rem);
+}
 `

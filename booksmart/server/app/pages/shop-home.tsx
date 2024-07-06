@@ -123,22 +123,11 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           flex-wrap: wrap;
         "
         >
-          <img
-            style="
-          max-width: 1.5em;
-          max-height: 1.5em;
-          border-radius: 0.2em;
-        "
-            src={getShopLogoImage(shop_slug)}
-          />
+          <img class="shop-logo" src={getShopLogoImage(shop_slug)} />
           {name}
         </h1>
         <img
-          class="ion-margin-horizontal"
-          style="
-          border-radius: 1rem;
-          width: calc(100% - 2rem);
-        "
+          class="ion-margin-horizontal shop-cover-image"
           src={getShopCoverImage(shop_slug)}
         />
 

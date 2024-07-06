@@ -3,7 +3,7 @@ import { Routes } from '../routes.js'
 import { title } from '../../config.js'
 import Style from '../components/style.js'
 import { mapArray } from '../components/fragment.js'
-import { object, string } from 'cast.ts'
+import { ParseResult, object, string } from 'cast.ts'
 import { Redirect } from '../components/router.js'
 import {
   shopFieldsParser,
@@ -15,18 +15,28 @@ import {
   ShopLocales,
   shopLocaleKeyParser,
   invalidateShopLocale,
+  getShopCoverImage,
+  getShopLogoImage,
 } from '../shop-store.js'
 import { find } from 'better-sqlite3-proxy'
 import { Shop, proxy } from '../../../db/proxy.js'
 import { ShopContacts, ShopContactsStyle } from '../components/shop-contact.js'
 import { Script } from '../components/script.js'
-import { MessageException } from '../../exception.js'
+import { HttpError, MessageException } from '../../exception.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { nodeToVNode } from '../jsx/vnode.js'
 import { ServerMessage } from '../../../client/types.js'
 import { getContextShop } from '../auth/shop.js'
 import { AppMoreBackButton } from './app-more.js'
-import { DynamicContext } from '../context.js'
+import { DynamicContext, resolveExpressContext } from '../context.js'
+import { placeholderForAttachRoutes } from '../components/placeholder.js'
+import { Router } from 'express'
+import { getAuthUserId } from '../auth/user.js'
+import { createUploadForm } from '../upload.js'
+import { join } from 'path'
+import { client_config } from '../../../client/client-config.js'
+import { renameSync } from 'fs'
+import { updateUrlVersion } from '../image-version.js'
 
 let pageTitle = '商戶管理'
 
@@ -40,12 +50,49 @@ let style = Style(/* css */ `
 #ShopAdmin {
 
 }
+/* setting hidden on button doesn't work, the attribute is removed by runtime */
+.image-field--image {
+  margin: 0.5rem;
+}
+.image-field ion-button[disabled] {
+  display: none;
+}
 `)
 
 let ShopAdminScripts = (
   <>
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
+    {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
     {Script(/* javascript */ `
+async function editImage(editButton, selectFn) {
+  let saveButton = editButton.parentElement.querySelector('[data-save-url]')
+  let item = editButton.closest('.image-field')
+  let image = item.querySelector('.image-field--image')
+  let photo = await selectFn()
+  if (!photo) return
+  image.src = photo.dataUrl
+  saveButton.file = photo.file
+  saveButton.disabled = false
+}
+async function saveImage(saveButton) {
+  let url = saveButton.dataset.saveUrl
+  let item = saveButton.closest('.image-field')
+  let label = item.querySelector('ion-label').textContent
+  let formData = new FormData()
+  formData.append('file', saveButton.file)
+  let res = await upload(url, formData)
+  let json = await res.json()
+  if (json.error) {
+    showToast(json.error, 'error')
+    return
+  }
+  if (json.message) {
+    onServerMessage(json.message)
+    return
+  }
+  showToast('更新了' + label, 'info')
+  saveButton.disabled = true
+}
 function clearField(button) {
   let url = button.dataset.saveUrl
   let item = button.closest('ion-item')
@@ -57,6 +104,7 @@ function saveField(button) {
   let url = button.dataset.saveUrl
   let item = button.closest('ion-item')
   let input = item.querySelector('ion-input')
+           || item.querySelector('ion-textarea')
   emit(url, input.value, input.label)
 }
 document.querySelectorAll('ion-checkbox[name="floating_contact_method"]').forEach(checkbox => {
@@ -115,6 +163,9 @@ function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
           </ion-title>
         </ion-toolbar>
         <nav class="scroll-nav">
+          <a href="#shop-settings" onclick="scrollToSection(event)">
+            店面設定
+          </a>
           <a href="#payment-methods" onclick="scrollToSection(event)">
             付款方法
           </a>
@@ -136,6 +187,88 @@ function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
             })
           }
         `)}
+        <ion-list-header aria-level="3" id="shop-settings">
+          店面設定
+        </ion-list-header>
+        <ion-note color="dark">
+          <div class="ion-margin-horizontal">編輯店舖主頁的內容。</div>
+        </ion-note>
+        <ion-list inset="true">
+          <ion-item class="image-field">
+            <ion-label position="stacked">店舖標誌</ion-label>
+            <img
+              class="image-field--image shop-logo"
+              src={getShopLogoImage(shop_slug)}
+            />
+            <ion-buttons slot="end">
+              <ion-button onclick="editImage(this, selectShopLogo)">
+                <ion-icon name="create" slot="icon-only" />
+              </ion-button>
+              <ion-button
+                disabled
+                color="success"
+                data-save-url={`${urlPrefix}/image?name=logo`}
+                onclick="saveImage(this)"
+              >
+                <ion-icon name="save" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-item>
+          <ion-item class="image-field">
+            <ion-label position="stacked">封面相</ion-label>
+            <img
+              class="image-field--image shop-cover-image"
+              src={getShopCoverImage(shop_slug)}
+            />
+            <ion-buttons slot="end">
+              <ion-button onclick="editImage(this, selectShopCoverImage)">
+                <ion-icon name="create" slot="icon-only" />
+              </ion-button>
+              <ion-button
+                disabled
+                color="success"
+                data-save-url={`${urlPrefix}/image?name=cover`}
+                onclick="saveImage(this)"
+              >
+                <ion-icon name="save" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-item>
+          <ion-item>
+            <ion-textarea
+              label="關於我們 (標語)"
+              label-placement="stacked"
+              auto-grow
+              value={shop.bio}
+            />
+            <ion-buttons slot="end">
+              <ion-button
+                color="success"
+                data-save-url={`${urlPrefix}/save/bio`}
+                onclick="saveField(this)"
+              >
+                <ion-icon name="save" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-item>
+          <ion-item>
+            <ion-textarea
+              label="關於我們 (詳情版)"
+              label-placement="stacked"
+              auto-grow
+              value={shop.desc}
+            />
+            <ion-buttons slot="end">
+              <ion-button
+                color="success"
+                data-save-url={`${urlPrefix}/save/desc`}
+                onclick="saveField(this)"
+              >
+                <ion-icon name="save" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-item>
+        </ion-list>
         <ion-list-header aria-level="2" id="payment-methods">
           付款方法
         </ion-list-header>
@@ -300,6 +433,67 @@ function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
   )
 }
 
+function attachRoutes(app: Router) {
+  app.post(
+    '/shop/:shop_slug/admin/image' satisfies keyof typeof routes,
+    async (req, res, next) => {
+      try {
+        let context = resolveExpressContext(req, res, next)
+
+        let user_id = getAuthUserId(context)
+        if (!user_id) throw 'not login'
+
+        let user = proxy.user[user_id]
+        if (!user) throw 'user not found'
+
+        let shop = getContextShop(context)
+        if (user_id != shop.owner_id) throw 'not shop owner'
+
+        let dir = join('public', 'assets', 'shops', shop.slug)
+        let filename = ''
+
+        let name = req.query.name
+        switch (name) {
+          case 'logo':
+            filename = 'logo.webp'
+            break
+          case 'cover':
+            filename = 'cover.webp'
+            break
+          default:
+            throw new MessageException([
+              'eval',
+              `showToast('invalid field name: ${name}', 'error')`,
+            ])
+        }
+        let image_url = join(dir, filename).replace('public', '')
+
+        let form = createUploadForm({
+          uploadDir: dir,
+          filename: filename + '.tmp',
+          maxFileSize: client_config.safe_max_image_size,
+        })
+        let [fields, files] = await form.parse(req)
+
+        let file = files.file?.[0].filepath
+        if (!file) throw new HttpError(400, 'missing file')
+
+        renameSync(file, file.replace(/\.tmp$/, ''))
+
+        updateUrlVersion(image_url)
+
+        res.json({})
+      } catch (error) {
+        if (error instanceof MessageException) {
+          res.json({ message: error.message })
+        } else {
+          next(error)
+        }
+      }
+    },
+  )
+}
+
 let routes = {
   '/shop/:shop_slug/admin': {
     resolve(context) {
@@ -312,6 +506,7 @@ let routes = {
       }
     },
   },
+  '/shop/:shop_slug/admin/image': placeholderForAttachRoutes,
   '/shop/:shop_slug/admin/save/:field': {
     resolve(context) {
       if (context.type !== 'ws') {
@@ -335,7 +530,15 @@ let routes = {
         1: string({ nonEmpty: true }),
       }).parse(context.args)
 
-      let field = shopFieldsParser.parse(context.routerMatch?.params.field)
+      let field: ParseResult<typeof shopFieldsParser>
+      try {
+        field = shopFieldsParser.parse(context.routerMatch?.params.field)
+      } catch (error) {
+        throw new MessageException([
+          'eval',
+          `showToast('invalid field: ${context.routerMatch?.params.field}', 'error')`,
+        ])
+      }
 
       if (value.length == 0) {
         shop[field] = null
@@ -458,4 +661,4 @@ let routes = {
   },
 } satisfies Routes
 
-export default { routes }
+export default { routes, attachRoutes }
