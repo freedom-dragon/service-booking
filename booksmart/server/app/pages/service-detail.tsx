@@ -2323,7 +2323,6 @@ let routes = {
       return resolveServiceRoute(context, ({ service, shop }) => {
         let body = getContextFormBody(context) as any
         body.answers = JSON.parse(body.answers)
-        console.log('body:', body)
         let input = submitBookingParser.parse(body)
         let tel = to_full_hk_mobile_phone(input.tel)
         if (!tel) {
