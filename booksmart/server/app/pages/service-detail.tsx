@@ -2394,9 +2394,9 @@ let routes = {
           let booking = proxy.booking[booking_id]
           let fee = calcBookingTotalFee(booking)
           booking.total_price = fee.total_fee
-          if (fee.is_free) {
-            noticeBookingSubmit(booking, context)
-          }
+          // if (fee.is_free) {
+          noticeBookingSubmit(booking, context)
+          // }
           return booking
         })()
         if (should_verify_email) {
