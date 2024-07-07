@@ -45,7 +45,7 @@ export function toUrl<K extends string>(
     json?: boolean
   },
 ): string {
-  let params = (options?.params || {}) as Record<string, string>
+  let params = (options?.params || {}) as Record<string, string | number>
   let url = key as string
   for (let part of url.split('/')) {
     if (part[0] == ':') {
