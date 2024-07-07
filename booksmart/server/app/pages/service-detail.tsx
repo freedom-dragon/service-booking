@@ -168,7 +168,6 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let remarks = filter(proxy.service_remark, { service_id: service.id! })
   remarks = remarks.filter(remark => remark.title || remark.content)
   let locale = getShopLocale(shop.id!)
-  let serviceUrl = `/shop/${shop_slug}/service/${service_slug}`
   let images = getServiceImages(shop_slug, service_slug)
   let user = getAuthUser(context)
   let is_shop_owner = user && user.id == shop.owner_id
@@ -213,7 +212,11 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
               <Link
                 tagName="ion-button"
                 title={'管理' + locale.service}
-                href={`${serviceUrl}/admin`}
+                href={toRouteUrl(
+                  routes,
+                  '/shop/:shop_slug/service/:service_slug/admin',
+                  { params: { shop_slug, service_slug } },
+                )}
               >
                 <ion-icon slot="icon-only" name="create"></ion-icon>
               </Link>
@@ -238,7 +241,11 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
 
         <form
           id="bookingForm"
-          action={`${serviceUrl}/booking/submit`}
+          action={toRouteUrl(
+            routes,
+            '/shop/:shop_slug/service/:service_slug/booking/submit',
+            { params: { shop_slug, service_slug } },
+          )}
           method="POST"
         >
           <ion-list lines="full" inset="true">

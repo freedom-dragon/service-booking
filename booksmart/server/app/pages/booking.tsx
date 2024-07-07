@@ -46,6 +46,9 @@ import { formatHKDateString } from '../format/date.js'
 import { countBooking } from '../booking-store.js'
 import { formatDuration } from '../format/duration.js'
 import { loginRouteUrl } from './login.js'
+import { IonButton } from '../components/ion-button.js'
+import { toRouteUrl, toUrl } from '../../url.js'
+import { getContextShopSlug } from '../auth/shop.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -163,6 +166,7 @@ let page = (
         </ion-list>
       </ion-content>
     </ion-popover>
+    <FilterUrl />
     <Page />
     <ion-footer>
       <AppTabBar />
@@ -192,14 +196,12 @@ requestAnimationFrame(fixCalendarHeader)
 calendarPicker.addEventListener('ionChange', event => {
   let value = event.detail.value.split('T')[0]
   document.querySelector('ion-datetime-button[datetime="calendarPicker"] [slot="date-target"]').textContent = value
-  // TODO add shop slug
-  emit('/booking/filter?date='+value)
+  emit(window.booking_filter_url+'?date='+value)
   showLoading()
 })
 calendarPicker.addEventListener('ionCancel', event => {
   document.querySelector('ion-datetime-button[datetime="calendarPicker"] [slot="date-target"]').textContent = '顯示全部'
-  // TODO add shop slug
-  emit('/booking/filter')
+  emit(window.booking_filter_url)
   showLoading()
 })
 function showLoading() {
@@ -235,6 +237,22 @@ async function uploadReceipt(url) {
 `)}
   </>
 )
+
+function FilterUrl(attrs: {}, context: DynamicContext) {
+  let shop_slug = getContextShopSlug(context)
+  return Script(/* javascript */ `
+window.booking_filter_url = ${toRouteUrl(
+    routes,
+    '/shop/:shop_slug/booking/filter',
+    {
+      params: {
+        shop_slug,
+      },
+      json: true,
+    },
+  )}
+`)
+}
 
 let topMenuButtons = (
   <ion-buttons slot="end">
@@ -287,9 +305,8 @@ function BookingDetails(attrs: {
   search: string
 }) {
   let { booking } = attrs
-  let receipts = filter(proxy.receipt, {
-    booking_id: booking.id!,
-  })
+  let booking_id = booking.id!
+  let receipts = filter(proxy.receipt, { booking_id })
   let avatar_url = toUploadedUrl(booking.user!.avatar)
   let service = booking.service!
   let shop_slug = service.shop!.slug
@@ -349,20 +366,42 @@ function BookingDetails(attrs: {
         ) : null}
         <div class="booking--buttons">
           {attrs.can_confirm ? (
-            <ion-button
+            <IonButton
               color="success"
-              onclick={`emit('/booking/${booking.id}/manage/approve${attrs.search}')`}
+              url={toRouteUrl(
+                routes,
+                '/shop/:shop_slug/booking/:booking_id/manage/:action',
+                {
+                  params: {
+                    shop_slug,
+                    booking_id,
+                    action: 'approve',
+                  },
+                  search: attrs.search,
+                },
+              )}
             >
               確認
-            </ion-button>
+            </IonButton>
           ) : null}
           {attrs.can_arrive ? (
-            <ion-button
+            <IonButton
               color="success"
-              onclick={`emit('/booking/${booking.id}/manage/arrive${attrs.search}')`}
+              url={toRouteUrl(
+                routes,
+                '/shop/:shop_slug/booking/:booking_id/manage/:action',
+                {
+                  params: {
+                    shop_slug,
+                    booking_id,
+                    action: 'arrive',
+                  },
+                  search: attrs.search,
+                },
+              )}
             >
               報到
-            </ion-button>
+            </IonButton>
           ) : null}
           {attrs.can_reschedule
             ? (() => {
@@ -492,7 +531,16 @@ function confirmReschedule${booking.id}() {
     + ' ' +
     bookingForm.time.value
   ).toISOString()
-  emit('/booking/${booking.id}/manage/reschedule${attrs.search}', appointment_time)
+  let url = ${toRouteUrl(
+    routes,
+    '/shop/:shop_slug/booking/:booking_id/manage/:action',
+    {
+      params: { shop_slug, booking_id, action: 'reschedule' },
+      search: attrs.search,
+      json: true,
+    },
+  )}
+  emit(url, appointment_time)
 }
 `,
                           'no-minify',
@@ -504,12 +552,19 @@ function confirmReschedule${booking.id}() {
               })()
             : null}
           {attrs.can_reject ? (
-            <ion-button
+            <IonButton
               color="dark"
-              onclick={`emit('/booking/${booking.id}/manage/reject${attrs.search}')`}
+              url={toRouteUrl(
+                routes,
+                '/shop/:shop_slug/booking/:booking_id/manage/:action',
+                {
+                  params: { shop_slug, booking_id, action: 'reject' },
+                  search: attrs.search,
+                },
+              )}
             >
               取消
-            </ion-button>
+            </IonButton>
           ) : null}
         </div>
         <div class="ion-margin-horizontal">
@@ -1108,7 +1163,7 @@ function getWeeks(date: TimezoneDate) {
   return weeks
 }
 
-function Main(attrs: {}, context: DynamicContext) {
+function Calendar(attrs: {}, context: DynamicContext) {
   let user = getAuthUser(context)
   let date = new TimezoneDate()
   date.timezone = +8
@@ -1171,16 +1226,6 @@ function Main(attrs: {}, context: DynamicContext) {
       <ion-list hidden>
         <ion-item>9am - 12nn</ion-item>
       </ion-list>
-      {user ? (
-        <Link href="/booking/add" tagName="ion-button">
-          {addPageTitle}
-        </Link>
-      ) : (
-        <p hidden>
-          You can add event / available timeslot after{' '}
-          <Link href={loginRouteUrl(context)}>login</Link>.
-        </p>
-      )}
     </>
   )
 }
@@ -1443,12 +1488,12 @@ let routes = {
     menuFullNavigate: true,
     node: page,
   },
-  '/booking/filter': {
+  '/shop/:shop_slug/booking/filter': {
     title: apiEndpointTitle,
     description: 'view all or filter by one date',
     node: <Filter />,
   },
-  '/booking/:booking_id/manage/:action': {
+  '/shop/:shop_slug/booking/:booking_id/manage/:action': {
     title: apiEndpointTitle,
     description: 'manage a booking by merchant',
     node: <ManageBooking />,
