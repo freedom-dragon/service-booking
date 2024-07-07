@@ -178,7 +178,7 @@ let page = (
 function fixCalendarHeader() {
   let root = document.querySelector('#calendarPicker')
 
-  let node = root?.shadowRoot.querySelector('.datetime-header')
+  let node = root?.shadowRoot?.querySelector('.datetime-header')
   if (!node) return requestAnimationFrame(fixCalendarHeader)
   node.style.display = 'flex'
   node.style.flexDirection = 'row-reverse'
