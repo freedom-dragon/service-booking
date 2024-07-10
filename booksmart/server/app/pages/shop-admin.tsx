@@ -149,7 +149,7 @@ function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
     })
   let localeItems: LocaleItem[] = [
     { label: '服務', key: 'service' },
-    { label: '服務提供者', key: 'tutor' },
+    // { label: '服務提供者', key: 'tutor' },
   ]
   return (
     <>
