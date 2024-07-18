@@ -37,7 +37,7 @@ export function Stats(attrs: { hidden?: boolean }, context: Context) {
   if (context.type === 'express') {
     state.visit++
     saveNumber(visitFile, state.visit)
-    messages.push(['update-text', '#stats .visit', state.visit])
+    // messages.push(['update-text', '#stats .visit', state.visit])
   }
   let ws: ManagedWebsocket | undefined
   if (context.type === 'ws') {
