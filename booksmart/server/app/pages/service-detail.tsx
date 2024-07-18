@@ -1152,6 +1152,7 @@ function ManageService(attrs: { service: Service }, context: DynamicContext) {
                   border-radius: 0.5rem;
                   display: inline-block;
                   word-break: break-word;
+                  font-size: 0.75rem;
                 "
                 onclick="copyUrl()"
               >
@@ -1181,7 +1182,7 @@ function copyUrl() {
           </ion-item>
           <ion-item>
             <div slot="start">
-              <ion-icon name="copy-outline"></ion-icon> 次數
+              <ion-icon name="copy-outline"></ion-icon> 服務次數
             </div>
             <div class="d-flex" style="align-items: center; gap: 0.25rem">
               <ion-input
@@ -1192,7 +1193,7 @@ function copyUrl() {
               />
             </div>
           </ion-item>
-          <ion-note class="item--hint">如：一次付費，三次服務的套票</ion-note>
+          <ion-note class="item--hint">一次收費可享用的服務次數</ion-note>
           <ion-item>
             <div slot="start">
               <ion-icon name="cash-outline"></ion-icon> 原價
@@ -1202,7 +1203,7 @@ function copyUrl() {
                 value={service.original_price}
                 type="text"
                 onchange={`emit('${serviceUrl}/update','original_price',this.value)`}
-                placeholder="可選輸入"
+                placeholder="非必填"
               />
             </div>
           </ion-item>
@@ -1226,7 +1227,9 @@ function copyUrl() {
             </div>
           </ion-item>
           <ion-note class="item--hint">
-            如: $100/人 、 $150/對情侶 、 📐 量身訂做/位
+            如: $100/人 、$150/對情侶
+            {/* 📐 量身訂做/位 */}
+            {/* 查詢報價 */}
           </ion-note>
           <ion-item>
             <div slot="start">
@@ -1240,10 +1243,14 @@ function copyUrl() {
                 type="text"
                 onchange={`emit('${serviceUrl}/update','peer_amount',this.value)`}
               />
-              <span style="padding-bottom: 0.25rem">人同行，每人</span>
+              <span>人同行，每人</span>
               <ion-input
                 style="width: 4rem"
-                value={service.peer_price}
+                value={
+                  +service.peer_price!
+                    ? '$' + service.peer_price
+                    : service.peer_price
+                }
                 placeholder="優惠價"
                 onchange={`emit('${serviceUrl}/update','peer_price',this.value)`}
               />
@@ -1252,7 +1259,7 @@ function copyUrl() {
           <ion-note class="item--hint">如: 2人同行，每人$50</ion-note>
           <ion-item>
             <div slot="start">
-              <ion-icon name="people-outline"></ion-icon> 人數
+              <ion-icon name="people-outline"></ion-icon> 人數上限
             </div>
             <div class="d-flex" style="align-items: center; gap: 0.25rem">
               <ion-input
@@ -1262,14 +1269,14 @@ function copyUrl() {
                 min="1"
                 onchange={`emit('${serviceUrl}/update','quota',this.value)`}
               />
+              <ion-input value={service.price_unit} readonly></ion-input>
             </div>
           </ion-item>
           <ion-note class="item--hint">如: 6(人) / 2(對情侶)</ion-note>
           <ion-item>
             <div slot="start">
-              <ion-icon name="hourglass-outline"></ion-icon> 時長
+              <ion-icon name="hourglass-outline"></ion-icon> 每節時長
             </div>
-            <div slot="end">分鐘</div>
             <ion-input
               value={service.book_duration_minute}
               placeholder="如: 120"
@@ -1277,13 +1284,19 @@ function copyUrl() {
               type="number"
               min="1"
             />
+            <ion-input readonly value="分鐘"></ion-input>
           </ion-item>
           <ion-note class="item--hint">
-            系統會以這個分鐘數作為計算。建議輸入每節最長時間。
+            如時長不定，建議輸入每節最長時間。
           </ion-note>
         </ion-list>
 
-        <h2 class="ion-margin">備註 (額外問題)</h2>
+        <h2 class="ion-margin" style="margin-bottom: 0.5rem">
+          備註 (客人必答問題)
+        </h2>
+        <ion-note class="item--hint" style="color: #0009">
+          如：會否帶寵物來？如有請填寫明品種和體形
+        </ion-note>
         <ion-list
           data-list-name="service-question"
           lines="full"
@@ -1298,6 +1311,7 @@ function copyUrl() {
             }),
           )}
           <ion-item-divider
+            hidden
             class="list-description"
             color="light"
             data-non-empty-message="共 {count} 條額外問題"
@@ -1309,7 +1323,7 @@ function copyUrl() {
                 : `未有任何額外問題`}
             </p>
           </ion-item-divider>
-          <div class="text-center">
+          <div class="text-center" style="margin-top: 0.5rem">
             <ion-button onclick={`emit('${serviceUrl}/question/add')`}>
               <ion-icon name="add" slot="start"></ion-icon>
               加問題
@@ -1329,7 +1343,7 @@ function copyUrl() {
               <div>
                 <ion-textarea
                   value={service.desc}
-                  placeholder="可選輸入"
+                  placeholder="非必填"
                   auto-grow
                   onchange={`emit('${serviceUrl}/update','desc',this.value)`}
                 />
@@ -1379,7 +1393,7 @@ function copyUrl() {
           ) : null}
           <ion-item>
             <div>
-              <ion-icon name="map-outline"></ion-icon> 地址 (備註)
+              <ion-icon name="map-outline"></ion-icon> 地址 (額外資訊)
               <div>
                 <ion-textarea
                   value={service.address_remark}
@@ -1614,7 +1628,6 @@ function ServiceQuestionItem(attrs: {
       </div>
       <ion-item>
         <ion-textarea
-          placeholder="如: 會否帶寵物來？如有請填寫明品種和體形。"
           auto-grow
           value={question.question}
           onchange={`emit('${serviceUrl}/question',${question.id},this.value,'問題')`}
@@ -2911,7 +2924,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
         }
 
         let name = question.question
-        name = name ? `「${name}」` : ` #${question_id}`
+        name = name ? `「${name}」` : ''
         delete proxy.service_question[question_id]
         let new_count = count(proxy.service_question, {
           service_id: service.id!,
@@ -3060,7 +3073,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
         }
 
         let name = remark.title
-        name = name ? `「${name}」` : ` #${remark_id}`
+        name = name ? `「${name}」` : ''
         delete proxy.service_remark[remark_id]
         let new_count = count(proxy.service_remark, {
           service_id: service.id!,
@@ -3211,7 +3224,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
           }
 
           let name = option.name
-          name = name ? `「${name}」` : ` #${option_id}`
+          name = name ? `「${name}」` : ''
           try {
             delete proxy.service_option[option_id]
           } catch (error) {
@@ -3220,7 +3233,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               [
                 [
                   'eval',
-                  `showToast(${JSON.stringify(`款式「${name}」已經有相關預訂`)},'error')`,
+                  `showToast(${JSON.stringify(`款式${name}已經有相關預訂`)},'error')`,
                 ],
               ],
             ])

@@ -140,7 +140,8 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           "
         >
           {/* {owner_name} {locale.service} */}
-          Booking
+          {/* Booking */}
+          立即預約
           {shop.owner_id == user?.id ? (
             <>
               <Link

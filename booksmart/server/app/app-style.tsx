@@ -8,9 +8,6 @@ import { MobileStyle } from './styles/mobile-style.js'
 import { WebStyle } from './styles/web-style.js'
 
 let appStyle = /* css */ `
-body {
-  font-family: Noto Sans HK, 微软雅黑, Microsoft YaHei, sans-serif;
-}
 ${SourceCodeStyle}
 ${ErrorStyle}
 ${UpdateMessageStyle}

@@ -374,7 +374,7 @@ function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
                   data-label={item.label}
                   data-shop-slug={shop_slug}
                 >
-                  浮在主頁
+                  主頁右下方浮標
                 </ion-checkbox>
               </ion-item>
               <div class="contact--preview">

@@ -1,4 +1,10 @@
 export let CommonStyle = /* css */ `
+body {
+  font-family: Noto Sans HK, 微软雅黑, Microsoft YaHei, sans-serif;
+}
+h1, h2 {
+  font-weight: bold;
+}
 .text-no-wrap {
   display: inline-block;
   width: max-content;
@@ -58,7 +64,7 @@ code.inline-code {
 .item--hint {
   display: block;
   margin-inline: 1rem;
-  margin-block: 0.25rem;
+  font-size: 0.85rem;
 }
 
 .shop-logo {
