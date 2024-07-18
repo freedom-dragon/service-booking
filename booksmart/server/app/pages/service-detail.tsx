@@ -347,7 +347,9 @@ function selectOption(button){
                   {index + 1}
                 </div>
                 <div>
-                  <ion-label>{row.question}</ion-label>
+                  <ion-label style="margin-top: 0.5rem">
+                    {row.question}
+                  </ion-label>
                   <ion-textarea
                     auto-grow
                     data-question-id={row.id}
@@ -515,7 +517,9 @@ function selectOption(button){
               </span>
               {service.peer_amount && service.peer_price ? (
                 <div>
-                  {service.peer_amount}人同行，每人
+                  {service.peer_amount}
+                  {service.price_unit || '人'}同行，每
+                  {service.price_unit || '人'}
                   {formatPrice(service.peer_price)}
                 </div>
               ) : null}
@@ -739,7 +743,10 @@ function PaymentModal(
           </>
         ) : null}
 
-        <p class="receiptMessage ion-text-center">
+        <p
+          class="receiptMessage ion-text-center"
+          style="color: red; font-weight: bold"
+        >
           {!need_pay || is_free
             ? ReceiptMessage.free(shop)
             : has_paid
@@ -819,8 +826,7 @@ function ReceiptFigure(
   )
 }
 let ReceiptMessage = {
-  not_paid:
-    '請注意，你的預約在上載付款證明之後才會生效。在此之前，這個時段可能會被其他人預約。',
+  not_paid: '請注意，你需上傳付款證明。否則這個時段可能會被其他人搶先預約。',
   paid: (shop: Shop) =>
     `已上載付款證明，請等待 ${'商家' || shop.owner!.nickname} 確認`,
   free: (shop: Shop) =>
@@ -1339,7 +1345,10 @@ function copyUrl() {
         >
           <ion-item>
             <div>
-              <ion-icon name="map-outline"></ion-icon> 活動詳情
+              <div slot="start" style="margin-top: 0.5rem">
+                <ion-icon name="information-circle-outline"></ion-icon>
+                活動詳情
+              </div>
               <div>
                 <ion-textarea
                   value={service.desc}
@@ -1362,7 +1371,7 @@ function copyUrl() {
           </ion-item>
           {address ? (
             <ion-note
-              style1="display: flex; align-items: center; gap: 1rem"
+              style="display: flex; align-items: center; gap: 1rem"
               class="w-100 item--hint"
             >
               預覽
@@ -1468,7 +1477,7 @@ function copyUrl() {
           <div class="text-center">
             <ion-button onclick={`emit('${serviceUrl}/timeslot/add')`}>
               <ion-icon name="add" slot="start"></ion-icon>
-              加時段
+              新增可預約時段
             </ion-button>
           </div>
         </ion-list>
@@ -1653,7 +1662,11 @@ function ServiceRemarkItem(attrs: {
 }) {
   let { serviceUrl, index, remark } = attrs
   return (
-    <div class="service-remark" data-remark-id={remark.id}>
+    <div
+      class="service-remark"
+      data-remark-id={remark.id}
+      style="margin-top: 0.5rem"
+    >
       {index > 0 ? <ion-item-divider></ion-item-divider> : null}
       <div class="ion-margin-start">
         注意事項 <span data-role="index">{index + 1}</span>
@@ -1750,7 +1763,7 @@ function ServiceOptionItem(attrs: {
         </ion-buttons>
       </ion-item>
       <h3 class="ion-margin-horizontal d-flex">
-        款式 {index + 1} 相片
+        <div class="label-text">款式 {index + 1} 相片</div>
         <ion-buttons style="display: inline-flex">
           <ion-button onclick="editOptionImage(this)" color="primary">
             <ion-icon name="create" slot="icon-only" />
@@ -2440,7 +2453,9 @@ let routes = {
                   'update-in',
                   '#guestInfo .guestInfo--message',
                   nodeToVNode(
-                    <p>已發送電郵通知給 {user.nickname}。</p>,
+                    <p style="margin: 1rem">
+                      已發送電郵通知給 {user.nickname}。
+                    </p>,
                     context,
                   ),
                 ],
@@ -2454,7 +2469,7 @@ let routes = {
                   'update-in',
                   '#guestInfo .guestInfo--message',
                   nodeToVNode(
-                    <p>
+                    <p style="margin: 1rem">
                       請查看{' '}
                       <a href={mailboxUrl} target="_blank">
                         {hint}

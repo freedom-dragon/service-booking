@@ -63,9 +63,8 @@ proxy.shop[1] = {
   owner_name: 'Katy',
   address: '大角咀必發道128號宏創方20樓',
   address_remark: `
-- 自然採光，私人班、情侶/ 親子班之打卡首選✨
-- 泊車方便，亦可乘搭巴士2E/18/44/E21/914等，
-  或太子/南昌/奧運站步行15分鐘
+太子站 A 出口，轉右；
+大門密碼 1234
 `.trim(),
   tel: '62787635',
   email: 'the.balconi.artstudio@gmail.com',

@@ -355,7 +355,7 @@ function BookingDetails(attrs: {
                   size="small"
                 >
                   <ion-icon name="cloud-upload" slot="start"></ion-icon>
-                  上傳付款證明
+                  新增付款證明
                 </ion-button>
               </div>
             </summary>
@@ -1321,7 +1321,9 @@ function ManageBooking(attrs: {}, context: WsContext) {
           html: /* html */ `
 <p>
 ${booking.user!.nickname} 你好，
-<b>${user.nickname}</b>
+</p>
+<p>
+<b>${shop.name}</b>
 確認了你在
 <b>${formatDateTimeText({ time: booking.appointment_time }, context)}</b>
 的
@@ -1331,11 +1333,12 @@ ${booking.user!.nickname} 你好，
 <p>
 到時見！
 </p>
+<br>
 <p>
 按此查看詳情：<a href="${service_url}">${service_url}</a>
 </p>
 `,
-          text: `${user.nickname} 確認了在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。到時見！！`,
+          text: `${shop.name} 確認了在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。到時見！！`,
         }).catch(error => {
           context.ws.send([
             'eval',
@@ -1368,7 +1371,9 @@ ${booking.user!.nickname} 你好，
           html: /* html */ `
 <p>
 ${booking.user!.nickname} 你好，
-<b>${user.nickname}</b>
+</p>
+<p>
+<b>${shop.name}</b>
 取消了原定在
 <b>${formatDateTimeText({ time: booking.appointment_time }, context)}</b>
 的
@@ -1378,11 +1383,12 @@ ${booking.user!.nickname} 你好，
 <p>
 期待下次再見！
 </p>
+<br>
 <p>
 按此預約其他${locale.service}：<a href="${shop_url}">${shop_url}</a>
 </p>
 `,
-          text: `${user.nickname} 取消了原定在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。期待下次再見！`,
+          text: `${shop.name} 取消了原定在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。期待下次再見！`,
         }).catch(error => {
           context.ws.send([
             'eval',
@@ -1417,7 +1423,9 @@ ${booking.user!.nickname} 你好，
           html: /* html */ `
 <p>
 ${booking.user!.nickname} 你好，
-<b>${user.nickname}</b>
+</p>
+<p>
+<b>${shop.name}</b>
 重新安排了你的
 <b>${booking.service!.name}</b>
 預約。
@@ -1429,11 +1437,12 @@ ${booking.user!.nickname} 你好，
 </p>
 到時見！
 </p>
+<br>
 <p>
 按此查看詳情：<a href="${service_url}">${service_url}</a>
 </p>
 `,
-          text: `${user.nickname} 重新安排了在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。到時見！！`,
+          text: `${shop.name} 重新安排了在 ${formatDateTimeText({ time: booking.appointment_time }, context)} 的 ${booking.service!.name} 預約。到時見！！`,
         }).catch(error => {
           context.ws.send([
             'eval',

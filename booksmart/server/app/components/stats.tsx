@@ -47,10 +47,11 @@ export function Stats(attrs: { hidden?: boolean }, context: Context) {
       saveNumber(sessionFile, state.session)
       state.live.add(ws)
     }
-    messages.push(
-      ['update-text', '#stats .session', state.session],
-      ['update-text', '#stats .live', state.live.size],
-    )
+    messages
+      .push
+      // ['update-text', '#stats .session', state.session],
+      // ['update-text', '#stats .live', state.live.size],
+      ()
     onWsSessionClose(ws, session => {
       let ws = session.ws
       state.live.delete(ws)

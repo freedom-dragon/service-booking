@@ -106,7 +106,7 @@ let emailFormBody =
       <div class="field">
         <label>
           <input type="checkbox" name="include_link" /> 包括驗證連結
-          （更方便但可能會被當作垃圾郵件）
+          {/* （更方便但可能會被當作垃圾郵件） */}
         </label>
       </div>
       <input type="submit" value="發送驗證碼" />
@@ -136,7 +136,7 @@ let emailFormBody =
         </ion-item>
         <ion-note color="dark">
           <div class="ion-padding-horizontal">
-            （更方便但可能會被當作垃圾郵件）
+            {/* （更方便但可能會被當作垃圾郵件） */}
           </div>
         </ion-note>
       </ion-list>
