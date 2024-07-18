@@ -121,7 +121,8 @@ export function selectAvailableHours(options: {
 
     for (; ; date.setTime(date.getTime() + booking_time_step_ms)) {
       let start_time = d2(date.getHours()) + ':' + d2(date.getMinutes())
-      let end_date = new Date(date.getTime() + service_duration)
+      let end_date = new TimezoneDate(date.getTime() + service_duration)
+      end_date.timezone = +8
       let end_time = d2(end_date.getHours()) + ':' + d2(end_date.getMinutes())
       if (end_time > hour.end_time) break
 
