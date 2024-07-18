@@ -15,6 +15,7 @@ import shopAdmin from './shop-admin.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { loginRouteUrl } from './login.js'
 import profile from './profile.js'
+import { getAuthRole } from '../auth/role.js'
 
 let pageTitle = '更多'
 
@@ -132,12 +133,13 @@ function ProfileItems(attrs: {}, context: DynamicContext) {
 }
 
 function ShopItems(attrs: {}, context: DynamicContext) {
-  let shop_slug = getContextShopSlug(context)
+  let { shop, is_owner } = getAuthRole(context)
+  if (!is_owner) return
   return (
     <Link
       tagName="ion-item"
       href={toRouteUrl(shopAdmin.routes, '/shop/:shop_slug/admin', {
-        params: { shop_slug },
+        params: { shop_slug: shop.slug },
       })}
     >
       <ion-icon slot="start" ios="cog" md="settings" />

@@ -37,6 +37,9 @@ import { join } from 'path'
 import { client_config } from '../../../client/client-config.js'
 import { renameSync } from 'fs'
 import { updateUrlVersion } from '../url-version.js'
+import { getAuthRole } from '../auth/role.js'
+import shopHome from './shop-home.js'
+import { toRouteUrl } from '../../url.js'
 
 let pageTitle = '商戶管理'
 
@@ -498,11 +501,20 @@ let routes = {
   '/shop/:shop_slug/admin': {
     resolve(context) {
       let shop = getContextShop(context)
+      let { is_owner } = getAuthRole(context)
       let shop_name = shop.name
       return {
         title: title(shop_name),
         description: 'Admin page for ' + shop_name,
-        node: <ShopAdmin shop={shop} />,
+        node: is_owner ? (
+          <ShopAdmin shop={shop} />
+        ) : (
+          <Redirect
+            href={toRouteUrl(shopHome.routes, '/shop/:shop_slug', {
+              params: { shop_slug: shop.slug },
+            })}
+          />
+        ),
       }
     },
   },
@@ -523,6 +535,20 @@ let routes = {
           title: title('shop not found'),
           description: 'update shop info',
           node: <Redirect href={`/`} />,
+        }
+      }
+      let { is_owner } = getAuthRole(context)
+      if (!is_owner) {
+        return {
+          title: title('not shop owner'),
+          description: 'update shop info',
+          node: (
+            <Redirect
+              href={toRouteUrl(shopHome.routes, '/shop/:shop_slug', {
+                params: { shop_slug },
+              })}
+            />
+          ),
         }
       }
       let { 0: value, 1: label } = object({
@@ -634,6 +660,20 @@ let routes = {
           title: title('shop not found'),
           description: 'update shop locale',
           node: <Redirect href={`/`} />,
+        }
+      }
+      let { is_owner } = getAuthRole(context)
+      if (!is_owner) {
+        return {
+          title: title('not shop owner'),
+          description: 'update shop info',
+          node: (
+            <Redirect
+              href={toRouteUrl(shopHome.routes, '/shop/:shop_slug', {
+                params: { shop_slug },
+              })}
+            />
+          ),
         }
       }
       let { 0: value, 1: label } = object({

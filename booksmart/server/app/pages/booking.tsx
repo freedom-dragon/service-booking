@@ -48,7 +48,7 @@ import { formatDuration } from '../format/duration.js'
 import { loginRouteUrl } from './login.js'
 import { IonButton } from '../components/ion-button.js'
 import { toRouteUrl, toUrl } from '../../url.js'
-import { getContextShopSlug } from '../auth/shop.js'
+import { getContextShop, getContextShopSlug } from '../auth/shop.js'
 
 let pageTitle = '我的預約'
 let addPageTitle = 'Add Calendar'
@@ -938,15 +938,40 @@ function groupAppointments(options: {
   }
 }
 
+let select_user_booking = db
+  .prepare<
+    {
+      user_id: number
+      shop_id: number
+    },
+    number
+  >(
+    /* sql */ `
+select
+  booking.id
+from booking
+inner join service on service.id = booking.service_id
+where booking.user_id = :user_id
+  and service.shop_id = :shop_id
+`,
+  )
+  .pluck()
+
 function UserPageContent(
   attrs: { user: User; date: string | null },
-  context: Context,
+  context: DynamicContext,
 ) {
   let { user, date } = attrs
+  let shop = getContextShop(context)
 
   let search = date ? '?date=' + date : ''
 
-  let bookings = filter(proxy.booking, { user_id: user.id! })
+  let bookings = select_user_booking
+    .all({
+      user_id: user.id!,
+      shop_id: shop.id!,
+    })
+    .map(id => proxy.booking[id])
 
   let { booking_count, submitted, confirmed, completed, cancelled, colors } =
     groupAppointments({ bookings, date })
@@ -1278,7 +1303,7 @@ function ManageBooking(attrs: {}, context: WsContext) {
     let { user, shop, is_owner } = getAuthRole(context)
 
     if (!user) throw `You must be logged in to manage booking`
-    if (!is_owner) throw `You must be merchant to manage booking`
+    if (!is_owner) throw `You must be shop owner to manage booking`
 
     let input = manageBookingParser.parse(context)
     let { action, booking_id } = input.routerMatch.params

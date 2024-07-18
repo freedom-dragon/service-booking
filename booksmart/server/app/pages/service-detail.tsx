@@ -57,7 +57,7 @@ import { concat_words } from '@beenotung/tslib/string.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { Router } from 'express'
-import { toRouteUrl } from '../../url.js'
+import { toRouteUrl, toUrl } from '../../url.js'
 import { basename, join } from 'path'
 import { existsSync, renameSync, unlinkSync } from 'fs'
 import { EarlyTerminate, MessageException, HttpError } from '../../exception.js'
@@ -88,13 +88,14 @@ import { countBooking, selectAvailableQuota } from '../booking-store.js'
 import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
 import { nodeToHTML } from '../jsx/html.js'
-import { ReceiptImageItem } from './booking.js'
+import booking, { ReceiptImageItem } from './booking.js'
 import { formatDuration } from '../format/duration.js'
 import { client_config } from '../../../client/client-config.js'
 import { formatBankNumber } from '../format/bank.js'
 import { Copyable } from '../components/copyable.js'
 import { placeholderForAttachRoutes } from '../components/placeholder.js'
 import { updateUrlVersion } from '../url-version.js'
+import { getContextShop, getContextShopSlug } from '../auth/shop.js'
 
 let ServiceDetailStyle = Style(/* css */ `
 #ServiceDetail {
@@ -382,7 +383,10 @@ function selectOption(button){
                     minlength="8"
                     maxlength="8"
                     value={tel}
-                    oninput="this.value.length == 8 && emit('/check-tel', this.value)"
+                    data-url={toRouteUrl(routes, '/shop/:shop_slug/check-tel', {
+                      params: { shop_slug: shop.slug },
+                    })}
+                    oninput="this.value.length == 8 && emit(this.dataset.url, this.value)"
                   />
                 </ion-item>
                 {tel
@@ -620,7 +624,7 @@ async function uploadReceipt(url) {
 
 function PaymentModal(
   attrs: { booking: Booking; user: User },
-  context: Context,
+  context: DynamicContext,
 ) {
   let { booking, user } = attrs
   let service = booking.service!
@@ -754,7 +758,7 @@ function PaymentModal(
               : ReceiptMessage.not_paid}
         </p>
         <div id="receiptNavButtons">
-          {is_free || has_paid ? receiptNavButton : null}
+          {is_free || has_paid ? ReceiptNavButton(context) : null}
         </div>
       </ion-content>
     </>
@@ -832,12 +836,24 @@ let ReceiptMessage = {
   free: (shop: Shop) =>
     `已提交預約申請，請等待 ${'商家' || shop.owner!.nickname} 確認`,
 }
-let receiptNavButton = nodeToVNode(
-  <Link tagName="ion-button" expand="block" href="/booking" class="ion-margin">
-    查看我的預約
-  </Link>,
-  { type: 'static' },
-)
+function ReceiptNavButton(context: DynamicContext) {
+  let shop_slug = getContextShopSlug(context)
+  return nodeToVNode(
+    <Link
+      tagName="ion-button"
+      expand="block"
+      href={toUrl<keyof typeof booking.routes>('/shop/:shop_slug/booking', {
+        params: {
+          shop_slug,
+        },
+      })}
+      class="ion-margin"
+    >
+      查看我的預約
+    </Link>,
+    { type: 'static' },
+  )
+}
 
 let ManageServiceStyle = Style(/* css */ `
 #ManageService h2,
@@ -2222,7 +2238,7 @@ function attachRoutes(app: Router) {
               ],
               ['update-text', '.receiptMessage', receiptMessage],
               ['eval', `showAlert(${JSON.stringify(receiptMessage)},'info')`],
-              ['update-in', '#receiptNavButtons', receiptNavButton],
+              ['update-in', '#receiptNavButtons', ReceiptNavButton(context)],
             )
           }
           if (from == 'booking') {
@@ -2271,6 +2287,8 @@ let submitBookingParser = object({
   ),
 })
 
+// TODO check shop owner on Update APIs
+
 let routes = {
   '/shop/:shop_slug/service/:service_slug': {
     resolve(context) {
@@ -2285,7 +2303,7 @@ let routes = {
       })
     },
   },
-  '/check-tel': {
+  '/shop/:shop_slug/check-tel': {
     resolve(context) {
       if (context.type !== 'ws') {
         return {
@@ -2294,11 +2312,13 @@ let routes = {
           node: 'This api is only available over ws',
         }
       }
+      let shop = getContextShop(context)
       let tel = context.args?.[0] as string
       tel = to_full_hk_mobile_phone(tel || '')
       if (!tel) throw EarlyTerminate
       let is_registered =
-        find(proxy.user, { tel }) || find(proxy.user, { tel: tel.slice(-8) })
+        find(proxy.user, { tel, shop_id: shop.id! }) ||
+        find(proxy.user, { tel: tel.slice(-8) })
       if (is_registered) {
         throw new MessageException([
           'update-in',
@@ -2373,7 +2393,7 @@ let routes = {
         let user = getAuthUser(context)
         let is_shop_owner = user && user.id == shop.owner_id
         let should_verify_email = !user
-        if (!user || is_shop_owner) {
+        if (!user) {
           user = find(proxy.user, { tel, shop_id: shop.id }) || null
         }
         if (!user) {
@@ -2601,7 +2621,11 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
           ['eval', `showToast(${JSON.stringify(receiptMessage)},"info")`],
         ]
         if (has_receipt) {
-          messages.push(['update-in', '#receiptNavButtons', receiptNavButton])
+          messages.push([
+            'update-in',
+            '#receiptNavButtons',
+            ReceiptNavButton(context),
+          ])
         } else {
           messages.push(
             ['update-text', '.receiptMessage', receiptMessage],

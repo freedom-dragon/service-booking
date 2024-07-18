@@ -23,7 +23,7 @@ export let config = {
   production,
   development,
   minify: production,
-  site_name: 'BookSmart Service Booking WebApp',
+  site_name: 'BookSmart Booking System',
   short_site_name: 'BookSmart',
   site_description:
     '方便易用的服務預約平台。預約水管工、電工、髮型師等各種專業服務。瀏覽各種服務供應商，比較價格和評論，輕鬆預約所需服務。立即使用可靠的服務預約網站，節省時間和精力。',

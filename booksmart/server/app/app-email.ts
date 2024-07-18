@@ -2,15 +2,23 @@ import { Booking } from '../../db/proxy.js'
 import { title } from '../config.js'
 import { sendEmail } from '../email.js'
 import { env } from '../env.js'
+import { toRouteUrl } from '../url.js'
 import { formatDateTimeText } from './components/datetime.js'
 import { Context } from './context.js'
+import BookingPage from './pages/booking.js'
 
 export function noticeBookingSubmit(booking: Booking, context: Context) {
   let service = booking.service!
   let user = booking.user!
   let shop = service.shop!
   let owner = shop.owner!
-  let booking_url = `${env.ORIGIN}/booking`
+  let booking_url =
+    env.ORIGIN +
+    toRouteUrl(BookingPage.routes, '/shop/:shop_slug/booking', {
+      params: {
+        shop_slug: shop.slug,
+      },
+    })
   sendEmail({
     from: env.EMAIL_USER,
     to: owner.email!,
@@ -46,7 +54,13 @@ export function noticeBookingReceiptSubmit(booking: Booking, context: Context) {
   let user = booking.user!
   let shop = service.shop!
   let owner = shop.owner!
-  let booking_url = `${env.ORIGIN}/booking`
+  let booking_url =
+    env.ORIGIN +
+    toRouteUrl(BookingPage.routes, '/shop/:shop_slug/booking', {
+      params: {
+        shop_slug: shop.slug,
+      },
+    })
   sendEmail({
     from: env.EMAIL_USER,
     to: owner.email!,
