@@ -55,7 +55,8 @@ let addPageTitle = 'Add Calendar'
 
 let submitted_pink = '#ff000040'
 let confirmed_orange = '#f08040'
-let finished_green = '#00c000'
+let finished_green =
+  'oklab(0.617439365900682 -0.127896775919671 0.0463667342516891)'
 let cancelled_gray = '#40404040'
 
 let style = Style(/* css */ `
@@ -88,6 +89,10 @@ ion-modal.modal-default.show-modal ~ ion-modal.modal-default {
 }
 
 /* calendar guide */
+#calendarModal .color-guide {
+  display: flex;
+  gap: 0.25rem;
+}
 #calendarGuidePopover ion-label {
   display: flex;
   align-items: center;
@@ -113,59 +118,41 @@ let page = (
         done-text="選擇日期"
         cancel-text="顯示全部"
       >
-        <ion-buttons slot="title">
-          <ion-button id="calendarGuideButton">
-            <ion-icon name="help"></ion-icon>
-          </ion-button>
-        </ion-buttons>
+        <div slot="title">
+          <div style="display: flex; margin-bottom: 0.5rem; justify-content: space-between">
+            {mapArray(
+              [
+                {
+                  label: '未確認',
+                  color: submitted_pink,
+                },
+                {
+                  label: '未開始',
+                  color: confirmed_orange,
+                },
+                {
+                  label: '已完成',
+                  color: finished_green,
+                },
+                {
+                  label: '已取消',
+                  color: cancelled_gray,
+                },
+              ],
+              item => (
+                <div class="color-guide">
+                  <div
+                    class="color-box"
+                    style={'background-color: ' + item.color}
+                  ></div>
+                  {item.label}
+                </div>
+              ),
+            )}
+          </div>
+        </div>
       </ion-datetime>
     </ion-modal>
-    <ion-popover
-      id="calendarGuidePopover"
-      trigger="calendarGuideButton"
-      trigger-action="click"
-    >
-      <ion-content class="ion-padding">
-        <ion-list>
-          <ion-item>
-            <ion-label>
-              <div
-                class="color-box"
-                style={'background-color: ' + submitted_pink}
-              ></div>
-              未確認
-            </ion-label>
-          </ion-item>{' '}
-          <ion-item>
-            <ion-label>
-              <div
-                class="color-box"
-                style={'background-color: ' + confirmed_orange}
-              ></div>
-              未開始
-            </ion-label>
-          </ion-item>{' '}
-          <ion-item>
-            <ion-label>
-              <div
-                class="color-box"
-                style={'background-color: ' + finished_green}
-              ></div>
-              已完成
-            </ion-label>
-          </ion-item>{' '}
-          <ion-item>
-            <ion-label>
-              <div
-                class="color-box"
-                style={'background-color: ' + cancelled_gray}
-              ></div>
-              已取消
-            </ion-label>
-          </ion-item>
-        </ion-list>
-      </ion-content>
-    </ion-popover>
     <FilterUrl />
     <Page />
     <ion-footer>
@@ -184,13 +171,15 @@ function fixCalendarHeader() {
 
   let node = root?.shadowRoot?.querySelector('.datetime-header')
   if (!node) return requestAnimationFrame(fixCalendarHeader)
-  node.style.display = 'flex'
-  node.style.flexDirection = 'row-reverse'
-  node.style.justifyContent = 'space-between'
+  node.style.paddingBottom = '0.5rem'
+  // node.style.display = 'flex'
+  // node.style.flexDirection = 'row-reverse'
+  // node.style.justifyContent = 'space-between'
 
   node = root?.shadowRoot.querySelector('.datetime-selected-date')
   if (!node) return requestAnimationFrame(fixCalendarHeader)
   node.style.marginTop = '0'
+  node.style.fontSize = '1.5rem'
 }
 requestAnimationFrame(fixCalendarHeader)
 calendarPicker.addEventListener('ionChange', event => {
