@@ -22,13 +22,9 @@ let content = (
   <div id="home">
     {style}
     <h1>Home Page</h1>
-    <p>
-      A booking system for shops of all sizes. From one-man micro startups to
-      mid-size companies.
-    </p>
-    <h2>Available Shops</h2>
+    <p>一個適合各種服務規模的預約系統。從一人微型創業到中小型企業。</p>
+    <h2>已加盟店舖</h2>
     <ShopList />
-    <SourceCode page="home.tsx" />
   </div>
 )
 
