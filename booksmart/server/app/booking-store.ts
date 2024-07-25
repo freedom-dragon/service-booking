@@ -10,6 +10,7 @@ import {
 } from './format/date.js'
 import { d2 } from 'cast.ts'
 import { TimezoneDate } from 'timezone-date.ts'
+import { getTimeslotIntervalInMinute } from './components/service-timeslot-picker.js'
 
 export type ServiceAvailableDateRow = Record<
   'id' | 'start_date' | 'end_date' | 'weekdays',
@@ -67,8 +68,6 @@ where service_id = :service_id
   and :start_time <= appointment_time and appointment_time < :end_time
 `)
 
-let booking_time_step_ms = 15 * MINUTE
-
 function selectBookedTimeslot(options: {
   service_id: number
   dateString: string
@@ -114,17 +113,29 @@ export function selectAvailableHours(options: {
   let { service_quota, hours, used, service_duration } =
     selectBookedTimeslot(options)
 
+  let booking_time_step_ms =
+    getTimeslotIntervalInMinute(proxy.service[options.service_id]) * MINUTE
+
   let available: AvailableHour[] = []
 
   for (let hour of hours) {
     let date = fromTimePart(hour.start_time)
 
+    console.log(
+      'date',
+      date.toString(),
+      new Date(booking_time_step_ms).toString(),
+      hour,
+    )
     for (; ; date.setTime(date.getTime() + booking_time_step_ms)) {
       let start_time = d2(date.getHours()) + ':' + d2(date.getMinutes())
       let end_date = new TimezoneDate(date.getTime() + service_duration)
       end_date.timezone = +8
       let end_time = d2(end_date.getHours()) + ':' + d2(end_date.getMinutes())
-      if (end_time > hour.end_time) break
+      if (end_time <= start_time) {
+        /* overflow to next day */
+        break
+      }
 
       let slot_time = { start_time, end_time }
 

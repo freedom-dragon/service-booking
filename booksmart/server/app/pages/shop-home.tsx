@@ -304,6 +304,7 @@ function AddService(attrs: { shop: Shop }, context: DynamicContext) {
     address_remark: null,
     desc: null,
     archive_time: null,
+    timeslot_interval_minute: null,
   })
   throw new MessageException([
     'redirect',

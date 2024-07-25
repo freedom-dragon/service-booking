@@ -80,7 +80,10 @@ import {
 } from '../components/booking-preview.js'
 import { calcBookingTotalFee } from '../../../db/service-store.js'
 import { env } from '../../env.js'
-import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
+import {
+  ServiceTimeslotPicker,
+  getTimeslotIntervalInMinute,
+} from '../components/service-timeslot-picker.js'
 import { formatTel } from '../components/tel.js'
 import { getAuthRole } from '../auth/role.js'
 import { toDatePart } from '../format/date.js'
@@ -96,6 +99,7 @@ import { Copyable } from '../components/copyable.js'
 import { placeholderForAttachRoutes } from '../components/placeholder.js'
 import { updateUrlVersion } from '../url-version.js'
 import { getContextShop, getContextShopSlug } from '../auth/shop.js'
+import { MINUTE } from '@beenotung/tslib/time.js'
 
 let ServiceDetailStyle = Style(/* css */ `
 #ServiceDetail {
@@ -1311,6 +1315,19 @@ function copyUrl() {
           <ion-note class="item--hint">
             如時長不定，建議輸入每節最長時間。
           </ion-note>
+          <ion-item>
+            <div slot="start">
+              <ion-icon name="hourglass-outline"></ion-icon> 每節間隔
+            </div>
+            <ion-input
+              value={getTimeslotIntervalInMinute(service)}
+              placeholder="15"
+              onchange={`emit('${serviceUrl}/update','timeslot_interval_minute',this.value)`}
+              type="number"
+              min="1"
+            />
+            <ion-input readonly value="分鐘"></ion-input>
+          </ion-item>
         </ion-list>
 
         <h2 class="ion-margin" style="margin-bottom: 0.5rem">
@@ -2317,8 +2334,7 @@ let routes = {
       tel = to_full_hk_mobile_phone(tel || '')
       if (!tel) throw EarlyTerminate
       let is_registered =
-        find(proxy.user, { tel, shop_id: shop.id! }) ||
-        find(proxy.user, { tel: tel.slice(-8) })
+        find(proxy.user, { tel }) || find(proxy.user, { tel: tel.slice(-8) })
       if (is_registered) {
         throw new MessageException([
           'update-in',
@@ -2390,15 +2406,15 @@ let routes = {
               : `showToast('所選擇時段沒有空位','error')`,
           ])
         }
-        let user = getAuthUser(context)
-        let is_shop_owner = user && user.id == shop.owner_id
-        let should_verify_email = !user
-        if (!user) {
-          user = find(proxy.user, { tel, shop_id: shop.id }) || null
-        }
-        if (!user) {
+        let authUser = getAuthUser(context)
+        let is_shop_owner = authUser && authUser.id == shop.owner_id
+        let should_verify_email = !authUser
+        let bookingUser = is_shop_owner
+          ? find(proxy.user, { tel })
+          : authUser || find(proxy.user, { tel })
+        if (!bookingUser) {
           let input = registerParser.parse(body)
-          if (find(proxy.user, { email: input.email, shop_id: shop.id })) {
+          if (find(proxy.user, { email: input.email })) {
             throw new MessageException([
               'eval',
               `showToast('這個電郵已經註冊過了，請檢查您的電話號碼和電郵是否正確。','error')`,
@@ -2411,11 +2427,10 @@ let routes = {
             email: input.email,
             tel: tel,
             avatar: null,
-            shop_id: shop.id!,
           })
-          user = proxy.user[user_id]
+          bookingUser = proxy.user[user_id]
         }
-        let user_id = user.id!
+        let booking_user_id = bookingUser.id!
         let booking: Booking = db.transaction(() => {
           let booking_id = proxy.booking.push({
             service_id: service.id!,
@@ -2427,7 +2442,7 @@ let routes = {
             cancel_time: null,
             amount: input.amount,
             service_option_id: input.option_id,
-            user_id,
+            user_id: booking_user_id,
             total_price: null,
           })
           for (let answer of input.answers) {
@@ -2446,7 +2461,7 @@ let routes = {
           return booking
         })()
         if (should_verify_email) {
-          let email = user.email!
+          let email = bookingUser.email!
           let hint = maskEmailForHint(email)
           let mailboxUrl = 'https://' + email.split('@').pop()
           let passcode = generatePasscode()
@@ -2456,7 +2471,7 @@ let routes = {
             request_time: Date.now(),
             revoke_time: null,
             match_id: null,
-            user_id,
+            user_id: booking_user_id,
             shop_id: shop.id!,
           })
           let { html, text } = verificationCodeEmail(
@@ -2467,14 +2482,14 @@ let routes = {
             ? [
                 [
                   'eval',
-                  `showToast('已發送電郵通知給 ${user.nickname}。','info')`,
+                  `showToast('已發送電郵通知給 ${bookingUser.nickname}。','info')`,
                 ],
                 [
                   'update-in',
                   '#guestInfo .guestInfo--message',
                   nodeToVNode(
                     <p style="margin: 1rem">
-                      已發送電郵通知給 {user.nickname}。
+                      已發送電郵通知給 {bookingUser.nickname}。
                     </p>,
                     context,
                   ),
@@ -2535,7 +2550,7 @@ let routes = {
               'update-in',
               '#submitModal',
               nodeToVNode(
-                PaymentModal({ booking: booking!, user }, context),
+                PaymentModal({ booking: booking!, user: bookingUser }, context),
                 context,
               ),
             ],
@@ -2679,6 +2694,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 'peer_price' as const,
                 'quota' as const,
                 'book_duration_minute' as const,
+                'timeslot_interval_minute' as const,
                 'address' as const,
                 'address_remark' as const,
                 'desc' as const,
@@ -2803,6 +2819,12 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
                 break
               case 'book_duration_minute':
                 label = '時長'
+                if (!(+value > 0)) invalid()
+                service[field] = +value
+                ok()
+                break
+              case 'timeslot_interval_minute':
+                label = '間隔'
                 if (!(+value > 0)) invalid()
                 service[field] = +value
                 ok()

@@ -60,7 +60,7 @@ export function ServiceTimeslotPicker(attrs: {
     /* javascript */ `
     var availableDates = ${JSON.stringify(availableDates)};
     var book_duration_ms = ${service.book_duration_minute * MINUTE};
-    var book_time_step_ms = ${15 * MINUTE};
+    var book_time_step_ms = ${getTimeslotIntervalInMinute(service) * MINUTE};
     ${attrs.datePicker}.isDateEnabled = (${function (
       dates: typeof availableDates,
     ) {
@@ -219,6 +219,10 @@ function getAvailableTimeslot(context: DynamicContext): ResolvedPageRoute {
   let hours = selectAvailableHours({ service_id: service.id!, dateString })
   context.res.json({ hours })
   throw EarlyTerminate
+}
+
+export function getTimeslotIntervalInMinute(service: Service): number {
+  return service.timeslot_interval_minute || 15
 }
 
 let routes: Routes = {

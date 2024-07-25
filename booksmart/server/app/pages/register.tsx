@@ -615,7 +615,6 @@ async function submit(context: InputContext): Promise<Node> {
       tel: null,
       avatar: null,
       nickname: null,
-      shop_id: input.shop_id,
     })
 
     let main: Node

@@ -101,7 +101,7 @@ async function requestEmailVerification(
           `showToast('請檢查電郵地址的形式','warning')`,
         ])
       }
-      user = find(proxy.user, { email, shop_id: shop.id })
+      user = find(proxy.user, { email })
       if (!user) {
         throw new MessageException([
           'eval',
@@ -116,7 +116,7 @@ async function requestEmailVerification(
           `showToast('請輸入香港的手提電話號碼','warning')`,
         ])
       }
-      user = find(proxy.user, { tel, shop_id: shop.id })
+      user = find(proxy.user, { tel })
       if (!user) {
         throw new MessageException([
           'eval',
@@ -522,7 +522,7 @@ async function checkEmailVerificationCode(
         verification_code.revoke_time = now
         verification_code.match_id = attempt_id
         user_id =
-          find(proxy.user, { email: input.email, shop_id: shop.id })?.id ||
+          find(proxy.user, { email: input.email })?.id ||
           proxy.user.push({
             email: input.email,
             username: null,
@@ -530,7 +530,6 @@ async function checkEmailVerificationCode(
             tel: null,
             avatar: null,
             nickname: null,
-            shop_id: verification_code.shop_id,
           })
         break
       }
