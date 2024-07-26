@@ -134,7 +134,7 @@ function ShopMain(attrs: {}, context: DynamicContext) {
           </ion-item>
           <ion-item lines="none">
             <div slot="start">
-              <ion-icon name="at-outline"></ion-icon> 頭像相片
+              <ion-icon name="image-outline"></ion-icon> 頭像相片
             </div>
           </ion-item>
         </ion-list>
