@@ -615,6 +615,7 @@ async function submit(context: InputContext): Promise<Node> {
       tel: null,
       avatar: null,
       nickname: null,
+      is_admin: false,
     })
 
     let main: Node
@@ -677,8 +678,8 @@ let routes: Routes = {
   '/register': {
     title: title('Register'),
     description: `Register to access exclusive content and functionality. Join our community on ${config.short_site_name}.`,
-    menuText: 'Register',
-    menuUrl: '/register',
+    // menuText: 'Register',
+    // menuUrl: '/register',
     guestOnly: true,
     node: RegisterPage,
   },

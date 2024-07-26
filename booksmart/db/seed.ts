@@ -22,6 +22,7 @@ function seedUser(user: User): number {
 let admin = seedUser({
   username: null,
   nickname: 'BookSmart Admin',
+  is_admin: true,
   password_hash: null,
   email:
     // 'admin@booksmart.com',
@@ -33,6 +34,7 @@ let admin = seedUser({
 let katy = seedUser({
   username: null,
   nickname: 'Katy 榆',
+  is_admin: false,
   password_hash: null,
   email:
     //  'the.balconi.artstudio@gmail.com',
@@ -44,6 +46,7 @@ let katy = seedUser({
 let beeno = seedUser({
   username: null,
   nickname: 'Beeno',
+  is_admin: false,
   password_hash: null,
   email: 'info@beenocodingstudio.com',
   tel: '+85298222913',

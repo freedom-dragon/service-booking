@@ -2,7 +2,7 @@ import { Random, digits } from '@beenotung/tslib/random.js'
 import { MINUTE } from '@beenotung/tslib/time.js'
 import { db } from '../../../db/db.js'
 import { HttpError } from '../../exception.js'
-import { User, proxy } from '../../../db/proxy.js'
+import { Shop, User, proxy } from '../../../db/proxy.js'
 import { boolean, email, object, optional, string } from 'cast.ts'
 import { sendEmail } from '../../email.js'
 import { apiEndpointTitle, config, title } from '../../config.js'
@@ -28,6 +28,10 @@ import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 import { loginRouteUrl } from './login.js'
 import { toRouteUrl } from '../../url.js'
 import { getContextShop } from '../auth/shop.js'
+import { toShopUrl } from '../app-url'
+import profile from './profile.js'
+import serviceDetail from './service-detail.js'
+import shopHome from './shop-home.js'
 
 let log = debugLog('app:verification-code')
 log.enabled = true
@@ -77,14 +81,14 @@ let requestEmailVerificationParser = object({
   tel: optional(string()),
   email: optional(string()),
   include_link: optional(boolean()),
-  shop_slug: string(),
+  // shop_slug: string(),
 })
 let email_parser = email()
 
 async function requestEmailVerification(
+  shop: Shop | null,
   context: DynamicContext,
 ): Promise<StaticPageRoute> {
-  let shop = getContextShop(context)
   try {
     let body = getContextFormBody(context)
     let input = requestEmailVerificationParser.parse(body, { name: 'body' })
@@ -146,10 +150,10 @@ async function requestEmailVerification(
       revoke_time: null,
       match_id: null,
       user_id: user.id || null,
-      shop_id: shop.id!,
+      shop_id: shop ? shop.id! : null,
     })
     let { html, text } = verificationCodeEmail(
-      { passcode, email: input.include_link ? email : null },
+      { passcode, email: input.include_link ? email : null, shop: shop },
       context,
     )
     let info = await sendEmail({
@@ -183,10 +187,16 @@ async function requestEmailVerification(
         'API Endpoint to request email verification code for authentication',
       node: (
         <Redirect
-          href={toRouteUrl(routes, '/shop/:shop_slug/verify/email/result', {
-            params: { shop_slug: shop.slug },
-            query: { email },
-          })}
+          href={
+            shop
+              ? toRouteUrl(routes, '/shop/:shop_slug/verify/email/result', {
+                  params: { shop_slug: shop.slug },
+                  query: { email },
+                })
+              : toRouteUrl(routes, '/admin/verify/email/result', {
+                  query: { email },
+                })
+          }
         />
       ),
     }
@@ -200,12 +210,20 @@ async function requestEmailVerification(
         'API Endpoint to request email verification code for authentication',
       node: (
         <Redirect
-          href={toRouteUrl(routes, '/shop/:shop_slug/verify/email/result', {
-            params: { shop_slug: shop.slug },
-            query: {
-              error: String(error),
-            },
-          })}
+          href={
+            shop
+              ? toRouteUrl(routes, '/shop/:shop_slug/verify/email/result', {
+                  params: { shop_slug: shop.slug },
+                  query: {
+                    error: String(error),
+                  },
+                })
+              : toRouteUrl(routes, '/admin/verify/email/result', {
+                  query: {
+                    error: String(error),
+                  },
+                })
+          }
         />
       ),
     }
@@ -215,19 +233,26 @@ async function requestEmailVerification(
 // TODO translate to zh-hk
 
 export function verificationCodeEmail(
-  attrs: { passcode: string; email: string | null },
+  attrs: { passcode: string; email: string | null; shop: Shop | null },
   context: DynamicContext,
 ) {
-  let shop = getContextShop(context)
+  let { shop } = attrs
   let url = attrs.email
     ? env.ORIGIN +
-      toRouteUrl(routes, '/shop/:shop_slug/verify/email/result', {
-        params: { shop_slug: shop.slug },
-        query: {
-          code: attrs.passcode,
-          email: attrs.email,
-        },
-      })
+      (shop
+        ? toRouteUrl(routes, '/shop/:shop_slug/verify/email/result', {
+            params: { shop_slug: shop.slug },
+            query: {
+              code: attrs.passcode,
+              email: attrs.email,
+            },
+          })
+        : toRouteUrl(routes, '/admin/verify/email/result', {
+            query: {
+              code: attrs.passcode,
+              email: attrs.email,
+            },
+          }))
     : null
   let node = (
     <div style="font-size: 1rem">
@@ -283,7 +308,10 @@ let style = Style(/* css */ `
 }
 `)
 
-function VerifyEmailPage(attrs: {}, context: DynamicContext) {
+function VerifyEmailPage(
+  attrs: { shop: Shop | null },
+  context: DynamicContext,
+) {
   let params = new URLSearchParams(context.routerMatch?.search)
   let error = params.get('error')
   let title = params.get('title')
@@ -309,7 +337,7 @@ function VerifyEmailPage(attrs: {}, context: DynamicContext) {
             </span>
           </p>
 
-          <VerifyEmailForm params={params} />
+          <VerifyEmailForm params={params} shop={attrs.shop} />
         </>
       )}
     </div>
@@ -329,19 +357,23 @@ function VerifyEmailPage(attrs: {}, context: DynamicContext) {
   )
 }
 function VerifyEmailForm(
-  attrs: { params: URLSearchParams },
+  attrs: { params: URLSearchParams; shop: Shop | null },
   context: DynamicContext,
 ) {
-  let shop = getContextShop(context)
+  let shop = attrs.shop
   let { params } = attrs
   let email = params.get('email')
   let code = params.get('code')
   return (
     <form
       method="post"
-      action={toRouteUrl(routes, '/shop/:shop_slug/verify/email/code/submit', {
-        params: { shop_slug: shop.slug },
-      })}
+      action={
+        shop
+          ? toRouteUrl(routes, '/shop/:shop_slug/verify/email/code/submit', {
+              params: { shop_slug: shop.slug },
+            })
+          : toRouteUrl(routes, '/admin/verify/email/code/submit')
+      }
     >
       {/* 
       <ion-list>
@@ -472,9 +504,9 @@ limit 1
 `)
 
 async function checkEmailVerificationCode(
+  shop: Shop | null,
   context: DynamicContext,
 ): Promise<StaticPageRoute> {
-  let shop = getContextShop(context)
   let res = (context as ExpressContext).res
   let email: string | null = null
   try {
@@ -530,6 +562,7 @@ async function checkEmailVerificationCode(
             tel: null,
             avatar: null,
             nickname: null,
+            is_admin: false,
           })
         break
       }
@@ -556,11 +589,22 @@ async function checkEmailVerificationCode(
       node: (
         <Redirect
           href={
-            lastBooking
-              ? `/shop/${shop.slug}/service/${lastBooking.service_slug}`
-              : `/shop/${shop.slug}`
-            // TODO handle login flow for admin / sales
-            //  loginRouteUrl(context, { code: 'ok' })
+            !shop
+              ? toRouteUrl(profile.routes, '/admin/profile')
+              : lastBooking
+                ? toRouteUrl(
+                    serviceDetail.routes,
+                    '/shop/:shop_slug/service/:service_slug',
+                    {
+                      params: {
+                        shop_slug: shop.slug,
+                        service_slug: lastBooking.service_slug,
+                      },
+                    },
+                  )
+                : toRouteUrl(shopHome.routes, '/shop/:shop_slug', {
+                    params: { shop_slug: shop.slug },
+                  })
           }
         />
       ),
@@ -577,10 +621,16 @@ async function checkEmailVerificationCode(
         'API Endpoint to submit email verification code for authentication',
       node: (
         <Redirect
-          href={toRouteUrl(routes, '/shop/:shop_slug/verify/email/result', {
-            params: { shop_slug: shop.slug },
-            query,
-          })}
+          href={
+            shop
+              ? toRouteUrl(routes, '/shop/:shop_slug/verify/email/result', {
+                  params: { shop_slug: shop.slug },
+                  query,
+                })
+              : toRouteUrl(routes, '/admin/verify/email/result', {
+                  query,
+                })
+          }
         />
       ),
     }
@@ -590,16 +640,39 @@ async function checkEmailVerificationCode(
 let routes = {
   '/shop/:shop_slug/verify/email/submit': {
     streaming: false,
-    resolve: requestEmailVerification,
+    resolve: context =>
+      requestEmailVerification(getContextShop(context), context),
   },
   '/shop/:shop_slug/verify/email/result': {
-    title: title('電郵驗證'),
-    description: 'Input email verification code for authentication',
-    node: <VerifyEmailPage />,
+    resolve(context) {
+      return {
+        title: title('電郵驗證'),
+        description: 'Input email verification code for authentication',
+        node: <VerifyEmailPage shop={getContextShop(context)} />,
+      }
+    },
   },
   '/shop/:shop_slug/verify/email/code/submit': {
     streaming: false,
-    resolve: checkEmailVerificationCode,
+    resolve: context =>
+      checkEmailVerificationCode(getContextShop(context), context),
+  },
+  '/admin/verify/email/submit': {
+    streaming: false,
+    resolve: context => requestEmailVerification(null, context),
+  },
+  '/admin/verify/email/result': {
+    resolve(context) {
+      return {
+        title: title('電郵驗證'),
+        description: 'Input email verification code for authentication',
+        node: <VerifyEmailPage shop={null} />,
+      }
+    },
+  },
+  '/admin/verify/email/code/submit': {
+    streaming: false,
+    resolve: context => checkEmailVerificationCode(null, context),
   },
 } satisfies Routes
 

@@ -4,6 +4,8 @@ import SourceCode from '../components/source-code.js'
 import { mapArray } from '../components/fragment.js'
 import { proxy } from '../../../db/proxy.js'
 import Style from '../components/style.js'
+import { Routes } from '../routes.js'
+import { LayoutType, config, title } from '../../config.js'
 
 // Calling <Component/> will transform the JSX into AST for each rendering.
 // You can reuse a pre-compute AST like `let component = <Component/>`.
@@ -19,13 +21,16 @@ let style = Style(/* css */ `
 `)
 
 let content = (
-  <div id="home">
+  <>
     {style}
-    <h1>Home Page</h1>
-    <p>一個適合各種服務規模的預約系統。從一人微型創業到中小型企業。</p>
-    <h2>已加盟店舖</h2>
-    <ShopList />
-  </div>
+    <div id="home">
+      <h1>Home Page</h1>
+      <p>一個適合各種服務規模的預約系統。從一人微型創業到中小型企業。</p>
+      <p>{config.site_description}</p>
+      <h2>已加盟店舖</h2>
+      <ShopList />
+    </div>
+  </>
 )
 
 function ShopList() {
@@ -36,7 +41,14 @@ function ShopList() {
   ))
 }
 
-// And it can be pre-rendered into html as well
-let Home = content
+let routes = {
+  '/': {
+    title: title('Home'),
+    description: config.site_description,
+    menuText: 'Home',
+    layout_type: LayoutType.navbar,
+    node: content,
+  },
+} satisfies Routes
 
-export default Home
+export default { routes }

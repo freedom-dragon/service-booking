@@ -19,6 +19,9 @@ import shopHome from './shop-home.js'
 import { getContextShop, getContextShopSlug } from '../auth/shop.js'
 import { concat_words } from '@beenotung/tslib/string.js'
 import verificationCode from './verification-code.js'
+import profile from './profile.js'
+import { IonBackButton } from '../components/ion-back-button.js'
+import home from './home.js'
 
 let style = Style(/* css */ `
 #login .field {
@@ -27,10 +30,10 @@ let style = Style(/* css */ `
 }
 `)
 
-function LoginPage(attrs: {}, context: DynamicContext) {
+function ShopLoginPage(attrs: {}, context: DynamicContext) {
   let shop = getContextShop(context)
   let user = getAuthUser(context)
-  if (user) {
+  if (user && !user.is_admin) {
     return (
       <Redirect
         href={toRouteUrl(shopHome.routes, '/shop/:shop_slug', {
@@ -270,6 +273,52 @@ export function LoginLink(attrs: {}, context: DynamicContext) {
   return <Link href={loginRouteUrl(context)}>Login</Link>
 }
 
+function AdminLoginPage(attrs: {}, context: Context) {
+  let user = getAuthUser(context)
+  if (user) {
+    return <Redirect href={toRouteUrl(profile.routes, '/admin/profile')} />
+  }
+  return (
+    <>
+      {style}
+      <ion-header>
+        <ion-toolbar color="primary">
+          <IonBackButton color="light" href={toRouteUrl(home.routes, '/')} />
+          <ion-title>Admin 登入</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <div id="login">
+          <h1>
+            歡迎回到{' '}
+            <span style="display: inline-block">{config.short_site_name}</span>
+          </h1>
+          <>
+            <div hidden>Login with:</div>
+            <form
+              method="POST"
+              action={toRouteUrl(
+                verificationCode.routes,
+                '/admin/verify/email/submit',
+              )}
+              onsubmit="emitForm(event)"
+            >
+              {emailFormBody}
+            </form>
+            <div class="or-line flex-center" hidden>
+              or
+            </div>
+            <form method="post" action="/login/submit" hidden>
+              {passwordFormBody}
+            </form>
+          </>
+        </div>
+        {wsStatus.safeArea}
+      </ion-content>
+    </>
+  )
+}
+
 let routes = {
   '/shop/:shop_slug/login': {
     resolve(context) {
@@ -278,9 +327,16 @@ let routes = {
       return {
         title: title(t),
         description: concat_words(t, '以在使用預約服務'),
-        node: <LoginPage />,
+        node: <ShopLoginPage />,
       }
     },
+  },
+  '/admin/login': {
+    title: title('Admin Login'),
+    description: 'Manage shops for operation team',
+    menuText: 'Admin Login',
+    guestOnly: true,
+    node: <AdminLoginPage />,
   },
   '/login/submit': {
     streaming: false,

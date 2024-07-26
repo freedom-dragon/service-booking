@@ -88,7 +88,7 @@ let routes = {
   '/toast': {
     title: title('Sweet Alert Toast Demo'),
     description: 'Demonstrate using sweet alert client-side plugin',
-    menuText: 'Client Plugin',
+    // menuText: 'Client Plugin',
     node: content,
   },
 } satisfies Routes

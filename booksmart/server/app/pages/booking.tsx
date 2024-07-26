@@ -1507,7 +1507,6 @@ let routes = {
   '/shop/:shop_slug/booking': {
     title: title(pageTitle),
     description: 'manage your service booking',
-    menuText: pageTitle,
     menuFullNavigate: true,
     node: page,
   },

@@ -90,14 +90,7 @@ let routeDict = {
   ...AppChat.routes,
   ...AppSettings.routes,
   ...AppMore.routes,
-  '/': {
-    title: title('Home'),
-    description:
-      'Getting Started with ts-liveview - a server-side rendering realtime webapp framework with progressive enhancement',
-    menuText: 'Home',
-    layout_type: LayoutType.navbar,
-    node: Home,
-  },
+  ...Home.routes,
   ...DemoToast.routes,
   '/user-agents': {
     title: title('User Agents of Visitors'),

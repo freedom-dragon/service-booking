@@ -26,7 +26,7 @@ export let config = {
   site_name: 'BookSmart Booking System',
   short_site_name: 'BookSmart',
   site_description:
-    '方便易用的服務預約平台。預約水管工、電工、髮型師等各種專業服務。瀏覽各種服務供應商，比較價格和評論，輕鬆預約所需服務。立即使用可靠的服務預約網站，節省時間和精力。',
+    '為各類店鋪輕鬆設置專屬的預訂系統，提升服務效率和客戶體驗。無論是美容院、工作坊、瑜伽還是舞蹈工作室，都能輕鬆管理預約，節省時間，讓業務運行更順暢。',
   setup_robots_txt: false,
   epoch,
   auto_open: !production && development && epoch === 1,
