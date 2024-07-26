@@ -2605,13 +2605,22 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
   '/shop/:shop_slug/service/:service_slug/receipt/:receipt_id/delete': {
     resolve(context) {
       return resolveServiceRoute(context, ({ service_slug, shop_slug }) => {
-        let user = getAuthUser(context)
+        let auth = getAuthRole(context)
+        if (!auth.user) {
+          throw new MessageException(['eval', 'showAlert("not login","error")'])
+        }
 
         let receipt_id = context.routerMatch?.params.receipt_id
         let receipt = proxy.receipt[receipt_id]
         let has_receipt = true
 
-        if (receipt && user && receipt.booking?.user_id == user.id) {
+        if (receipt) {
+          if (auth.user.id != receipt.booking?.user_id && !auth.is_owner) {
+            throw new MessageException([
+              'eval',
+              'showAlert("only admin can delete other\'s receipt","error")',
+            ])
+          }
           let booking_id = receipt.booking_id!
           let dir = join(
             'public',
