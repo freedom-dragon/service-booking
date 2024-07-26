@@ -399,7 +399,7 @@ function AdminSubmitShop(attrs: {}, context: DynamicContext) {
       address: null,
       address_remark: null,
       tel,
-      email: input.email,
+      email: null,
       facebook: null,
       messenger: null,
       instagram: null,
