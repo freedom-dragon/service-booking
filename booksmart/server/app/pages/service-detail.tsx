@@ -100,6 +100,7 @@ import { placeholderForAttachRoutes } from '../components/placeholder.js'
 import { updateUrlVersion } from '../url-version.js'
 import { getContextShop, getContextShopSlug } from '../auth/shop.js'
 import { MINUTE } from '@beenotung/tslib/time.js'
+import { findUserByTel } from '../user-store.js'
 
 let ServiceDetailStyle = Style(/* css */ `
 #ServiceDetail {
@@ -2333,8 +2334,7 @@ let routes = {
       let tel = context.args?.[0] as string
       tel = to_full_hk_mobile_phone(tel || '')
       if (!tel) throw EarlyTerminate
-      let is_registered =
-        find(proxy.user, { tel }) || find(proxy.user, { tel: tel.slice(-8) })
+      let is_registered = findUserByTel(tel)
       if (is_registered) {
         throw new MessageException([
           'update-in',
@@ -2410,8 +2410,8 @@ let routes = {
         let is_shop_owner = authUser && authUser.id == shop.owner_id
         let should_verify_email = !authUser
         let bookingUser = is_shop_owner
-          ? find(proxy.user, { tel })
-          : authUser || find(proxy.user, { tel })
+          ? findUserByTel(tel)
+          : authUser || findUserByTel(tel)
         if (!bookingUser) {
           let input = registerParser.parse(body)
           if (find(proxy.user, { email: input.email })) {
@@ -2427,6 +2427,7 @@ let routes = {
             email: input.email,
             tel: tel,
             avatar: null,
+            is_admin: false,
           })
           bookingUser = proxy.user[user_id]
         }
@@ -2475,7 +2476,7 @@ let routes = {
             shop_id: shop.id!,
           })
           let { html, text } = verificationCodeEmail(
-            { passcode, email },
+            { passcode, email, shop },
             context,
           )
           let email_success_messages: ServerMessage[] = is_shop_owner

@@ -32,6 +32,7 @@ import { toShopUrl } from '../app-url'
 import profile from './profile.js'
 import serviceDetail from './service-detail.js'
 import shopHome from './shop-home.js'
+import { findUserByTel } from '../user-store.js'
 
 let log = debugLog('app:verification-code')
 log.enabled = true
@@ -120,7 +121,7 @@ async function requestEmailVerification(
           `showToast('請輸入香港的手提電話號碼','warning')`,
         ])
       }
-      user = find(proxy.user, { tel })
+      user = findUserByTel(tel)
       if (!user) {
         throw new MessageException([
           'eval',
