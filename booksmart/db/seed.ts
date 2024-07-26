@@ -26,7 +26,8 @@ let admin = seedUser({
   password_hash: null,
   email:
     // 'admin@booksmart.com',
-    'booksmart@mailinator.com',
+    // 'booksmart@mailinator.com',
+    'cs.playsmarthk@gmail.com',
   tel: '+85269330678',
   avatar: null,
 })
