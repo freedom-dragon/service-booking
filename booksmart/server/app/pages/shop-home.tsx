@@ -150,7 +150,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                 "
                 size="small"
               >
-                新增服務
+                新增{locale.service}
               </Link>
               {
                 loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' })
