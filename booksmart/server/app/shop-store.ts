@@ -284,6 +284,7 @@ export type ShopContact = ReturnType<typeof getShopContacts>[number]
 export let contactFields = getShopContacts({} as Shop).map(item => item.field)
 
 export let shopFieldsParser = values([
+  'name',
   'bio',
   'desc',
   'accept_cash',

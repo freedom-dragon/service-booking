@@ -197,6 +197,23 @@ function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
           <div class="ion-margin-horizontal">編輯店舖主頁的內容。</div>
         </ion-note>
         <ion-list inset="true">
+          <ion-item>
+            <ion-input
+              label="店舖名稱"
+              label-placement="stacked"
+              auto-grow
+              value={shop.name}
+            />
+            <ion-buttons slot="end">
+              <ion-button
+                color="success"
+                data-save-url={`${urlPrefix}/save/name`}
+                onclick="saveField(this)"
+              >
+                <ion-icon name="save" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-item>
           <ion-item class="image-field">
             <ion-label position="stacked">店舖標誌</ion-label>
             <img
@@ -567,10 +584,13 @@ let routes = {
       }
 
       if (value.length == 0) {
-        shop[field] = null
-        let messages: ServerMessage[] = [
-          ['eval', `showToast('除去了${label}','info')`],
-        ]
+        let messages: ServerMessage[] = []
+        if (field == 'name') {
+          messages.push(['eval', `showToast('店舖名稱不能留空','warning')`])
+        } else {
+          shop[field] = null
+          messages.push(['eval', `showToast('除去了${label}','info')`])
+        }
         if (contactFields.includes(field as any)) {
           messages.push([
             'update-in',
