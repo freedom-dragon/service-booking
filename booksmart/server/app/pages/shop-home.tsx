@@ -29,10 +29,6 @@ import { formatDuration } from '../format/duration.js'
 import { getContextShop } from '../auth/shop.js'
 import { loginRouteUrl } from './login.js'
 
-let pageTitle = 'The Balconi ARTLAB 香港'
-
-let addPageTitle = 'Add more'
-
 let style = Style(/* css */ `
 #ShopHome {
 
