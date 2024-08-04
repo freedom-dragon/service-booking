@@ -28,6 +28,7 @@ import { formatPrice } from '../format/price.js'
 import { formatDuration } from '../format/duration.js'
 import { getContextShop } from '../auth/shop.js'
 import { loginRouteUrl } from './login.js'
+import { toRouteUrl } from '../../url.js'
 
 let style = Style(/* css */ `
 #ShopHome {
@@ -141,7 +142,9 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           {shop.owner_id == user?.id ? (
             <>
               <Link
-                href={`/shop/${shop_slug}/add-service`}
+                href={toRouteUrl(routes, '/shop/:shop_slug/add-service', {
+                  params: { shop_slug },
+                })}
                 tagName="ion-button"
                 style="
                   margin-inline-start: 1rem;
@@ -320,11 +323,11 @@ let routes = {
       }
     },
   },
-  '/shop/:slug/add-service': {
+  '/shop/:shop_slug/add-service': {
     title: apiEndpointTitle,
     streaming: false,
     resolve(context) {
-      let slug = context.routerMatch?.params.slug
+      let slug = context.routerMatch?.params.shop_slug
       let shop = find(proxy.shop, { slug })
       if (!shop) {
         throw new MessageException([
