@@ -1296,7 +1296,11 @@ function copyUrl() {
                 min="1"
                 onchange={`emit('${serviceUrl}/update','quota',this.value)`}
               />
-              <ion-input value={service.price_unit} readonly></ion-input>
+              <ion-input
+                value={service.price_unit}
+                readonly
+                data-label-name="price_unit"
+              ></ion-input>
             </div>
           </ion-item>
           <ion-note class="item--hint">如: 6(人) / 2(對情侶)</ion-note>
@@ -2803,6 +2807,11 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               case 'price_unit':
                 label = '費用 (單位)'
                 service[field] = value
+                context.ws.send([
+                  'set-value',
+                  '[data-label-name="price_unit"]',
+                  value,
+                ])
                 ok()
                 break
               case 'peer_amount':
