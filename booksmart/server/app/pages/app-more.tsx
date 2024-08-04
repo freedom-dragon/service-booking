@@ -82,9 +82,11 @@ let page = (
 function ProfileHeader(attrs: {}, context: Context) {
   let user = getAuthUser(context)
   let name = user?.nickname || '訪客'
-  let avatar = toUploadedUrl(
-    user?.avatar || 'https://picsum.photos/seed/logo/128/128',
-  )
+  let avatar = user?.avatar
+  avatar = avatar
+    ? toUploadedUrl(avatar)
+    : // '/assets/default-avatar.webp'
+      '/assets/person-outline.svg'
   return (
     <>
       <ion-avatar
