@@ -335,6 +335,7 @@ let routes = {
     title: title('Admin Login'),
     description: 'Manage shops for operation team',
     menuText: 'Admin Login',
+    menuFullNavigate: true,
     guestOnly: true,
     node: <AdminLoginPage />,
   },
