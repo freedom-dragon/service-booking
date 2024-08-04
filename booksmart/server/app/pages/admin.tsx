@@ -17,9 +17,13 @@ import { HttpError, MessageException } from '../../exception.js'
 import { toRouteUrl } from '../../url.js'
 import { formatTel } from '../components/tel.js'
 import Home from './home.js'
-import { email, object, string } from 'cast.ts'
+import { ParseResult, email, object, string } from 'cast.ts'
+import { env } from '../../env.js'
+import shopHome from './shop-home.js'
+import { db } from '../../../db/db.js'
 
-let pageTitle = 'Admin Portal'
+let adminPortalTitle = 'Admin Portal'
+let createShopTitle = '商戶註冊'
 
 let style = Style(/* css */ `
 
@@ -32,7 +36,7 @@ let adminProfilePage = (
       <ion-toolbar color="primary">
         <IonBackButton href={toRouteUrl(Home.routes, '/')} color="light" />
         <ion-title role="heading" aria-level="1">
-          {pageTitle}
+          {adminPortalTitle}
         </ion-title>
       </ion-toolbar>
     </ion-header>
@@ -81,7 +85,7 @@ function AdminProfileMain(attrs: {}, context: DynamicContext) {
             class="ion-margin"
             style="margin-top: 2rem"
           >
-            Create Shop Profile
+            {createShopTitle}
           </Link>
           <ion-button
             href={toRouteUrl(routes, '/admin/logout')}
@@ -110,7 +114,7 @@ function AdminCreateShopProfilePage() {
             backText="Admin"
           />
           <ion-title role="heading" aria-level="1">
-            Create Shop Profile
+            {createShopTitle}
           </ion-title>
         </ion-toolbar>
       </ion-header>
@@ -123,14 +127,14 @@ function AdminCreateShopProfilePage() {
           <ion-list>
             <ion-item>
               <ion-input
-                label="Merchant Nickname"
+                label="商戶(聯絡人)暱稱"
                 label-placement="floating"
                 name="nickname"
               />
             </ion-item>
             <ion-item>
               <ion-input
-                label="Merchant Email"
+                label="商戶(聯絡人)電郵"
                 label-placement="floating"
                 type="email"
                 name="email"
@@ -138,7 +142,7 @@ function AdminCreateShopProfilePage() {
             </ion-item>
             <ion-item>
               <ion-input
-                label="Merchant Tel"
+                label="商戶(聯絡人)電話"
                 label-placement="floating"
                 type="tel"
                 name="tel"
@@ -149,8 +153,12 @@ function AdminCreateShopProfilePage() {
                 label="Shop Slug (in url)"
                 label-placement="floating"
                 name="shop_slug"
+                oninput={`shopSlugPreview.innerText = '${env.ORIGIN + toRouteUrl(shopHome.routes, '/shop/:shop_slug', { params: { shop_slug: '' } })}' + this.value`}
               />
             </ion-item>
+            <ion-note class="item--hint" id="shopSlugPreview">
+              如: lab.on.the.balconi
+            </ion-note>
           </ion-list>
           <ion-button
             type="submit"
@@ -158,7 +166,7 @@ function AdminCreateShopProfilePage() {
             expand="block"
             class="ion-margin"
           >
-            Submit
+            註冊商戶
           </ion-button>
           <p id="submitMessage"></p>
         </form>
@@ -168,10 +176,10 @@ function AdminCreateShopProfilePage() {
 }
 
 let adminSubmitShopParser = object({
-  email: email(),
-  tel: string(),
-  nickname: string(),
-  shop_slug: string(),
+  nickname: string({ nonEmpty: true }),
+  email: email({ nonEmpty: true }),
+  tel: string({ nonEmpty: true }),
+  shop_slug: string({ nonEmpty: true, match: /^[\w-.]{1,32}$/ }),
 })
 
 function AdminSubmitShop(attrs: {}, context: DynamicContext) {
@@ -185,7 +193,19 @@ function AdminSubmitShop(attrs: {}, context: DynamicContext) {
     ])
   }
   let body = getContextFormBody(context)
-  let input = adminSubmitShopParser.parse(body, { name: 'req.body' })
+  let input: ParseResult<typeof adminSubmitShopParser>
+  try {
+    input = adminSubmitShopParser.parse(body, { name: 'req.body' })
+  } catch (error) {
+    let message = String(error)
+    let match = message.match(
+      /^TypeError: Invalid non-empty \w+ "req.body.(\w+)", got empty string$/,
+    )
+    if (match) {
+      message = 'Missing ' + match[1]
+    }
+    throw new MessageException(['update-text', '#submitMessage', message])
+  }
   let tel = to_full_hk_mobile_phone(input.tel)
   if (!tel) {
     throw new MessageException([
@@ -194,7 +214,7 @@ function AdminSubmitShop(attrs: {}, context: DynamicContext) {
       'Invalid tel, expect hk mobile phone number',
     ])
   }
-  try {
+  let insert_shop = db.transaction(() => {
     let owner_id = proxy.user.push({
       username: null,
       nickname: input.nickname,
@@ -233,8 +253,18 @@ function AdminSubmitShop(attrs: {}, context: DynamicContext) {
       bank_account_name: null,
       accept_cash: true,
     })
+  })
+  try {
+    insert_shop()
   } catch (error) {
-    throw new MessageException(['update-text', '#submitMessage', String(error)])
+    let message = String(error)
+    let match = message.match(
+      /^SqliteError: UNIQUE constraint failed: ([\w.]+)$/,
+    )
+    if (match) {
+      message = match[1] + ' 已經註冊了，不可重複使用'
+    }
+    throw new MessageException(['update-text', '#submitMessage', message])
   }
   return (
     <Redirect
@@ -255,7 +285,7 @@ function AdminLogout(_attrs: {}, context: ExpressContext) {
 
 let routes = {
   '/admin/profile': {
-    title: title(pageTitle),
+    title: title(adminPortalTitle),
     description: `Manage shops for operation team`,
     menuText: 'Profile',
     userOnly: true,
@@ -263,14 +293,14 @@ let routes = {
     menuFullNavigate: true,
   },
   '/admin/create-shop': {
-    title: apiEndpointTitle,
-    description: 'create shop profile',
+    title: title(createShopTitle),
+    description: 'create shop and merchant profile',
     userOnly: true,
     node: <AdminCreateShopProfilePage />,
   },
   '/admin/create-shop/submit': {
     title: apiEndpointTitle,
-    description: 'create shop profile',
+    description: 'submit shop and merchant profile',
     userOnly: true,
     node: <AdminSubmitShop />,
   },
