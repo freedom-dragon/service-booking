@@ -81,7 +81,7 @@ function ShopLoginPage(attrs: {}, context: DynamicContext) {
               {passwordFormBody}
             </form>
             <div>
-              首次使用{config.short_site_name}？您可以在提交預約時自動註冊。
+              首次使用 {config.short_site_name}？您可以在提交預約時自動註冊。
             </div>
             <div hidden>
               New to {config.short_site_name}?{' '}
