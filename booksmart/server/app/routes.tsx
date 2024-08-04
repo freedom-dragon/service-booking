@@ -1,3 +1,4 @@
+import Admin from './pages/admin.js'
 import ShopAdmin from './pages/shop-admin.js'
 import ServiceDetail from './pages/service-detail.js'
 import Calendar from './pages/booking.js'
@@ -81,6 +82,7 @@ export type Routes = Record<string, PageRoute>
 
 // TODO direct support alternative urls instead of having to repeat the entry
 let routeDict = {
+  ...Admin.routes,
   ...ShopAdmin.routes,
   ...ServiceDetail.routes,
   ...ServiceTimeslotPicker.routes,
