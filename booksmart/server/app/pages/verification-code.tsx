@@ -500,6 +500,10 @@ from booking
 inner join service on service.id = booking.service_id
 inner join shop on shop.id = service.shop_id
 where booking.user_id = :user_id
+  and booking.approve_time is null
+  and booking.reject_time is null
+  and booking.cancel_time is null
+  and booking.id not in (select booking_id from receipt)
 order by booking.id desc
 limit 1
 `)
@@ -579,7 +583,6 @@ async function checkEmailVerificationCode(
       )
     }
     writeUserIdToCookie(res, user_id)
-    // FIXME what if the user want to login another shop?
     let lastBooking =
       (select_last_booking_by_user_id.get({ user_id }) as LastBookingRow) ||
       null
