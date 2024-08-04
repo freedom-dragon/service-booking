@@ -114,13 +114,8 @@ document.querySelectorAll('ion-checkbox[name="floating_contact_method"]').forEac
   checkbox.addEventListener('ionChange', event => {
     let field = event.detail.value
     let checked = event.detail.checked
-    let shop_slug = event.target.dataset.shopSlug
-    let label = event.target.dataset.label
-    let url = '/shop/:slug/admin/save/:field'
-      .replace(':slug', shop_slug)
-      .replace(':field', 'floating_contact_method')
+    let { label, url } = event.target.dataset
     let value = checked ? field : ''
-    label = '浮動' + label
     emit(url, value, label)
   })
 })
@@ -391,8 +386,18 @@ function ShopAdmin(attrs: { shop: Shop }, context: DynamicContext) {
                   checked={shop.floating_contact_method == item.field}
                   name="floating_contact_method"
                   value={item.field}
-                  data-label={item.label}
+                  data-label={'浮動' + item.label}
                   data-shop-slug={shop_slug}
+                  data-url={toRouteUrl(
+                    routes,
+                    '/shop/:shop_slug/admin/save/:field',
+                    {
+                      params: {
+                        shop_slug,
+                        field: 'floating_contact_method',
+                      },
+                    },
+                  )}
                 >
                   主頁右下方浮標
                 </ion-checkbox>
