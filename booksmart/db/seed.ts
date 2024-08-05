@@ -34,13 +34,13 @@ let admin = seedUser({
 
 let katy = seedUser({
   username: null,
-  nickname: 'Katy 榆',
+  nickname: 'Demo 榆',
   is_admin: false,
   password_hash: null,
   email:
     //  'the.balconi.artstudio@gmail.com',
     'the.balconi.artstudio@mailinator.com',
-  tel: '+85262787635',
+  tel: '+85265432198',
   avatar: null,
 })
 
@@ -128,7 +128,7 @@ function seedShop(
 let art_studio = seedShop({
   owner_id: katy,
   name: 'The Balconi ARTLAB 香港',
-  slug: 'lab.on.the.balconi',
+  slug: 'demo.on.the.balconi',
   bio: 'Affordable art for all',
   desc: 'The Balconi ARTLAB 是一家由藝術系畢業生主理的私人畫室，主打《現代掛畫工作坊》，致力推廣高質素的裝飾掛畫，將精緻繪畫帶入可觸及的日常，讓每家每戶都能擁有畫廊級的藝術品收藏，並享受個人專屬的美感體驗——親手製作，品味生活。',
   owner_name: 'Katy',
