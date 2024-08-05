@@ -1414,6 +1414,7 @@ function copyUrl() {
             >
               預覽
               <ion-button
+                id="addressPreviewButton"
                 fill="block"
                 color="primary"
                 size="normal"
@@ -2851,6 +2852,24 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
               case 'address':
                 label = '地址 (街道)'
                 service[field] = value || null
+                let address = value || shop.address
+                context.ws.send([
+                  'update-props',
+                  '#addressPreviewButton',
+                  address
+                    ? {
+                        href:
+                          'https://www.google.com/maps/search/' +
+                          encodeURIComponent(address),
+                        disabled: false,
+                      }
+                    : {
+                        disabled: true,
+                      },
+                ])
+                if (value) {
+                } else {
+                }
                 ok()
                 break
               case 'address_remark':
