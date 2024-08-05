@@ -10,6 +10,7 @@ import { toLocaleDateTimeString } from './datetime.js'
 import { mapArray } from './fragment.js'
 import Style from './style.js'
 import { Tel } from './tel.js'
+import { MINUTE } from '@beenotung/tslib/time.js'
 
 export let bookingPreviewStyle = Style(/* css */ `
 .booking-preview tr {
@@ -111,7 +112,17 @@ export function BookingPreview(
               hour: '2-digit',
               hour12: false,
               minute: '2-digit',
-            })}
+            })}{' '}
+            -{' '}
+            {toLocaleDateTimeString(
+              booking.appointment_time + service.book_duration_minute * MINUTE,
+              context,
+              {
+                hour: '2-digit',
+                hour12: false,
+                minute: '2-digit',
+              },
+            )}
           </td>
         </tr>
         <tr>
