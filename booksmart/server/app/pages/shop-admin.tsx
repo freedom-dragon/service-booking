@@ -116,6 +116,13 @@ document.querySelectorAll('ion-checkbox[name="floating_contact_method"]').forEac
     let checked = event.detail.checked
     let { label, url } = event.target.dataset
     let value = checked ? field : ''
+    if (checked) {
+      document.querySelectorAll('ion-checkbox[name="floating_contact_method"]').forEach(other => {
+        if (other != checkbox) {
+          other.checked = false
+        }
+      })
+    }
     emit(url, value, label)
   })
 })
