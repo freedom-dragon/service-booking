@@ -288,20 +288,20 @@ let routes = {
     title: title(adminPortalTitle),
     description: `Manage shops for operation team`,
     menuText: 'Profile',
-    userOnly: true,
+    adminOnly: true,
     node: adminProfilePage,
     menuFullNavigate: true,
   },
   '/admin/create-shop': {
     title: title(createShopTitle),
     description: 'create shop and merchant profile',
-    userOnly: true,
+    adminOnly: true,
     node: <AdminCreateShopProfilePage />,
   },
   '/admin/create-shop/submit': {
     title: apiEndpointTitle,
     description: 'submit shop and merchant profile',
-    userOnly: true,
+    adminOnly: true,
     node: <AdminSubmitShop />,
   },
   '/admin/logout': {

@@ -4,9 +4,13 @@ import { flagsToClassName } from '../jsx/html.js'
 import { o } from '../jsx/jsx.js'
 import { Node } from '../jsx/types.js'
 import { mapArray } from './fragment.js'
-import { MenuRoute, isCurrentMenuRoute } from './menu.js'
+import {
+  MenuRoute,
+  isCurrentMenuRoute,
+  isCurrentMenuRouteAllowed,
+} from './menu.js'
 import Style from './style.js'
-import { getAuthUserId } from '../auth/user.js'
+import { getAuthUserRole } from '../auth/user.js'
 
 let containerClass = 'sidebar-container'
 let mainContainerClass = 'sidebar-main-container'
@@ -104,7 +108,7 @@ function Sidebar(
   context: Context,
 ) {
   let currentUrl = getContextUrl(context)
-  let hasLogin = !!getAuthUserId(context)
+  let role = getAuthUserRole(context)
   let toggleId = attrs.toggleId || 'sidebar-menu-toggle'
   return (
     <nav class="sidebar">
@@ -124,12 +128,11 @@ function Sidebar(
       <div class="sidebar-foldable">
         <div class="sidebar-menu">
           {mapArray(attrs.menuRoutes, route =>
-            (route.guestOnly && hasLogin) ||
-            (route.userOnly && !hasLogin) ? null : (
+            !isCurrentMenuRouteAllowed(route, role) ? null : (
               <a
                 class={flagsToClassName({
                   'sidebar-menu-item': true,
-                  'selected': isCurrentMenuRoute(currentUrl, route),
+                  'selected': isCurrentMenuRoute(route, currentUrl),
                 })}
                 href={route.menuUrl || route.url}
                 onclick={route.menuFullNavigate ? undefined : 'emitHref(event)'}

@@ -6,6 +6,8 @@ import { proxy } from '../../../db/proxy.js'
 import Style from '../components/style.js'
 import { Routes } from '../routes.js'
 import { LayoutType, config, title } from '../../config.js'
+import { getAuthUserRole } from '../auth/user.js'
+import { Context } from '../context.js'
 
 // Calling <Component/> will transform the JSX into AST for each rendering.
 // You can reuse a pre-compute AST like `let component = <Component/>`.
