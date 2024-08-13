@@ -130,6 +130,10 @@ export function selectAvailableHours(options: {
         /* overflow to next day */
         break
       }
+      if (end_time > hour.end_time) {
+        /* passed end of session */
+        break
+      }
 
       let slot_time = { start_time, end_time }
 
@@ -144,6 +148,11 @@ export function selectAvailableHours(options: {
 
       if (quota > 0) {
         available.push({ start_time, end_time, quota })
+      }
+
+      if (end_time == hour.end_time) {
+        /* end of session */
+        break
       }
     }
   }
