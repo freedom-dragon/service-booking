@@ -121,12 +121,6 @@ export function selectAvailableHours(options: {
   for (let hour of hours) {
     let date = fromTimePart(hour.start_time)
 
-    console.log(
-      'date',
-      date.toString(),
-      new Date(booking_time_step_ms).toString(),
-      hour,
-    )
     for (; ; date.setTime(date.getTime() + booking_time_step_ms)) {
       let start_time = d2(date.getHours()) + ':' + d2(date.getMinutes())
       let end_date = new TimezoneDate(date.getTime() + service_duration)
