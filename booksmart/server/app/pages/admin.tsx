@@ -1,14 +1,19 @@
 import { apiEndpointTitle, title } from '../../config.js'
 import { Link, Redirect } from '../components/router.js'
 import {
+  Context,
   DynamicContext,
   ExpressContext,
   getContextFormBody,
 } from '../context.js'
 import { o } from '../jsx/jsx.js'
 import { Routes } from '../routes.js'
-import { proxy } from '../../../db/proxy.js'
-import { eraseUserIdFromCookie, getAuthUser } from '../auth/user.js'
+import { User, proxy } from '../../../db/proxy.js'
+import {
+  eraseUserIdFromCookie,
+  getAuthUser,
+  getAuthUserRole,
+} from '../auth/user.js'
 import Style from '../components/style.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
@@ -21,6 +26,8 @@ import { ParseResult, email, object, string } from 'cast.ts'
 import { env } from '../../env.js'
 import shopHome from './shop-home.js'
 import { db } from '../../../db/db.js'
+import { find } from 'better-sqlite3-proxy'
+import { Node } from '../jsx/types.js'
 
 let adminPortalTitle = 'Admin Portal'
 let createShopTitle = '商戶註冊'
@@ -48,20 +55,38 @@ let adminProfilePage = (
   </>
 )
 
-function AdminProfileMain(attrs: {}, context: DynamicContext) {
-  let user = getAuthUser(context)
+function roleCheck(user: User | null) {
   if (!user) {
     return (
-      <>
+      <div style="margin: 1rem">
         <p>正在以訪客身份瀏覽此頁。</p>
         <p>
           你可以
           <Link href={toRouteUrl(login.routes, '/admin/login')}>登入</Link>
           以管理店舖資料。
         </p>
-      </>
+      </div>
     )
   }
+  if (!user.is_admin) {
+    let role = find(proxy.shop, { owner_id: user.id! }) ? '商戶' : '用戶'
+    return (
+      <div style="margin: 1rem">
+        <p>正在以{role}身份瀏覽此頁。</p>
+        <p>
+          你可以
+          <a href={toRouteUrl(routes, '/admin/logout')}>登出</a>
+          再切換至管理員以管理店舖資料。
+        </p>
+      </div>
+    )
+  }
+}
+
+function AdminProfileMain(attrs: {}, context: DynamicContext) {
+  let user = getAuthUser(context)
+  let fallback = roleCheck(user)
+  if (!user || fallback) return fallback
   return (
     <>
       {Style(/* css */ `
@@ -102,7 +127,10 @@ function AdminProfileMain(attrs: {}, context: DynamicContext) {
   )
 }
 
-function AdminCreateShopProfilePage() {
+function AdminCreateShopProfilePage(attrs: {}, context: Context) {
+  let user = getAuthUser(context)
+  let fallback = roleCheck(user)
+  if (!user || fallback) return fallback
   return (
     <>
       {style}
@@ -184,7 +212,6 @@ let adminSubmitShopParser = object({
 
 function AdminSubmitShop(attrs: {}, context: DynamicContext) {
   let user = getAuthUser(context)
-  console.log('user:', user?.is_admin)
   if (!user?.is_admin) {
     throw new MessageException([
       'update-text',
