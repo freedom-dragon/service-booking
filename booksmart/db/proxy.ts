@@ -181,7 +181,7 @@ export type Booking = {
   user?: User
   service_id: number
   service?: Service
-  service_option_id: number
+  service_option_id: null | number
   service_option?: ServiceOption
   submit_time: number
   appointment_time: number

@@ -255,12 +255,15 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
           method="POST"
         >
           <ion-list lines="full" inset="true">
-            <ion-item lines="none">
+            <ion-item
+              lines="none"
+              hidden={options.length == 0 ? '' : undefined}
+            >
               <div slot="start">
                 <ion-icon name="options-outline"></ion-icon> 款式
               </div>
             </ion-item>
-            <ion-item>
+            <ion-item hidden={options.length == 0 ? '' : undefined}>
               <div
                 class="service-options ion-margin-horizontal flex-wrap"
                 style="gap: 0.25rem; margin-bottom: 8px"
@@ -583,7 +586,8 @@ let ServiceDetailScripts = (
     }
     {Script(/* javascript */ `
 function submitBooking() {
-  if (!bookingForm.option_id.value) return showToast('請選擇款式', 'error')
+  let has_options = bookingForm.option_id.closest('ion-item').getBoundingClientRect().height > 0
+  if (has_options && !bookingForm.option_id.value) return showToast('請選擇款式', 'error')
   if (!bookingForm.amount.value) bookingForm.amount.value = 1
   if (!bookingForm.date.value) return showToast('請選擇日期', 'error')
   if (!bookingForm.time.value) return showToast('請選擇時間', 'error')
@@ -2300,7 +2304,7 @@ let registerParser = object({
 let submitBookingParser = object({
   appointment_time: date(),
   amount: int({ min: 1 }),
-  option_id: id(),
+  option_id: optional(id()),
   tel: string(),
   answers: array(
     object({
@@ -2391,6 +2395,15 @@ let routes = {
         let body = getContextFormBody(context) as any
         body.answers = JSON.parse(body.answers)
         let input = submitBookingParser.parse(body)
+        if (
+          !input.option_id &&
+          count(proxy.service_option, { service_id: service.id! }) > 0
+        ) {
+          throw new MessageException([
+            'eval',
+            `showToast('請選擇款式','error')`,
+          ])
+        }
         let tel = to_full_hk_mobile_phone(input.tel)
         if (!tel) {
           throw new MessageException([
@@ -2447,7 +2460,7 @@ let routes = {
             reject_time: null,
             cancel_time: null,
             amount: input.amount,
-            service_option_id: input.option_id,
+            service_option_id: input.option_id || null,
             user_id: booking_user_id,
             total_price: null,
           })
