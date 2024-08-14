@@ -227,6 +227,27 @@ export type Receipt = {
   upload_time: number
 }
 
+export type Package = {
+  id?: null | number
+  price: number
+  shop_id: number
+  shop?: Shop
+  title: string
+  start_time: number
+  end_time: number
+  duration_time: number
+}
+
+export type Ticket = {
+  id?: null | number
+  package_id: number
+  package?: Package
+  user_id: number
+  user?: User
+  purchase_time: number
+  expire_time: number
+}
+
 export type DBProxy = {
   method: Method[]
   url: Url[]
@@ -250,6 +271,8 @@ export type DBProxy = {
   timeslot_hour: TimeslotHour[]
   booking_answer: BookingAnswer[]
   receipt: Receipt[]
+  package: Package[]
+  ticket: Ticket[]
 }
 
 export let proxy = proxySchema<DBProxy>({
@@ -328,6 +351,15 @@ export let proxy = proxySchema<DBProxy>({
     receipt: [
       /* foreign references */
       ['booking', { field: 'booking_id', table: 'booking' }],
+    ],
+    package: [
+      /* foreign references */
+      ['shop', { field: 'shop_id', table: 'shop' }],
+    ],
+    ticket: [
+      /* foreign references */
+      ['package', { field: 'package_id', table: 'package' }],
+      ['user', { field: 'user_id', table: 'user' }],
     ],
   },
 })

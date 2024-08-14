@@ -5,6 +5,7 @@ import { o } from '../jsx/jsx.js'
 import appMore from '../pages/app-more.js'
 import appNotice from '../pages/app-notice.js'
 import booking from '../pages/booking.js'
+import Package from '../pages/package.js'
 import shopHome from '../pages/shop-home.js'
 import { IonTabBar } from './ion-tab-bar.js'
 
@@ -29,12 +30,14 @@ export function AppTabBar(attrs: {}, context: DynamicContext) {
             params: { shop_slug },
           }),
         },
-        // {
-        //   tab: 'shopping',
-        //   icon: 'cart',
-        //   label: '套票',
-        //   href: '/shop/' + config.shop_slug,
-        // },
+        {
+          tab: 'package',
+          icon: 'ticket',
+          label: '套票',
+          href: toRouteUrl(Package.routes, '/shop/:shop_slug/package', {
+            params: { shop_slug },
+          }),
+        },
         {
           tab: 'notice',
           icon: 'notifications',
