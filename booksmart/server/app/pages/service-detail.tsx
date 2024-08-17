@@ -1743,7 +1743,7 @@ function ServiceRemarkItem(attrs: {
 }
 function MoreItem(attrs: { serviceUrl: string; index: number; image: string }) {
   let { serviceUrl, index, image } = attrs
-  let filename = basename(image)
+  let filename = basename(image).split('?')[0]
   return (
     <div class="more-item" data-more-index={index}>
       {index > 0 ? <ion-item-divider></ion-item-divider> : null}
@@ -2104,11 +2104,7 @@ function attachRoutes(app: Router) {
               if (images.includes(more_file)) {
                 continue
               }
-              image_url = getServiceMoreImage(
-                shop_slug,
-                service_slug,
-                more_file,
-              )
+
               image_node = nodeToHTML(
                 MoreItem({
                   image: image_url,
@@ -2122,8 +2118,8 @@ function attachRoutes(app: Router) {
           }
 
           if (!more_file) throw new HttpError(400, 'missing more_file')
-          more_file = basename(more_file)
-          filename = more_file
+          filename = basename(more_file).split('?')[0]
+          image_url = getServiceMoreImage(shop_slug, service_slug, filename)
         }
 
         if (field_name == 'option') {
@@ -2135,11 +2131,7 @@ function attachRoutes(app: Router) {
             image_count = count(proxy.service_option, {
               service_id: service.id!,
             })
-            image_url = getServiceOptionImage(
-              shop_slug,
-              service_slug,
-              option_id,
-            )
+
             image_node = nodeToHTML(
               ServiceOptionItem({
                 serviceUrl,
@@ -2160,6 +2152,7 @@ function attachRoutes(app: Router) {
             throw new HttpError(400, 'service option not belong to the service')
 
           filename = `option-${option_id}.webp`
+          image_url = getServiceOptionImage(shop_slug, service_slug, option_id)
         }
 
         if (!filename) {
