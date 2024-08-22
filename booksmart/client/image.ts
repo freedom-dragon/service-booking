@@ -59,6 +59,14 @@ async function selectPhotos(
       }
       let dataUrl = resizeImage(image, width, height, 'image/webp', quality)
       file = dataURItoFile(dataUrl, file)
+      if (file.size > client_config.max_image_size) {
+        dataUrl = await compressMobilePhoto({
+          image: dataUrl,
+          maximumSize: client_config.max_image_size,
+          mimeType: 'image/webp',
+        })
+        file = dataURItoFile(dataUrl, file)
+      }
       return { dataUrl, file }
     }),
   )
