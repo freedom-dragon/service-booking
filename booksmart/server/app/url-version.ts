@@ -1,5 +1,5 @@
 import { statSync } from 'fs'
-import { join } from 'path'
+import { basename, join } from 'path'
 
 let timestamps = new Map<string, number>()
 
@@ -21,6 +21,13 @@ export function toVersionedUrl(pathname: string): string {
     }
   }
   return pathname + '?t=' + t
+}
+
+/**
+ * @description remove the timestamp search query
+ */
+export function toFilename(pathname: string): string {
+  return basename(pathname).split('?')[0]
 }
 
 export function updateUrlVersion(url: string): string {

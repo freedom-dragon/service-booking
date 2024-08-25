@@ -58,7 +58,7 @@ import { to_full_hk_mobile_phone } from '@beenotung/tslib/validate.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { Router } from 'express'
 import { toRouteUrl, toUrl } from '../../url.js'
-import { basename, join } from 'path'
+import { join } from 'path'
 import { existsSync, renameSync, unlinkSync } from 'fs'
 import { EarlyTerminate, MessageException, HttpError } from '../../exception.js'
 import { nodeToVNode } from '../jsx/vnode.js'
@@ -97,7 +97,7 @@ import { client_config } from '../../../client/client-config.js'
 import { formatBankNumber } from '../format/bank.js'
 import { Copyable } from '../components/copyable.js'
 import { placeholderForAttachRoutes } from '../components/placeholder.js'
-import { updateUrlVersion } from '../url-version.js'
+import { toFilename, updateUrlVersion } from '../url-version.js'
 import { getContextShop, getContextShopSlug } from '../auth/shop.js'
 import { MINUTE } from '@beenotung/tslib/time.js'
 import { findUserByTel } from '../user-store.js'
@@ -1743,7 +1743,7 @@ function ServiceRemarkItem(attrs: {
 }
 function MoreItem(attrs: { serviceUrl: string; index: number; image: string }) {
   let { serviceUrl, index, image } = attrs
-  let filename = basename(image).split('?')[0]
+  let filename = toFilename(image)
   return (
     <div class="more-item" data-more-index={index}>
       {index > 0 ? <ion-item-divider></ion-item-divider> : null}
@@ -1768,7 +1768,7 @@ function MoreItem(attrs: { serviceUrl: string; index: number; image: string }) {
         <ion-button
           hidden
           onclick="uploadOptionImage(this)"
-          data-url={serviceUrl + '/image?name=more&file=' + basename(image)}
+          data-url={serviceUrl + '/image?name=more&file=' + toFilename(image)}
           class="upload-button"
         >
           <ion-icon name="cloud-upload" slot="start"></ion-icon>
@@ -2096,7 +2096,7 @@ function attachRoutes(app: Router) {
         if (field_name == 'more') {
           if (is_new) {
             let images = getServiceImages(shop_slug, service_slug).more.map(
-              file => basename(file),
+              file => toFilename(file),
             )
             image_count = images.length + 1
             for (let i = 1; ; i++) {
@@ -2104,6 +2104,11 @@ function attachRoutes(app: Router) {
               if (images.includes(more_file)) {
                 continue
               }
+              image_url = getServiceMoreImage(
+                shop_slug,
+                service_slug,
+                more_file,
+              )
 
               image_node = nodeToHTML(
                 MoreItem({
@@ -2118,7 +2123,7 @@ function attachRoutes(app: Router) {
           }
 
           if (!more_file) throw new HttpError(400, 'missing more_file')
-          filename = basename(more_file).split('?')[0]
+          filename = toFilename(more_file)
           image_url = getServiceMoreImage(shop_slug, service_slug, filename)
         }
 
@@ -3267,7 +3272,7 @@ document.querySelectorAll('#submitModal').forEach(modal => modal.dismiss())
             `showToast('Only shop owner can update the service','error')`,
           ])
         }
-        filename = basename(filename)
+        filename = toFilename(filename)
         let url = getServiceMoreImage(shop_slug, service_slug, filename)
         let file = join('public', url)
         try {
