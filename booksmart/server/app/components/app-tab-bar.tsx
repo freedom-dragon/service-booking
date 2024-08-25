@@ -1,3 +1,4 @@
+import { env } from '../../env.js'
 import { toRouteUrl } from '../../url.js'
 import { getContextShopSlug } from '../auth/shop.js'
 import { DynamicContext } from '../context.js'
@@ -54,7 +55,7 @@ export function AppTabBar(attrs: {}, context: DynamicContext) {
             params: { shop_slug },
           }),
         },
-      ]}
+      ].filter(tab => tab.tab != 'package' || env.ORIGIN.includes('localhost'))}
     />
   )
 }
