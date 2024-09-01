@@ -9,7 +9,7 @@ import {
 } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { date, float, int, object, string, values } from 'cast.ts'
+import { date, float, int, object, string, toDateString, values } from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
@@ -137,8 +137,6 @@ function AddPage(attrs: {}, context: DynamicContext) {
     },
   })
   if (!is_owner) return <Redirect href={tab_url} />
-  let startDate = new Date()
-  let endDate = new Date(startDate.getTime() + 1 * MONTH)
   return (
     <>
       {Style(/* css */ `
@@ -217,7 +215,7 @@ function AddPage(attrs: {}, context: DynamicContext) {
                   presentation="date"
                   show-default-buttons="true"
                   name="start_time"
-                  value={startDate.toISOString()}
+                  value={toDateString(new Date())}
                 />
               </ion-modal>
             </ion-item>
@@ -230,7 +228,7 @@ function AddPage(attrs: {}, context: DynamicContext) {
                   presentation="date"
                   show-default-buttons="true"
                   name="end_time"
-                  value={endDate.toISOString()}
+                  value={toDateString(new Date(Date.now() + 1 * MONTH))}
                 />
               </ion-modal>
             </ion-item>
