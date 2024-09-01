@@ -37,7 +37,7 @@ import { ServiceTimeslotPicker } from '../components/service-timeslot-picker.js'
 import { Script } from '../components/script.js'
 import { formatHKDateString } from '../format/date.js'
 import { countBooking } from '../booking-store.js'
-import { formatDuration } from '../format/duration.js'
+import { formatServiceDuration } from '../format/duration.js'
 import { loginRouteUrl } from './login.js'
 import { IonButton } from '../components/ion-button.js'
 import { toRouteUrl } from '../../url.js'
@@ -457,7 +457,9 @@ function BookingDetails(attrs: {
                                 <ion-icon name="hourglass-outline"></ion-icon>{' '}
                                 時長
                               </div>
-                              <ion-label>{formatDuration(service)}</ion-label>
+                              <ion-label>
+                                {formatServiceDuration(service)}
+                              </ion-label>
                             </ion-item>
                           </ion-list>
                           <div class="ion-margin">

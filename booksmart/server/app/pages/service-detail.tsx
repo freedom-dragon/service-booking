@@ -92,7 +92,7 @@ import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
 import { nodeToHTML } from '../jsx/html.js'
 import booking, { ReceiptImageItem } from './booking.js'
-import { formatDuration } from '../format/duration.js'
+import { formatServiceDuration } from '../format/duration.js'
 import { client_config } from '../../../client/client-config.js'
 import { formatBankNumber } from '../format/bank.js'
 import { Copyable } from '../components/copyable.js'
@@ -335,7 +335,7 @@ function selectOption(button){
               <div slot="start">
                 <ion-icon name="hourglass-outline"></ion-icon> 時長
               </div>
-              <ion-label>{formatDuration(service)}</ion-label>
+              <ion-label>{formatServiceDuration(service)}</ion-label>
             </ion-item>
             <input name="appointment_time" hidden />
 

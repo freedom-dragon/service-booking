@@ -2,7 +2,7 @@ import { filter } from 'better-sqlite3-proxy'
 import { Booking, proxy } from '../../../db/proxy.js'
 import { countBooking } from '../booking-store.js'
 import { Context } from '../context.js'
-import { formatDuration } from '../format/duration.js'
+import { formatServiceDuration } from '../format/duration.js'
 import { concatClassNames } from '../jsx/html.js'
 import { o } from '../jsx/jsx.js'
 import { getShopLocale } from '../shop-store.js'
@@ -130,7 +130,7 @@ export function BookingPreview(
             <ion-icon name="hourglass-outline"></ion-icon>
             時長:
           </td>
-          <td>{formatDuration(service)}</td>
+          <td>{formatServiceDuration(service)}</td>
         </tr>
         <tr>
           <td>

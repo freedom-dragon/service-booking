@@ -25,7 +25,7 @@ import { loadClientPlugin } from '../../client-plugin.js'
 import { randomUUID } from 'crypto'
 import { db } from '../../../db/db.js'
 import { formatPrice } from '../format/price.js'
-import { formatDuration } from '../format/duration.js'
+import { formatServiceDuration } from '../format/duration.js'
 import { getContextShop } from '../auth/shop.js'
 import { loginRouteUrl } from './login.js'
 import { toRouteUrl } from '../../url.js'
@@ -206,7 +206,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                     ) : null}
                     <p class="card--field">
                       <ion-icon name="hourglass-outline" />
-                      &nbsp;時長: {formatDuration(service)}
+                      &nbsp;時長: {formatServiceDuration(service)}
                     </p>
                     {service.original_price ? (
                       <p
