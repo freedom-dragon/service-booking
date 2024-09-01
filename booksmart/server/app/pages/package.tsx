@@ -23,6 +23,8 @@ import { MessageException } from '../../exception.js'
 import { formatHKDateString } from '../format/date.js'
 import { TimezoneDate } from 'timezone-date.ts'
 import { Script } from '../components/script.js'
+import { formatDuration } from '../format/duration.js'
+import { IonButton } from '../components/ion-button.js'
 
 let pageTitle = '套票'
 let addPageTitle = '新增套票'
@@ -55,10 +57,6 @@ let page = (
 
 function Page(attrs: {}, context: DynamicContext) {
   let { shop, user, is_owner } = getAuthRole(context)
-  return is_owner ? AdminPage(shop, context) : UserPage(user, context)
-}
-
-function AdminPage(shop: Shop, context: DynamicContext) {
   let packages = filter(proxy.package, { shop_id: shop.id! }).sort(
     (a, b) => b.id! - a.id!,
   )
@@ -71,42 +69,67 @@ function AdminPage(shop: Shop, context: DynamicContext) {
           <ion-title role="heading" aria-level="1">
             {pageTitle}
           </ion-title>
-          <ion-buttons slot="end">
-            <Link
-              tagName="ion-button"
-              href={toRouteUrl(routes, '/shop/:shop_slug/package/add', {
-                params: { shop_slug: shop.slug },
-              })}
-            >
-              {addPageTitle}
-            </Link>
-          </ion-buttons>
+          {is_owner ? (
+            <ion-buttons slot="end">
+              <Link
+                tagName="ion-button"
+                href={toRouteUrl(routes, '/shop/:shop_slug/package/add', {
+                  params: { shop_slug: shop.slug },
+                })}
+              >
+                {addPageTitle}
+              </Link>
+            </ion-buttons>
+          ) : null}
         </ion-toolbar>
       </ion-header>
       <ion-content id="Package" class="ion-padding">
+        {is_owner ? AdminPage(shop, context) : UserPage(user, context)}
         {packages.length == 0 ? (
           <ion-note>未有套票</ion-note>
         ) : (
           <ion-list>
-            {mapArray(packages, row => (
-              <ion-card>
-                <ion-card-title
-                  class="ion-margin-top ion-margin-start"
-                  color={row.id == id ? 'success' : undefined}
-                >
-                  {row.title}
-                </ion-card-title>
-                <ion-card-content>
-                  <div>$ {row.price}</div>
-                  <div>
-                    開售時期: {formatHKDateString(row.start_time)}
-                    {' - '}
-                    {formatHKDateString(row.end_time)}
-                  </div>
-                  <div>有效期限: {formatDuration(row.duration_time)}</div>
-                </ion-card-content>
-              </ion-card>
-            ))}
+            {mapArray(packages, pkg => {
+              let tickets = filter(proxy.ticket, {
+                package_id: pkg.id!,
+                user_id: user?.id!,
+              })
+              return (
+                <ion-card>
+                  <ion-card-title
+                    class="ion-margin-top ion-margin-start"
+                    color={pkg.id == id ? 'success' : undefined}
+                  >
+                    {pkg.title}
+                  </ion-card-title>
+                  <ion-card-content>
+                    {tickets.length > 0 ? <ion-badge>已購買</ion-badge> : null}
+                    <div>$ {pkg.price}</div>
+                    <div>
+                      開售時期: {formatHKDateString(pkg.start_time)}
+                      {' 至 '}
+                      {formatHKDateString(pkg.end_time)}
+                    </div>
+                    <div>有效期限: {formatDuration(pkg.duration_time)}</div>
+                    <IonButton
+                      url={toRouteUrl(
+                        routes,
+                        '/shop/:shop_slug/package/:package_id/purchase',
+                        {
+                          params: {
+                            shop_slug: shop.slug,
+                            package_id: pkg.id!,
+                          },
+                        },
+                      )}
+                      expand="block"
+                    >
+                      購買
+                    </IonButton>
+                  </ion-card-content>
+                </ion-card>
+              )
+            })}
           </ion-list>
         )}
       </ion-content>
@@ -114,20 +137,13 @@ function AdminPage(shop: Shop, context: DynamicContext) {
   )
 }
 
-function formatDuration(time: number): string {
-  let value = time / MONTH
-  if (Number.isInteger(value)) {
-    return value + '個月'
-  }
-  value = time / WEEK
-  if (Number.isInteger(value)) {
-    return value + '周'
-  }
-  value = time / DAY
-  return value + '日'
+function AdminPage(shop: Shop, context: DynamicContext) {
+  return <></>
 }
 
-function UserPage(shop: User | null, context: DynamicContext) {}
+function UserPage(shop: User | null, context: DynamicContext) {
+  return <></>
+}
 
 function AddPage(attrs: {}, context: DynamicContext) {
   let { shop, is_owner } = getAuthRole(context)
@@ -256,7 +272,7 @@ let submitParser = object({
   ]),
 })
 
-function Submit(attrs: {}, context: DynamicContext) {
+function SubmitPackage(attrs: {}, context: DynamicContext) {
   try {
     let { user, shop, is_owner } = getAuthRole(context)
     if (!user) throw 'You must be logged in to submit ' + pageTitle
@@ -301,6 +317,47 @@ function Submit(attrs: {}, context: DynamicContext) {
   }
 }
 
+function SubmitPurchase(attrs: {}, context: DynamicContext) {
+  try {
+    let { user, shop, is_owner } = getAuthRole(context)
+    if (!user) throw 'You must be logged in to submit ' + pageTitle
+    // if (!is_owner) throw 'Only shop owner can submit new package'
+
+    let { package_id } = context.routerMatch?.params
+
+    let pkg = proxy.package[package_id]
+    if (!pkg) throw `Package #${package_id} not found`
+
+    let now = Date.now()
+
+    let id = proxy.ticket.push({
+      package_id,
+      user_id: user.id!,
+      purchase_time: now,
+      expire_time: now + pkg.duration_time,
+    })
+
+    console.log('ticket id:', id)
+
+    // TODO do realtime update instead of redirect
+
+    return (
+      <Redirect
+        href={toRouteUrl(routes, '/shop/:shop_slug/package', {
+          params: { shop_slug: shop.slug },
+          query: { id },
+        })}
+      />
+    )
+  } catch (error) {
+    console.log('error:', error)
+    throw new MessageException([
+      'eval',
+      `showToast(${JSON.stringify(error)},'error')`,
+    ])
+  }
+}
+
 function SubmitResult(attrs: {}, context: DynamicContext) {
   let params = new URLSearchParams(context.routerMatch?.search)
   let error = params.get('error')
@@ -334,19 +391,25 @@ function SubmitResult(attrs: {}, context: DynamicContext) {
 let routes = {
   '/shop/:shop_slug/package': {
     title: title(pageTitle),
-    description: 'TODO',
+    description: 'see list of packages of the current shop',
     node: page,
   },
   '/shop/:shop_slug/package/add': {
     title: title(addPageTitle),
-    description: 'TODO',
+    description: 'create new package by shop owner',
     node: <AddPage />,
     streaming: false,
   },
   '/shop/:shop_slug/package/add/submit': {
     title: apiEndpointTitle,
-    description: 'TODO',
-    node: <Submit />,
+    description: 'submit new package by shop owner',
+    node: <SubmitPackage />,
+    streaming: false,
+  },
+  '/shop/:shop_slug/package/:package_id/purchase': {
+    title: apiEndpointTitle,
+    description: '',
+    node: <SubmitPurchase />,
     streaming: false,
   },
   '/package/result': {
