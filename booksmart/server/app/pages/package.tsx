@@ -25,6 +25,8 @@ import { TimezoneDate } from 'timezone-date.ts'
 import { Script } from '../components/script.js'
 import { formatDuration } from '../format/duration.js'
 import { IonButton } from '../components/ion-button.js'
+import login from './login.js'
+import { ServerMessage } from '../../../client/types.js'
 
 let pageTitle = '套票'
 let addPageTitle = '新增套票'
@@ -318,8 +320,12 @@ function SubmitPackage(attrs: {}, context: DynamicContext) {
 }
 
 function SubmitPurchase(attrs: {}, context: DynamicContext) {
+  let shop_slug: string | null = null
   try {
     let { user, shop, is_owner } = getAuthRole(context)
+
+    shop_slug = shop.slug
+
     if (!user) throw 'You must be logged in to submit ' + pageTitle
     // if (!is_owner) throw 'Only shop owner can submit new package'
 
@@ -351,10 +357,20 @@ function SubmitPurchase(attrs: {}, context: DynamicContext) {
     )
   } catch (error) {
     console.log('error:', error)
-    throw new MessageException([
-      'eval',
-      `showToast(${JSON.stringify(error)},'error')`,
-    ])
+    let messages: ServerMessage[] = [
+      ['eval', `showToast(${JSON.stringify(error)},'error')`],
+    ]
+    if (shop_slug) {
+      messages.push([
+        'redirect',
+        toRouteUrl(login.routes, '/shop/:shop_slug/login', {
+          params: {
+            shop_slug,
+          },
+        }),
+      ])
+    }
+    throw new MessageException(['batch', messages])
   }
 }
 
