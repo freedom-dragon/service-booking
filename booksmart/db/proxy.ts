@@ -254,7 +254,6 @@ export type PackageService = {
   package?: Package
   service_id: number
   service?: Service
-  quantity: number
 }
 
 export type DBProxy = {

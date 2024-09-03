@@ -264,7 +264,6 @@ package_service
 id integer PK
 package_id integer FK >- package.id
 service_id integer FK >- service.id
-quantity integer
 
 
 # zoom: 1.000
