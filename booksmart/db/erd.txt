@@ -229,6 +229,7 @@ reject_time integer NULL
 cancel_time integer NULL
 amount integer
 total_price text NULL
+ticket_id integer NULL FK >0- ticket.id
 
 
 receipt

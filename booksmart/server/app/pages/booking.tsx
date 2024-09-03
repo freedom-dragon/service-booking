@@ -22,7 +22,7 @@ import { MessageException } from '../../exception.js'
 import { loadClientPlugin } from '../../client-plugin.js'
 import { sendEmail } from '../../email.js'
 import { toServiceUrl, toShopUrl } from '../app-url.js'
-import { getShopLocale } from '../shop-store.js'
+import { countUserTicket, getShopLocale } from '../shop-store.js'
 import { nodeToVNode } from '../jsx/vnode.js'
 import {
   BookingPreview,
@@ -297,6 +297,7 @@ function BookingDetails(attrs: {
   let locale = getShopLocale(service.shop_id)
   let { used } = countBooking({ service, user: booking.user })
   let need_pay = used == 0
+  let using_ticket = booking.ticket?.expire_time! > Date.now()
   return (
     <ion-card data-booking-id={booking.id}>
       <ion-card-content>
@@ -316,13 +317,22 @@ function BookingDetails(attrs: {
           <BookingPreview booking={booking} style="margin: 0.25rem 1rem" />
           {need_pay ? (
             <div class="ion-margin-top">
-              <b>總共費用: {formatPrice(booking.total_price)}</b>
+              {using_ticket ? (
+                <>
+                  <div style="text-decoration: line-through">
+                    總共費用: {formatPrice(booking.total_price)}
+                  </div>
+                  <ion-badge>使用套票</ion-badge>
+                </>
+              ) : (
+                <b>總共費用: {formatPrice(booking.total_price)}</b>
+              )}
             </div>
           ) : null}
         </div>
       </ion-card-content>
       <div class="ion-margin-horizontal">
-        {need_pay ? (
+        {need_pay && !using_ticket ? (
           <details open={attrs.open_receipt} class="ion-margin-bottom">
             <summary>
               <span class="ion-margin-bottom receipt-desc">

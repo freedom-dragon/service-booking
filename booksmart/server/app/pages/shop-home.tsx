@@ -9,6 +9,7 @@ import { getAuthUser } from '../auth/user.js'
 import { Shop, proxy } from '../../../db/proxy.js'
 import { find } from 'better-sqlite3-proxy'
 import {
+  countUserTicket,
   getServiceCoverImage,
   getShopContacts,
   getShopCoverImage,
@@ -169,6 +170,10 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           {mapArray(services, ({ id, timeslot_count }) => {
             let service = proxy.service[id]
             let { used, times } = countBooking({ service, user })
+            let user_ticket_count = countUserTicket({
+              user_id: user?.id,
+              service_id: service.id!,
+            })
             return (
               <Link
                 tagName="ion-card"
@@ -185,7 +190,9 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                   </div>
                   <div class="card-text-container">
                     <h3>{service.name}</h3>
-                    {times > 1 ? (
+                    {user_ticket_count > 0 ? (
+                      <ion-badge>有套票</ion-badge>
+                    ) : times > 1 ? (
                       <p class="card--field">
                         <ion-icon name="copy-outline" />
                         &nbsp;次數:{' '}

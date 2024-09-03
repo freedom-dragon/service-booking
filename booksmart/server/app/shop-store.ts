@@ -1,8 +1,9 @@
 import { find } from 'better-sqlite3-proxy'
-import { Shop, proxy } from '../../db/proxy.js'
+import { Shop, Ticket, proxy } from '../../db/proxy.js'
 import { existsSync, readdirSync, renameSync } from 'fs'
 import { values } from 'cast.ts'
 import { toVersionedUrl } from './url-version.js'
+import { db } from '../../db/db.js'
 
 export type ShopLocales = {
   tutor: string
@@ -294,3 +295,75 @@ export let shopFieldsParser = values([
 ])
 
 export let shopLocaleKeyParser = values(['tutor', 'service'])
+
+let count_user_ticket = db
+  .prepare<
+    {
+      user_id: number
+      service_id: number
+      now: number
+    },
+    number
+  >(
+    /* sql */ `
+select
+  count(*) as count
+from ticket
+inner join package_service on package_service.id = ticket.package_id
+where ticket.user_id = :user_id
+  and package_service.service_id = :service_id
+  and ticket.expire_time > :now
+`,
+  )
+  .pluck()
+
+export function countUserTicket(filter: {
+  user_id: number | null | undefined
+  service_id: number
+}): number {
+  if (!filter.user_id) return 0
+  return (
+    count_user_ticket.get({
+      user_id: filter.user_id,
+      service_id: filter.service_id,
+      now: Date.now(),
+    }) || 0
+  )
+}
+
+let select_user_ticket = db
+  .prepare<
+    {
+      user_id: number
+      service_id: number
+      now: number
+    },
+    number
+  >(
+    /* sql */ `
+select
+  ticket.id
+from ticket
+inner join package_service on package_service.id = ticket.package_id
+where ticket.user_id = :user_id
+  and package_service.service_id = :service_id
+  and ticket.expire_time > :now
+order by ticket.expire_time asc
+limit 1
+`,
+  )
+  .pluck()
+
+export function getUserTicket(filter: {
+  user_id: number | null | undefined
+  service_id: number
+}): Ticket | null {
+  if (!filter.user_id) return null
+  let id = select_user_ticket.get({
+    user_id: filter.user_id,
+    service_id: filter.service_id,
+    now: Date.now(),
+  })
+  if (!id) return null
+  return proxy.ticket[id]
+}

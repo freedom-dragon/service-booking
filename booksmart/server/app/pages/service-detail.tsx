@@ -41,12 +41,14 @@ import {
 } from '../../../db/proxy.js'
 import { count, del, filter, find } from 'better-sqlite3-proxy'
 import {
+  countUserTicket,
   getReceiptImage,
   getServiceCoverImage,
   getServiceImages,
   getServiceMoreImage,
   getServiceOptionImage,
   getShopLocale,
+  getUserTicket,
   renameServiceSlug,
 } from '../shop-store.js'
 import { Swiper } from '../components/swiper.js'
@@ -201,6 +203,11 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
   let quota = service.quota
 
   let { times, used } = countBooking({ service, user })
+
+  let user_ticket_count = countUserTicket({
+    user_id: user?.id,
+    service_id: service.id!,
+  })
 
   return (
     <>
@@ -510,32 +517,46 @@ function selectOption(button){
       <ion-footer style="background-color: var(--ion-color-light);">
         <ion-list inset="true" style="margin-top: 0.5rem">
           <ion-item>
-            <ion-label
-              style={used > 0 ? 'text-decoration: line-through' : undefined}
-            >
-              {service.original_price ? (
-                <div style="text-decoration: line-through">
-                  原價:{' '}
-                  {+service.original_price
-                    ? '$' + service.original_price
-                    : service.original_price}
+            {user_ticket_count ? (
+              <ion-label>
+                <div style="text-decoration: line-through; margin-bottom: 0.25rem">
+                  費用:{' '}
+                  <span id="priceLabel">
+                    {+service.unit_price!
+                      ? '$' + service.unit_price + '/' + service.price_unit
+                      : service.unit_price}
+                  </span>
                 </div>
-              ) : null}
-              費用{' '}
-              <span id="priceLabel">
-                {+service.unit_price!
-                  ? '$' + service.unit_price + '/' + service.price_unit
-                  : service.unit_price}
-              </span>
-              {service.peer_amount && service.peer_price ? (
-                <div>
-                  {service.peer_amount}
-                  {service.price_unit || '人'}同行，每
-                  {service.price_unit || '人'}
-                  {formatPrice(service.peer_price)}
-                </div>
-              ) : null}
-            </ion-label>
+                <ion-badge>有套票</ion-badge>
+              </ion-label>
+            ) : (
+              <ion-label
+                style={used > 0 ? 'text-decoration: line-through' : undefined}
+              >
+                {service.original_price ? (
+                  <div style="text-decoration: line-through">
+                    原價:{' '}
+                    {+service.original_price
+                      ? '$' + service.original_price
+                      : service.original_price}
+                  </div>
+                ) : null}
+                費用:{' '}
+                <span id="priceLabel">
+                  {+service.unit_price!
+                    ? '$' + service.unit_price + '/' + service.price_unit
+                    : service.unit_price}
+                </span>
+                {service.peer_amount && service.peer_price ? (
+                  <div>
+                    {service.peer_amount}
+                    {service.price_unit || '人'}同行，每
+                    {service.price_unit || '人'}
+                    {formatPrice(service.peer_price)}
+                  </div>
+                ) : null}
+              </ion-label>
+            )}
             <ion-button
               size="normal"
               color="primary"
@@ -648,6 +669,7 @@ function PaymentModal(
   let has_paid = receipts.length > 0
   let need_pay = used == 0
   let is_shop_owner = getAuthUser(context)?.id == shop.owner_id
+  let using_ticket = booking.ticket_id
   return (
     <>
       <ion-header>
@@ -657,6 +679,7 @@ function PaymentModal(
             need_pay &&
             !has_paid &&
             !is_free &&
+            !using_ticket &&
             !booking.approve_time &&
             !booking.reject_time &&
             !booking.cancel_time ? (
@@ -670,7 +693,9 @@ function PaymentModal(
               <ion-button onclick="submitModal.dismiss()">返回</ion-button>
             )}
           </ion-buttons>
-          <ion-title>確認付款</ion-title>
+          <ion-title>
+            {!need_pay || is_free || using_ticket ? '確認預約' : '確認付款'}
+          </ion-title>
         </ion-toolbar>
       </ion-header>
       <ion-content class="ion-padding">
@@ -682,10 +707,22 @@ function PaymentModal(
           <>
             <h1>總共費用</h1>
             <div id="totalPriceLabel"></div>
-            <div>{formatPrice(total_price)}</div>
+            {using_ticket ? (
+              <>
+                <div
+                  style="text-decoration: line-through"
+                  class="ion-margin-bottom"
+                >
+                  {formatPrice(total_price)}
+                </div>
+                <ion-badge>使用套票</ion-badge>
+              </>
+            ) : (
+              <div>{formatPrice(total_price)}</div>
+            )}
           </>
         ) : null}
-        {need_pay && !is_free ? (
+        {need_pay && !is_free && !using_ticket ? (
           <>
             <h1>付款方法</h1>
             <ion-list class="payment-method--list">
@@ -760,14 +797,16 @@ function PaymentModal(
           class="receiptMessage ion-text-center"
           style="color: red; font-weight: bold"
         >
-          {!need_pay || is_free
-            ? ReceiptMessage.free(shop)
+          {!need_pay || is_free || using_ticket
+            ? ReceiptMessage.not_need_pay(shop)
             : has_paid
               ? ReceiptMessage.paid(shop)
               : ReceiptMessage.not_paid}
         </p>
         <div id="receiptNavButtons">
-          {is_free || has_paid ? ReceiptNavButton(context) : null}
+          {is_free || has_paid || using_ticket
+            ? ReceiptNavButton(context)
+            : null}
         </div>
       </ion-content>
     </>
@@ -842,7 +881,7 @@ let ReceiptMessage = {
   not_paid: '請注意，你需上傳付款證明。否則這個時段可能會被其他人搶先預約。',
   paid: (shop: Shop) =>
     `已上載付款證明，請等待 ${'商家' || shop.owner!.nickname} 確認`,
-  free: (shop: Shop) =>
+  not_need_pay: (shop: Shop) =>
     `已提交預約申請，請等待 ${'商家' || shop.owner!.nickname} 確認`,
 }
 function ReceiptNavButton(context: DynamicContext) {
@@ -2449,6 +2488,10 @@ let routes = {
         }
         let booking_user_id = bookingUser.id!
         let booking: Booking = db.transaction(() => {
+          let ticket = getUserTicket({
+            user_id: booking_user_id,
+            service_id: service.id!,
+          })
           let booking_id = proxy.booking.push({
             service_id: service.id!,
             submit_time: Date.now(),
@@ -2461,6 +2504,7 @@ let routes = {
             service_option_id: input.option_id || null,
             user_id: booking_user_id,
             total_price: null,
+            ticket_id: ticket?.id || null,
           })
           for (let answer of input.answers) {
             proxy.booking_answer.push({

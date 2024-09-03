@@ -175,22 +175,15 @@ export type ServiceRemark = {
   content: string
 }
 
-export type Booking = {
+export type Package = {
   id?: null | number
-  user_id: number
-  user?: User
-  service_id: number
-  service?: Service
-  service_option_id: null | number
-  service_option?: ServiceOption
-  submit_time: number
-  appointment_time: number
-  arrive_time: null | number
-  approve_time: null | number
-  reject_time: null | number
-  cancel_time: null | number
-  amount: number
-  total_price: null | string
+  price: number
+  shop_id: number
+  shop?: Shop
+  title: string
+  start_time: number
+  end_time: number
+  duration_time: number
 }
 
 export type ServiceTimeslot = {
@@ -210,6 +203,36 @@ export type TimeslotHour = {
   end_time: string
 }
 
+export type Ticket = {
+  id?: null | number
+  package_id: number
+  package?: Package
+  user_id: number
+  user?: User
+  purchase_time: number
+  expire_time: number
+}
+
+export type Booking = {
+  id?: null | number
+  user_id: number
+  user?: User
+  service_id: number
+  service?: Service
+  service_option_id: null | number
+  service_option?: ServiceOption
+  submit_time: number
+  appointment_time: number
+  arrive_time: null | number
+  approve_time: null | number
+  reject_time: null | number
+  cancel_time: null | number
+  amount: number
+  total_price: null | string
+  ticket_id: null | number
+  ticket?: Ticket
+}
+
 export type BookingAnswer = {
   id?: null | number
   booking_id: number
@@ -225,27 +248,6 @@ export type Receipt = {
   booking?: Booking
   filename: string
   upload_time: number
-}
-
-export type Package = {
-  id?: null | number
-  price: number
-  shop_id: number
-  shop?: Shop
-  title: string
-  start_time: number
-  end_time: number
-  duration_time: number
-}
-
-export type Ticket = {
-  id?: null | number
-  package_id: number
-  package?: Package
-  user_id: number
-  user?: User
-  purchase_time: number
-  expire_time: number
 }
 
 export type PackageService = {
@@ -274,13 +276,13 @@ export type DBProxy = {
   service_question: ServiceQuestion[]
   service_option: ServiceOption[]
   service_remark: ServiceRemark[]
-  booking: Booking[]
+  package: Package[]
   service_timeslot: ServiceTimeslot[]
   timeslot_hour: TimeslotHour[]
+  ticket: Ticket[]
+  booking: Booking[]
   booking_answer: BookingAnswer[]
   receipt: Receipt[]
-  package: Package[]
-  ticket: Ticket[]
   package_service: PackageService[]
 }
 
@@ -338,11 +340,9 @@ export let proxy = proxySchema<DBProxy>({
       /* foreign references */
       ['service', { field: 'service_id', table: 'service' }],
     ],
-    booking: [
+    package: [
       /* foreign references */
-      ['user', { field: 'user_id', table: 'user' }],
-      ['service', { field: 'service_id', table: 'service' }],
-      ['service_option', { field: 'service_option_id', table: 'service_option' }],
+      ['shop', { field: 'shop_id', table: 'shop' }],
     ],
     service_timeslot: [
       /* foreign references */
@@ -352,6 +352,18 @@ export let proxy = proxySchema<DBProxy>({
       /* foreign references */
       ['service_timeslot', { field: 'service_timeslot_id', table: 'service_timeslot' }],
     ],
+    ticket: [
+      /* foreign references */
+      ['package', { field: 'package_id', table: 'package' }],
+      ['user', { field: 'user_id', table: 'user' }],
+    ],
+    booking: [
+      /* foreign references */
+      ['user', { field: 'user_id', table: 'user' }],
+      ['service', { field: 'service_id', table: 'service' }],
+      ['service_option', { field: 'service_option_id', table: 'service_option' }],
+      ['ticket', { field: 'ticket_id', table: 'ticket' }],
+    ],
     booking_answer: [
       /* foreign references */
       ['booking', { field: 'booking_id', table: 'booking' }],
@@ -360,15 +372,6 @@ export let proxy = proxySchema<DBProxy>({
     receipt: [
       /* foreign references */
       ['booking', { field: 'booking_id', table: 'booking' }],
-    ],
-    package: [
-      /* foreign references */
-      ['shop', { field: 'shop_id', table: 'shop' }],
-    ],
-    ticket: [
-      /* foreign references */
-      ['package', { field: 'package_id', table: 'package' }],
-      ['user', { field: 'user_id', table: 'user' }],
     ],
     package_service: [
       /* foreign references */

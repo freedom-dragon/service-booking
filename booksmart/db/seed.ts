@@ -248,13 +248,13 @@ let art_studio = seedShop({
       timeslots: [
         {
           start_date: '2024-02-11',
-          end_date: '2024-07-17',
+          end_date: '2024-10-17',
           weekdays: '日二四六',
           hours: '09:00-12:00,14:00-16:30,20:00-22:00',
         },
         {
           start_date: '2024-02-18',
-          end_date: '2024-07-24',
+          end_date: '2024-10-24',
           weekdays: '一三五',
           hours: '14:00-16:30',
         },
