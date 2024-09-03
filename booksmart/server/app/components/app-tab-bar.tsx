@@ -55,7 +55,12 @@ export function AppTabBar(attrs: {}, context: DynamicContext) {
             params: { shop_slug },
           }),
         },
-      ].filter(tab => tab.tab != 'package' || env.ORIGIN.includes('localhost'))}
+      ].filter(
+        tab =>
+          tab.tab != 'package' ||
+          env.ORIGIN.includes('localhost') ||
+          shop_slug.includes('demo'),
+      )}
     />
   )
 }

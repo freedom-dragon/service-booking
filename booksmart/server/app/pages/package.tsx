@@ -10,6 +10,7 @@ import {
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import {
+  array,
   date,
   float,
   id,
@@ -26,8 +27,14 @@ import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { AppTabBar } from '../components/app-tab-bar.js'
 import { toRouteUrl } from '../../url.js'
 import { getAuthRole } from '../auth/role.js'
-import { Package, Shop, User, proxy } from '../../../db/proxy.js'
-import { filter } from 'better-sqlite3-proxy'
+import {
+  Package,
+  PackageService,
+  Shop,
+  User,
+  proxy,
+} from '../../../db/proxy.js'
+import { filter, find } from 'better-sqlite3-proxy'
 import { DAY, MONTH, WEEK, YEAR } from '@beenotung/tslib/time.js'
 import { MessageException } from '../../exception.js'
 import { formatHKDateString } from '../format/date.js'
@@ -43,8 +50,8 @@ let addPageTitle = '新增套票'
 let editPageTitle = '編輯套票'
 
 let style = Style(/* css */ `
-#Package {
-
+#Package .service-list {
+  margin: 0;
 }
 `)
 
@@ -70,9 +77,15 @@ let page = (
 
 function Page(attrs: {}, context: DynamicContext) {
   let { shop, user, is_owner } = getAuthRole(context)
-  let packages = filter(proxy.package, { shop_id: shop.id! }).sort(
-    (a, b) => b.id! - a.id!,
-  )
+  let packages = filter(proxy.package, { shop_id: shop.id! })
+    .sort((a, b) => b.id! - a.id!)
+    .map(pkg => ({
+      pkg,
+      services: filter(proxy.package_service, { package_id: pkg.id! }),
+    }))
+  if (!is_owner) {
+    packages = packages.filter(item => item.services.length > 0)
+  }
   let params = new URLSearchParams(context.routerMatch?.search)
   let id = params.get('id')
   return (
@@ -102,7 +115,7 @@ function Page(attrs: {}, context: DynamicContext) {
           <ion-note>未有套票</ion-note>
         ) : (
           <ion-list>
-            {mapArray(packages, pkg => {
+            {mapArray(packages, ({ pkg, services }) => {
               let tickets = filter(proxy.ticket, {
                 package_id: pkg.id!,
                 user_id: user?.id!,
@@ -124,6 +137,18 @@ function Page(attrs: {}, context: DynamicContext) {
                       {formatHKDateString(pkg.end_time)}
                     </div>
                     <div>有效期限: {formatDuration(pkg.duration_time)}</div>
+                    <div>
+                      可選擇服務:{' '}
+                      {services.length == 0 ? (
+                        <ion-text color="danger">未設定</ion-text>
+                      ) : (
+                        <ul class="service-list">
+                          {mapArray(services, row => {
+                            return <li>{row.service!.name}</li>
+                          })}
+                        </ul>
+                      )}
+                    </div>
                     {is_owner ? (
                       <IonButton
                         url={toRouteUrl(
@@ -197,6 +222,12 @@ function DetailPage(attrs: {}, context: DynamicContext) {
       }
     }
   }
+  let services = filter(proxy.service, { shop_id: shop.id! })
+  let selected_service_ids = pkg
+    ? filter(proxy.package_service, { package_id: pkg.id! }).map(
+        ps => ps.service_id,
+      )
+    : []
   return (
     <>
       {Style(/* css */ `
@@ -224,6 +255,7 @@ function DetailPage(attrs: {}, context: DynamicContext) {
           onsubmit="emitForm(event)"
         >
           <input type="hidden" name="id" value={pkg?.id} />
+          <h2 class="ion-margin">套票資料</h2>
           <ion-list lines="full" inset="true">
             <ion-item>
               <ion-input
@@ -307,12 +339,36 @@ function DetailPage(attrs: {}, context: DynamicContext) {
               </ion-modal>
             </ion-item>
           </ion-list>
+          <h2 class="ion-margin">可選擇服務</h2>
+          <ion-list lines="full" inset="true">
+            {mapArray(services, service => (
+              <ion-item onclick="selectService(event)">
+                <ion-label>
+                  {service.name} ({service.slug})
+                </ion-label>
+                <ion-checkbox
+                  slot="end"
+                  name="service_ids"
+                  value={service.id}
+                  checked={selected_service_ids.includes(service.id!)}
+                  onclick="event.stopPropagation()"
+                />
+              </ion-item>
+            ))}
+          </ion-list>
           <p id="submitMessage"></p>
           <div style="text-align: center">
             <ion-button type="submit">{pkg ? '更新' : '新增'}</ion-button>
           </div>
         </form>
       </ion-content>
+      {Script(/* javascript */ `
+function selectService(event) {
+  let item = event.target.closest('ion-item')
+  let checkbox = item.querySelector('ion-checkbox')
+  checkbox.checked = !checkbox.checked
+}
+      `)}
     </>
   )
 }
@@ -329,6 +385,7 @@ let submitParser = object({
     'month' as const,
     'year' as const,
   ]),
+  service_ids: array(string()),
 })
 
 let duration_units = {
@@ -375,6 +432,28 @@ function SubmitPackage(attrs: {}, context: DynamicContext) {
       Object.assign(pkg, row)
     } else {
       id = proxy.package.push(row)
+    }
+
+    let service_ids = input.service_ids.map(id => +id).filter(id => id)
+
+    filter(proxy.package_service, { package_id: id }).forEach(row => {
+      if (!service_ids.includes(row.service_id)) {
+        delete proxy.package_service[row.id!]
+      }
+    })
+
+    for (let service_id of service_ids) {
+      let row = find(proxy.package_service, {
+        package_id: id,
+        service_id: +service_id,
+      })
+      if (!row) {
+        proxy.package_service.push({
+          package_id: id,
+          service_id: +service_id,
+          quantity: 0,
+        })
+      }
     }
 
     return (

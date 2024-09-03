@@ -248,6 +248,15 @@ export type Ticket = {
   expire_time: number
 }
 
+export type PackageService = {
+  id?: null | number
+  package_id: number
+  package?: Package
+  service_id: number
+  service?: Service
+  quantity: number
+}
+
 export type DBProxy = {
   method: Method[]
   url: Url[]
@@ -273,6 +282,7 @@ export type DBProxy = {
   receipt: Receipt[]
   package: Package[]
   ticket: Ticket[]
+  package_service: PackageService[]
 }
 
 export let proxy = proxySchema<DBProxy>({
@@ -360,6 +370,11 @@ export let proxy = proxySchema<DBProxy>({
       /* foreign references */
       ['package', { field: 'package_id', table: 'package' }],
       ['user', { field: 'user_id', table: 'user' }],
+    ],
+    package_service: [
+      /* foreign references */
+      ['package', { field: 'package_id', table: 'package' }],
+      ['service', { field: 'service_id', table: 'service' }],
     ],
   },
 })

@@ -259,6 +259,14 @@ purchase_time integer
 expire_time integer
 
 
+package_service
+---------------
+id integer PK
+package_id integer FK >- package.id
+service_id integer FK >- service.id
+quantity integer
+
+
 # zoom: 1.000
 # view: (738, 623)
 # text-bg: #6495ed
