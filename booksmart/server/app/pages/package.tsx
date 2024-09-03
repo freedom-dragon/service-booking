@@ -9,14 +9,24 @@ import {
 } from '../context.js'
 import { mapArray } from '../components/fragment.js'
 import { IonBackButton } from '../components/ion-back-button.js'
-import { date, float, int, object, string, toDateString, values } from 'cast.ts'
+import {
+  date,
+  float,
+  id,
+  int,
+  object,
+  optional,
+  string,
+  toDateString,
+  values,
+} from 'cast.ts'
 import { Link, Redirect } from '../components/router.js'
 import { renderError } from '../components/error.js'
 import { fitIonFooter, selectIonTab } from '../styles/mobile-style.js'
 import { AppTabBar } from '../components/app-tab-bar.js'
 import { toRouteUrl } from '../../url.js'
 import { getAuthRole } from '../auth/role.js'
-import { Shop, User, proxy } from '../../../db/proxy.js'
+import { Package, Shop, User, proxy } from '../../../db/proxy.js'
 import { filter } from 'better-sqlite3-proxy'
 import { DAY, MONTH, WEEK, YEAR } from '@beenotung/tslib/time.js'
 import { MessageException } from '../../exception.js'
@@ -30,6 +40,7 @@ import { ServerMessage } from '../../../client/types.js'
 
 let pageTitle = '套票'
 let addPageTitle = '新增套票'
+let editPageTitle = '編輯套票'
 
 let style = Style(/* css */ `
 #Package {
@@ -113,21 +124,39 @@ function Page(attrs: {}, context: DynamicContext) {
                       {formatHKDateString(pkg.end_time)}
                     </div>
                     <div>有效期限: {formatDuration(pkg.duration_time)}</div>
-                    <IonButton
-                      url={toRouteUrl(
-                        routes,
-                        '/shop/:shop_slug/package/:package_id/purchase',
-                        {
-                          params: {
-                            shop_slug: shop.slug,
-                            package_id: pkg.id!,
+                    {is_owner ? (
+                      <IonButton
+                        url={toRouteUrl(
+                          routes,
+                          '/shop/:shop_slug/package/:package_id/edit',
+                          {
+                            params: {
+                              shop_slug: shop.slug,
+                              package_id: pkg.id!,
+                            },
                           },
-                        },
-                      )}
-                      expand="block"
-                    >
-                      購買
-                    </IonButton>
+                        )}
+                        expand="block"
+                      >
+                        編輯
+                      </IonButton>
+                    ) : (
+                      <IonButton
+                        url={toRouteUrl(
+                          routes,
+                          '/shop/:shop_slug/package/:package_id/purchase',
+                          {
+                            params: {
+                              shop_slug: shop.slug,
+                              package_id: pkg.id!,
+                            },
+                          },
+                        )}
+                        expand="block"
+                      >
+                        購買
+                      </IonButton>
+                    )}
                   </ion-card-content>
                 </ion-card>
               )
@@ -147,14 +176,27 @@ function UserPage(shop: User | null, context: DynamicContext) {
   return <></>
 }
 
-function AddPage(attrs: {}, context: DynamicContext) {
+function DetailPage(attrs: {}, context: DynamicContext) {
   let { shop, is_owner } = getAuthRole(context)
+  let package_id: string | null = context.routerMatch?.params.package_id
   let tab_url = toRouteUrl(routes, '/shop/:shop_slug/package', {
     params: {
       shop_slug: shop.slug,
     },
   })
   if (!is_owner) return <Redirect href={tab_url} />
+  let pkg = package_id ? proxy.package[+package_id] : null
+  let duration_unit_value = DAY
+  let duration_unit_name = 'month'
+  if (pkg) {
+    for (let unit_name in duration_units) {
+      let unit_value = duration_units[unit_name as keyof typeof duration_units]
+      if (pkg.duration_time >= unit_value) {
+        duration_unit_value = unit_value
+        duration_unit_name = unit_name
+      }
+    }
+  }
   return (
     <>
       {Style(/* css */ `
@@ -167,20 +209,21 @@ function AddPage(attrs: {}, context: DynamicContext) {
         <ion-toolbar color="primary">
           <IonBackButton href={tab_url} backText={pageTitle} color="light" />
           <ion-title role="heading" aria-level="1">
-            {addPageTitle}
+            {pkg ? editPageTitle : addPageTitle}
           </ion-title>
         </ion-toolbar>
       </ion-header>
       <ion-content id="AddPackage" class="ion-padding" color="light">
         <form
           method="POST"
-          action={toRouteUrl(routes, '/shop/:shop_slug/package/add/submit', {
+          action={toRouteUrl(routes, '/shop/:shop_slug/package/submit', {
             params: {
               shop_slug: shop.slug,
             },
           })}
           onsubmit="emitForm(event)"
         >
+          <input type="hidden" name="id" value={pkg?.id} />
           <ion-list lines="full" inset="true">
             <ion-item>
               <ion-input
@@ -190,6 +233,7 @@ function AddPage(attrs: {}, context: DynamicContext) {
                 minlength="1"
                 maxlength="50"
                 placeholder="如: 限時任玩"
+                value={pkg?.title}
               />
             </ion-item>
             <ion-note class="item--hint">一次收費可多次享用服務</ion-note>
@@ -200,6 +244,7 @@ function AddPage(attrs: {}, context: DynamicContext) {
                 required
                 min="0"
                 placeholder="HKD$"
+                value={pkg?.price}
               />
             </ion-item>
             <ion-item>
@@ -211,11 +256,14 @@ function AddPage(attrs: {}, context: DynamicContext) {
                 min="1"
                 style="text-align: end"
                 name="duration_time_value"
+                value={
+                  pkg ? pkg.duration_time / duration_unit_value : undefined
+                }
               />
               <div>個</div>
               <ion-select
                 placeholder="單位"
-                value="month"
+                value={duration_unit_name}
                 name="duration_time_unit"
               >
                 <ion-select-option value="day">日</ion-select-option>
@@ -233,7 +281,11 @@ function AddPage(attrs: {}, context: DynamicContext) {
                   presentation="date"
                   show-default-buttons="true"
                   name="start_time"
-                  value={toDateString(new Date())}
+                  value={
+                    pkg
+                      ? toDateString(new Date(pkg.start_time))
+                      : toDateString(new Date())
+                  }
                 />
               </ion-modal>
             </ion-item>
@@ -246,14 +298,18 @@ function AddPage(attrs: {}, context: DynamicContext) {
                   presentation="date"
                   show-default-buttons="true"
                   name="end_time"
-                  value={toDateString(new Date(Date.now() + 1 * MONTH))}
+                  value={
+                    pkg
+                      ? toDateString(new Date(pkg.end_time))
+                      : toDateString(new Date(Date.now() + 1 * MONTH))
+                  }
                 />
               </ion-modal>
             </ion-item>
           </ion-list>
           <p id="submitMessage"></p>
           <div style="text-align: center">
-            <ion-button type="submit">Submit</ion-button>
+            <ion-button type="submit">{pkg ? '更新' : '新增'}</ion-button>
           </div>
         </form>
       </ion-content>
@@ -262,6 +318,7 @@ function AddPage(attrs: {}, context: DynamicContext) {
 }
 
 let submitParser = object({
+  id: optional(id()),
   title: string({ minLength: 1, maxLength: 50 }),
   price: float({ min: 0 }),
   start_time: date(),
@@ -273,6 +330,13 @@ let submitParser = object({
     'year' as const,
   ]),
 })
+
+let duration_units = {
+  day: DAY,
+  week: WEEK,
+  month: MONTH,
+  year: YEAR,
+}
 
 function SubmitPackage(attrs: {}, context: DynamicContext) {
   try {
@@ -291,21 +355,28 @@ function SubmitPackage(attrs: {}, context: DynamicContext) {
     endDate.setHours(0, 0, 0, 0)
 
     let duration_value = +getStringCasual(body, 'duration_time_value') || 1
-    let duration_unit = {
-      day: DAY,
-      week: WEEK,
-      month: MONTH,
-      year: YEAR,
-    }[input.duration_time_unit]
+    let duration_unit = duration_units[input.duration_time_unit]
 
-    let id = proxy.package.push({
+    let row: Package = {
       shop_id: shop.id!,
       title: input.title,
       price: input.price,
       start_time: startDate.getTime(),
       end_time: endDate.getTime() + DAY - 1,
       duration_time: duration_value * duration_unit,
-    })
+    }
+
+    let id = input.id
+    if (id) {
+      let pkg = proxy.package[id]
+      if (!pkg) throw `Package #${id} not found`
+      if (pkg.shop_id !== shop.id)
+        throw `Package #${id} does not belong to current shop`
+      Object.assign(pkg, row)
+    } else {
+      id = proxy.package.push(row)
+    }
+
     return (
       <Redirect
         href={toRouteUrl(routes, '/shop/:shop_slug/package', {
@@ -413,12 +484,18 @@ let routes = {
   '/shop/:shop_slug/package/add': {
     title: title(addPageTitle),
     description: 'create new package by shop owner',
-    node: <AddPage />,
+    node: <DetailPage />,
     streaming: false,
   },
-  '/shop/:shop_slug/package/add/submit': {
+  '/shop/:shop_slug/package/:package_id/edit': {
+    title: title(editPageTitle),
+    description: 'edit package by shop owner',
+    node: <DetailPage />,
+    streaming: false,
+  },
+  '/shop/:shop_slug/package/submit': {
     title: apiEndpointTitle,
-    description: 'submit new package by shop owner',
+    description: 'submit new package or edit existing package by shop owner',
     node: <SubmitPackage />,
     streaming: false,
   },
