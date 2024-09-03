@@ -28,12 +28,19 @@ import shopHome from './shop-home.js'
 import { db } from '../../../db/db.js'
 import { find } from 'better-sqlite3-proxy'
 import { Node } from '../jsx/types.js'
+import { mapArray } from '../components/fragment.js'
+import DateTimeText, { formatDateTimeText } from '../components/datetime.js'
+import { WEEK } from '@beenotung/tslib/time.js'
 
 let adminPortalTitle = 'Admin Portal'
 let createShopTitle = '商戶註冊'
+let recentVerificationCodeTitle = '最近的驗證碼'
 
 let style = Style(/* css */ `
-
+.card-normal-text {
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+}
 `)
 
 let adminProfilePage = (
@@ -102,7 +109,8 @@ function AdminProfileMain(attrs: {}, context: DynamicContext) {
         <div class="field">
           Tel: <div>{user.tel ? formatTel(user.tel) : '-'}</div>
         </div>
-        <div>
+
+        <div style="max-width: 24rem; margin: auto">
           <Link
             tagName="ion-button"
             href={toRouteUrl(routes, '/admin/create-shop')}
@@ -111,6 +119,15 @@ function AdminProfileMain(attrs: {}, context: DynamicContext) {
             style="margin-top: 2rem"
           >
             {createShopTitle}
+          </Link>
+          <Link
+            tagName="ion-button"
+            href={toRouteUrl(routes, '/admin/recent-verification-code')}
+            expand="block"
+            class="ion-margin"
+            color="warning"
+          >
+            {recentVerificationCodeTitle}
           </Link>
           <ion-button
             href={toRouteUrl(routes, '/admin/logout')}
@@ -123,6 +140,69 @@ function AdminProfileMain(attrs: {}, context: DynamicContext) {
           </ion-button>
         </div>
       </div>
+    </>
+  )
+}
+
+let select_recent_verification_code = db
+  .prepare<void[], number>(
+    /* sql */ `
+select id from verification_code
+order by id desc
+limit 10
+`,
+  )
+  .pluck()
+
+function AdminRecentVerificationCodePage(attrs: {}, context: Context) {
+  let user = getAuthUser(context)
+  let fallback = roleCheck(user)
+  if (!user || fallback) return fallback
+  let rows = select_recent_verification_code.all()
+  return (
+    <>
+      {style}
+      <ion-header>
+        <ion-toolbar color="primary">
+          <IonBackButton
+            href={toRouteUrl(routes, '/admin/profile')}
+            color="light"
+            backText="Admin"
+          />
+          <ion-title role="heading" aria-level="1">
+            {recentVerificationCodeTitle}
+          </ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-list>
+          {mapArray(rows, id => {
+            let row = proxy.verification_code[id]
+            let tel = row.user!.tel
+            return (
+              <ion-card>
+                <ion-card-header>
+                  #{row.id} {row.shop!.name}
+                </ion-card-header>
+                <ion-card-content>
+                  <div class="card-normal-text">Email: {row.email}</div>
+                  {tel ? (
+                    <div class="card-normal-text">Tel: {formatTel(tel)}</div>
+                  ) : null}
+                  <div class="card-normal-text">
+                    Time:{' '}
+                    <DateTimeText
+                      time={row.request_time}
+                      relativeTimeThreshold={1 * WEEK}
+                    />
+                  </div>
+                  <div>Code: {row.passcode}</div>
+                </ion-card-content>
+              </ion-card>
+            )
+          })}
+        </ion-list>
+      </ion-content>
     </>
   )
 }
@@ -318,6 +398,12 @@ let routes = {
     adminOnly: true,
     node: adminProfilePage,
     menuFullNavigate: true,
+  },
+  '/admin/recent-verification-code': {
+    title: title(recentVerificationCodeTitle),
+    description: 'show recent verification code to admin',
+    adminOnly: true,
+    node: <AdminRecentVerificationCodePage />,
   },
   '/admin/create-shop': {
     title: title(createShopTitle),
