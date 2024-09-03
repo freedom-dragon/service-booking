@@ -254,7 +254,7 @@ function DetailPage(attrs: {}, context: DynamicContext) {
           })}
           onsubmit="emitForm(event)"
         >
-          <input type="hidden" name="id" value={pkg?.id} />
+          {pkg ? <input type="hidden" name="id" value={pkg.id} /> : null}
           <h2 class="ion-margin">套票資料</h2>
           <ion-list lines="full" inset="true">
             <ion-item>
