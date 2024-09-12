@@ -34,3 +34,8 @@ uploads/
 # data files
 data/*.tmp.*
 data/*.sql
+
+# analysis export
+traffic.csv
+traffic.png
+.~lock.*#
