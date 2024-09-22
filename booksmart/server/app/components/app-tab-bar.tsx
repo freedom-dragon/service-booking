@@ -18,7 +18,9 @@ export function AppTabBar(attrs: {}, context: DynamicContext) {
         {
           tab: 'home',
           icon: 'planet',
-          label: '預約',
+          // TODO show services and packages in segment
+          label: '主頁',
+          // label: '預約',
           href: toRouteUrl(shopHome.routes, '/shop/:shop_slug', {
             params: { shop_slug },
           }),
@@ -26,7 +28,8 @@ export function AppTabBar(attrs: {}, context: DynamicContext) {
         {
           tab: 'booking',
           icon: 'calendar',
-          label: '行程',
+          // TODO toggle to admin/client
+          label: '我的行程',
           href: toRouteUrl(booking.routes, '/shop/:shop_slug/booking', {
             params: { shop_slug },
           }),
@@ -34,19 +37,22 @@ export function AppTabBar(attrs: {}, context: DynamicContext) {
         {
           tab: 'package',
           icon: 'ticket',
-          label: '套票',
+          // TODO toggle to admin/client
+          label: '我的套票',
+          // '套票記錄'
+          // 未確認 / 已確認 / 已到期
           href: toRouteUrl(Package.routes, '/shop/:shop_slug/package', {
             params: { shop_slug },
           }),
         },
-        {
-          tab: 'notice',
-          icon: 'notifications',
-          label: '通知',
-          href: toRouteUrl(appNotice.routes, '/shop/:shop_slug/notice', {
-            params: { shop_slug },
-          }),
-        },
+        // {
+        //   tab: 'notice',
+        //   icon: 'notifications',
+        //   label: '通知',
+        //   href: toRouteUrl(appNotice.routes, '/shop/:shop_slug/notice', {
+        //     params: { shop_slug },
+        //   }),
+        // },
         {
           tab: 'more',
           icon: 'ellipsis-horizontal',
