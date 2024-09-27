@@ -1,9 +1,12 @@
 import { Knex } from 'knex'
-import { proxy } from '../proxy'
 
 async function reset(knex: Knex) {
   await knex('user').update({ shop_id: null })
-  for (let table of Object.keys(proxy).reverse()) {
+  let rows = await knex.raw(
+    "select tbl_name from sqlite_master where type = 'table'",
+  )
+  for (let row of rows.reverse()) {
+    let table = row.tbl_name
     console.log('reset', table)
     await knex(table).delete()
   }
