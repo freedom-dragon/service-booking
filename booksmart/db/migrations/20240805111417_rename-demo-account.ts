@@ -24,7 +24,11 @@ export async function up(knex: Knex): Promise<void> {
   await knex('shop')
     .where({ slug: 'lab.on.the.balconi' })
     .update({ slug: 'demo.on.the.balconi' })
-  renameSync(join(dir, 'lab.on.the.balconi'), join(dir, 'demo.on.the.balconi'))
+  let src = join(dir, 'lab.on.the.balconi')
+  let dest = join(dir, 'demo.on.the.balconi')
+  if (existsSync(src)) {
+    renameSync(src, dest)
+  }
 }
 
 export async function down(knex: Knex): Promise<void> {
