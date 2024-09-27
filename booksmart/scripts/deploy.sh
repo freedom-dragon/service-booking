@@ -45,6 +45,7 @@ else
     server \
     client \
     public \
+    template \
     build \
     dist \
     package.json \
@@ -52,6 +53,7 @@ else
     "$user@$host:$root_dir"
   rsync -SavLPz \
     db/package.json \
+    db/tsconfig.json \
     db/migrations \
     db/*.ts \
     "$user@$host:$root_dir/db"
