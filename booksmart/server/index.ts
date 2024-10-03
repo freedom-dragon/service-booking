@@ -16,7 +16,6 @@ import { clearInvalidUserId } from './app/auth/user.js'
 import { env } from './env.js'
 import { HttpError, EarlyTerminate } from './exception.js'
 import { sessionMiddleware } from './session.js'
-import grant from 'grant'
 import oauth from './oauth.js'
 
 const log = debugLog('index.ts')

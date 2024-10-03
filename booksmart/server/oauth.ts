@@ -1,6 +1,6 @@
 import { Application } from 'express'
 import grant from 'grant'
-import { env } from './env'
+import { env } from './env.js'
 import { find } from 'better-sqlite3-proxy'
 import { proxy } from '../db/proxy.js'
 
