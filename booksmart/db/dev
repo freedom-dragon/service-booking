@@ -1,0 +1,4 @@
+set -e
+while [ true ]; do
+  npx knex migrate:up
+done

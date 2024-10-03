@@ -3,7 +3,7 @@ import { renderError } from '../components/error.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { DynamicContext } from '../context.js'
 import { o } from '../jsx/jsx.js'
-import { Routes } from '../routes'
+import { Routes } from '../routes.js'
 
 type Character = {
   id: number

@@ -29,10 +29,19 @@ let content = (
       <h1>Home Page</h1>
       <p>一個適合各種服務規模的預約系統。從一人微型創業到中小型企業。</p>
       <p>{config.site_description}</p>
+
+      <a class="signup" href={'/register'}>
+        註冊
+      </a>
+
       <h2>已加盟店舖</h2>
       <ShopList />
     </div>
+    <a class="on-board" href={'on-board'}>
+      建立新店
+    </a>
   </>
+
 )
 
 function ShopList() {

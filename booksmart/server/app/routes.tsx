@@ -21,6 +21,8 @@ import NotFoundPageRoute from './pages/not-found.js'
 import { then } from '@beenotung/tslib/result.js'
 import Login from './pages/login.js'
 import Register from './pages/register.js'
+import onBoard from './pages/on-board.js'
+import onBoardAccount from './pages/on-board-account.js'
 import Profile from './pages/profile.js'
 import VerificationCode from './pages/verification-code.js'
 import type { MenuRoute } from './components/menu'
@@ -104,6 +106,8 @@ let routeDict = {
     node: UserAgents,
   },
   ...Login.routes,
+  ...onBoard.routes,
+  ...onBoardAccount.routes,
   ...Register.routes,
   ...Profile.routes,
   ...VerificationCode.routes,

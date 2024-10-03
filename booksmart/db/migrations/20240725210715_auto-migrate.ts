@@ -3,7 +3,12 @@ import { Knex } from 'knex'
 async function reset(knex: Knex) {
   await knex('user').update({ shop_id: null })
   let rows = await knex.raw(
-    "select tbl_name from sqlite_master where type = 'table'",
+    /* sql */
+    `select tbl_name from sqlite_master
+    where type = 'table'
+    and tbl_name not like 'knex%'
+    and tbl_name not like 'sqlite%'
+    `,
   )
   for (let row of rows.reverse()) {
     let table = row.tbl_name
