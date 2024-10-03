@@ -10,6 +10,7 @@ import {
   DynamicContext,
   ExpressContext,
   getContextFormBody,
+  WsContext,
 } from '../context.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib'
 import { db } from '../../../db/db.js'
@@ -21,12 +22,16 @@ import { IonBackButton } from '../components/ion-back-button.js'
 import { env } from '../../env.js'
 import login from './login.js'
 import shopHome from './shop-home.js'
-import { Input } from '../components/input.js';
+import { Input } from '../components/input.js'
 import { Script } from '../components/script.js'
 import onBoardAccount from './on-board-account.js'
+import { ServerMessage } from '../../../client/types.js'
+import { count } from 'better-sqlite3-proxy'
+
+let host = new URL(env.ORIGIN).host
 
 let createShopTitle = '商戶註冊'
-let iconText = "arrow-forward-circle-outline"
+let iconText = 'arrow-forward-circle-outline'
 let style = Style(/* css */ `
   /*
     .card-normal-text {
@@ -173,18 +178,59 @@ ion-item div.label-text-wrapper div.label-text {
   }
 }
 `)
+style = Style(/* css */ `
+h2 {
+  font-size: 1.25rem;
+}
+.slug-input {
+  height: 2rem;
+  border-radius: 3rem;
+  border: 0.0625rem solid #ddd;
+  font-size: 1rem;
+  --padding-start: 1rem;
+  color: var(--ion-color-medium);
+}
+.slug-input .label-text-wrapper {
+  margin-inline: 0 !important;
+}
+.slug-input .native-input {
+  color: var(--ion-color-primary);
+}
+.slug-input ion-button {
+  font-size: 1.25rem;
+}
+#CreateShopPage .hint {
+  border-inline-start: 3px solid #748;
+  background-color: #edf;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  width: fit-content;
+}
+#CreateShopPage form {
+  height: calc(100% - 2rem);
+  display: flex;
+  flex-direction: column;
+}
+#CreateShopPage .form-body {
+  margin: auto;
+}
+`)
 
-let ShopSlugParser = object({
-  shop_slug: string({ nonEmpty: true, match: /^[\w-.]{1,32}$/ }),
+let slug_regex = /^[\w-._]{1,32}$/
+let shop_slug_parser = string({ nonEmpty: true, match: slug_regex })
+
+let CheckShopSlugParser = object({
+  args: object({
+    0: shop_slug_parser,
+  }),
 })
 
 let SubmitShopParser = object({
   nickname: string({ nonEmpty: true }),
   email: email({ nonEmpty: true }),
   tel: string({ nonEmpty: true }),
-  shop_slug: string({ nonEmpty: true, match: /^[\w-.]{1,32}$/ }),
+  shop_slug: shop_slug_parser,
 })
-
 
 /*
 function roleCheck(user: User | null) {
@@ -204,7 +250,6 @@ function roleCheck(user: User | null) {
 }
 */
 
-
 function CreateShopSlug(attrs: {}, context: Context) {
   let user = getAuthUser(context)
   //let fallback = roleCheck(user)
@@ -220,106 +265,122 @@ function CreateShopSlug(attrs: {}, context: Context) {
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content class="ion-padding">
+      <ion-content class="ion-padding" id="CreateShopPage">
         <form
           method="POST"
           action={toRouteUrl(routes, '/on-board/slug-check')}
           onsubmit="emitForm(event)"
         >
-          
-          <ion-item lines="none">
-            <ion-input
-              name="shop_slug"
-              class="ion-padding"
-              style="margin: auto 0"
-              label={env.ORIGIN + '/shop/'}
-              labelPlacement = 'start'
-              placeholder="lab.on.the.balconi"
-              
-          >
-            <ion-button 
-              color="none"
-              type="submit"
-              slot="end"
-              fill="clear"
-              onmouseenter="this.querySelector('ion-icon').name = 'arrow-forward-circle'"
-              onmouseleave="this.querySelector('ion-icon').name = 'arrow-forward-circle-outline'"
+          <div class="form-body">
+            <h2>選擇店舖連結</h2>
+            <ion-item lines="none" style="margin-bottom: 0.5rem">
+              <ion-input
+                class="slug-input"
+                type="text"
+                label={'/shop/'}
+                oninput="checkSlugInput(event)"
+                placeholder="my.shop.id"
               >
-              <ion-icon 
-                fill="clear"
-                class="arrowIcon"
-                iconState='false'
-                name='arrow-forward-circle-outline'
-                >
-              </ion-icon>
-            </ion-button>
-          </ion-input>
-          </ion-item>
-          <p id="submitMessage"></p>
-        </form>
-        
-{Script(/* javascript */ `
+                <ion-buttons slot="end">
+                  <ion-button id="submitButton" disabled type="submit">
+                    <ion-icon
+                      id="submitButtonIcon"
+                      name="arrow-forward-circle"
+                    ></ion-icon>
+                  </ion-button>
+                </ion-buttons>
+              </ion-input>
+            </ion-item>
+            <ion-note
+              class="item--hint ion-text-center"
+              id="preview_url"
+              color="dark"
+            >
+              預覽: {host + '/shop/'}
+            </ion-note>
 
+            <p class="ion-text-center">
+              <ion-text id="submitMessage"></ion-text>
+            </p>
+          </div>
+        </form>
+
+        {Script(/* javascript */ `
+async function checkSlugInput(event) {
+  let slug = event.target.value
+  preview_url.textContent = '預覽: ${host}/shop/' + slug
+
+  let url = ${toRouteUrl(routes, '/on-board/slug-check', { json: true })}
+  emit(url, slug)
+}
 `)}
-      
       </ion-content>
     </>
   )
 }
 
-
-function OnBoardShopSlug(attrs: {}, context: DynamicContext){
-  let body = getContextFormBody(context)
-  let input: ParseResult<typeof ShopSlugParser>
-
+function OnBoardShopSlug(attrs: {}, context: WsContext) {
   try {
-    input = ShopSlugParser.parse(body, { name: 'req.body' })
-  } catch (error) {
-    let message = String(error)
-    let match = message.match(
-      /^TypeError: Invalid non-empty \w+ "req.body.(\w+)", got empty string$/,
-    )
-    if (match) {
-      message = 'Missing ' + match[1]
+    // let {
+    //   args: { 0: slug },
+    // } = CheckShopSlugParser.parse(context)
+    let slug = (context.args?.[0] || '') as string
+    let is_valid = slug && slug_regex.test(slug)
+    let is_available = is_valid && count(proxy.shop, { slug }) == 0
+    let messages: ServerMessage[] = [
+      ['update-props', '#submitButton', { disabled: !is_available }],
+      [
+        'update-props',
+        '#submitButtonIcon',
+        {
+          name: is_available
+            ? 'arrow-forward-circle'
+            : 'arrow-forward-circle-outline',
+        },
+      ],
+      [
+        'update-text',
+        '#submitMessage',
+        !slug
+          ? ''
+          : is_available
+            ? '這個 link 可以使用'
+            : !is_valid
+              ? '請輸入 1 至 32 個字元的店舖 link，只能包含英文字母、數字及符號「_」、「-」或「.」。例如：「my.dance.studio」'
+              : '這個 link 已被使用（不可重複使用）',
+      ],
+      [
+        'update-props',
+        '#submitMessage',
+        { color: is_available ? 'primary' : 'danger' },
+      ],
+    ]
+    if (!is_available) {
+      messages.push(['update-text', '#preview_url', ''])
     }
-    throw new MessageException(['update-text', '#submitMessage', message])
-  }
-  
-  let shop_slug: string = input.shop_slug.toLowerCase()
-  let check_show_slug_exists = db
-    .prepare<{shop_slug: string}>(
-    /* sql */ `
-  select slug from shop
-  where slug = :shop_slug
-  limit 1
-  `,
-  )
-
-  let queryResult: string | null
-  try {
-    queryResult = check_show_slug_exists.get({shop_slug}) as string
+    throw new MessageException(['batch', messages])
   } catch (error) {
+    if (error instanceof MessageException) {
+      throw error
+    }
     let message = String(error)
-    // let match = message.match(
-    //   /^SqliteError: UNIQUE constraint failed: ([\w.]+)$/,
-    // )
-    throw new MessageException(['update-text', '#submitMessage', message])
+    throw new MessageException([
+      'batch',
+      [
+        ['update-text', '#preview_url', ''],
+        ['update-text', '#submitMessage', message],
+        ['update-props', '#submitMessage', { color: 'danger' }],
+      ],
+    ])
   }
-  if (queryResult) {
-    throw new MessageException(['update-text', '#submitMessage', shop_slug + ' 已經註冊了，不可重複使用'])
-  }
-  else {
-    return (
-      <>
-        <Redirect
-          href={toRouteUrl(onBoardAccount.routes, '/on-board/account')}
-        />
-      </>
-    )
-  }
-  
-}
 
+  // TODO
+  return (
+    <>
+      <Redirect href={toRouteUrl(onBoardAccount.routes, '/on-board/account')} />
+    </>
+  )
+}
 
 function SubmitShop(attrs: {}, context: DynamicContext) {
   let user = getAuthUser(context)
@@ -422,17 +483,16 @@ let routes = {
   },
   '/on-board/submit': {
     title: apiEndpointTitle,
-    description: 'submit shop and merchant profile',  
+    description: 'submit shop and merchant profile',
     adminOnly: false,
     node: <SubmitShop />,
   },
   '/on-board/slug-check': {
     title: apiEndpointTitle,
-    description: 'checking show slug',  
+    description: 'checking show slug',
     adminOnly: false,
     node: <OnBoardShopSlug />,
   },
 } satisfies Routes
 
 export default { routes }
-
