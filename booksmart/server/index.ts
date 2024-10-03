@@ -15,6 +15,9 @@ import { logRequest } from './app/log.js'
 import { clearInvalidUserId } from './app/auth/user.js'
 import { env } from './env.js'
 import { HttpError, EarlyTerminate } from './exception.js'
+import { sessionMiddleware } from './session.js'
+import grant from 'grant'
+import oauth from './oauth.js'
 
 const log = debugLog('index.ts')
 log.enabled = true
@@ -38,6 +41,11 @@ listenWSSConnection({
 
 app.use(cookieMiddleware)
 app.use(clearInvalidUserId)
+
+app.use(sessionMiddleware)
+
+oauth.attachRoutes(app)
+
 app.use((req, res, next) => {
   logRequest(req, req.method, req.url, null)
   next()

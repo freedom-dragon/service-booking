@@ -16,6 +16,8 @@ export let env = {
   EMAIL_USER: '',
   EMAIL_PASSWORD: '',
   ORIGIN: '',
+  GOOGLE_CLIENT_ID: 'skip',
+  GOOGLE_CLIENT_SECRET: 'skip',
 }
 applyDefaultEnv()
 
