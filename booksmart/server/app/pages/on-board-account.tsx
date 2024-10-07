@@ -11,6 +11,7 @@ import {
   githubLogo,
   googleLogo,
   instagramLogo,
+  emailLogo,
 } from '../svgs/logo.js'
 import {
   Context,
@@ -30,50 +31,40 @@ import login from './login.js'
 import shopHome from './shop-home.js'
 import { Input } from '../components/input';
 import { Script } from '../components/script.js'
+import { Button } from '../components/button';
+import home from './home.js'
 
 let createShopTitle = '登錄'
 
 let style = Style(/* css */ `
-  /*ion-justify-content-center ion-padding-top ion-wrap ion-text-center*/
-  .oauth-provider-list {
-    display: inline-flex;
-    align-items: center;
-    border: 1px solid #888;
-    padding: 0.25rem;
-    border-radius: 0.25rem;
-    margin: 0.25rem;
-    text-align: center
-
-  }
-  #on-board-account form .field {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 0.5rem;
-  }
-  #on-board-account form .field input {
-    margin: 0.25rem 0;
-  }
-  #on-board-account form .field .space {
-    width: 4rem;
-  }
-  #on-board-account form .field .msg {
-    align-self: end;
-    margin-bottom: 0.25rem;
-  }
-  #on-board-account form .field .extra {
-    color: darkred;
-    display: block;
-    margin-top: 0.25rem;
-  }
-  #on-board-account .hint {
-    border-inline-start: 3px solid #748;
-    background-color: #edf;
-    padding: 1rem;
-    margin: 0.5rem 0;
-    width: fit-content;
-  }
-
   
+
+  .fontstyle{
+    color: #68a1e2;
+    width: 19rem;
+    justify-content: center;
+    padding-top:10   px;
+    flex-wrap: wrap;
+    text-align: center;
+    align-items: center;
+    margin-inline: auto;
+  }
+  .oauth-provider-list {
+    justify-content: center;
+    margin-inline: auto;
+    --font-size: 16px;
+    vertical-align: middle;
+    
+
+    width: 18rem;
+    height: 3rem;
+
+  }
+  .oauth-provider-list:hover {
+    --background: #77aae5;
+  }
+
+
   `)
 
 
@@ -83,41 +74,62 @@ function OnBoardAccount(attrs: {}, context: DynamicContext) {
       {style}
         <ion-header>
         <ion-toolbar color="primary">
-            <IonBackButton href={'/on-board'} color="light" backText="on-board" />
+            <IonBackButton href={'/'} color="light" backText="Home" />
             <ion-title role="heading" aria-level="1">
               {createShopTitle}
             </ion-title>
           </ion-toolbar>
         </ion-header>
         <ion-content>
-          <ion-row class="ion-justify-content-center ion-padding-top ion-text-center">
+          <ion-row class="fontstyle">
             <h1>Create Your Account</h1>
           </ion-row>
-            <ion-row class="ion-justify-content-center ion-padding-top ion-wrap ion-text-center">
-              <ion-col size="3.5">
-                You’ll be able to use this account to log in to both PlaySmart and BookSmart.
-              </ion-col>
-            </ion-row>
-            <ion-row class="ion-justify-content-center ion-padding-top ion-wrap ion-text-center">
-              <ion-col size="3.5">
-                By creating an account, you agree to our Terms of Service and have read and understood the Privacy Policy
-              </ion-col>
-            </ion-row>
-            <ion-row class="oauth-provider-list">
-              <ion-col size="3.5">
-                {googleLogo}&nbsp;Continue with Google
-              </ion-col>
-            </ion-row>
-            <ion-row class="oauth-provider-list">
-              <ion-col size="3.5">
-                {appleLogo}&nbsp;Continue with Apple
-              </ion-col>
-            </ion-row>
-            <ion-row class="oauth-provider-list">
-              <ion-col size="3.5">
-                {githubLogo}&nbsp;Continue with GitHub
-              </ion-col>
-            </ion-row>
+          <ion-row class="fontstyle">
+            <ion-col size="auto">
+              You’ll be able to use this account to log in to both PlaySmart and BookSmart.
+            </ion-col>
+          </ion-row>
+          <ion-row class="fontstyle">
+            <ion-col size="auto">
+              By creating an account, you agree to our Terms of Service and have read and understood the Privacy Policy
+            </ion-col>
+          </ion-row>
+          <ion-row>
+              <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
+                <ion-icon name="logo-google" class="ion-align-items-center" slot="start"></ion-icon>
+                <ion-label class="ion-align-items-right">Continue with Google</ion-label>
+              </ion-Button>
+          </ion-row>
+          <ion-row>
+              <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
+                <ion-icon class="ion-align-items-center" name="logo-apple" slot="start" ></ion-icon>
+                <ion-label class="ion-align-items-center">Continue with Apple</ion-label>
+              </ion-Button>
+          </ion-row>
+          <ion-row>
+              <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
+                <ion-icon name="logo-github" slot="start"></ion-icon>
+                <ion-label>Continue with GitHub</ion-label>
+              </ion-Button>
+          </ion-row>
+          <ion-row>
+            <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
+              <ion-icon name="logo-facebook" slot="start"></ion-icon>
+              <ion-label>Continue with Facebook</ion-label>
+            </ion-Button>
+          </ion-row>
+          <ion-row>
+              <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
+                <ion-icon name="logo-instagram" slot="start" ></ion-icon>
+                <ion-label class="ion-align-items-center">Continue with Instagram</ion-label>
+              </ion-Button>
+          </ion-row>
+          <ion-row>
+            <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
+              <ion-icon name="mail-outline" slot="start"></ion-icon>
+              <ion-label>Continue with Email</ion-label>
+            </ion-Button>
+          </ion-row>
 
         </ion-content>
     </>

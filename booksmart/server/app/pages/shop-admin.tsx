@@ -693,7 +693,7 @@ let routes = {
           description: 'update shop locale',
           node: <Redirect href={`/`} />,
         }
-      }
+      }      
       let { is_owner } = getAuthRole(context)
       if (!is_owner) {
         return {
