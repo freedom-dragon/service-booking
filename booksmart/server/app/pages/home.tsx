@@ -37,7 +37,7 @@ let content = (
       <h2>已加盟店舖</h2>
       <ShopList />
     </div>
-    <a class="on-board" href={'/on-board/account'}>
+    <a class="on-board" href={'/on-board'}>
       建立新店
     </a>
   </>

@@ -616,6 +616,7 @@ async function submit(context: InputContext): Promise<Node> {
       avatar: null,
       nickname: null,
       is_admin: false,
+      is_creating_shop: false,
     })
 
     let main: Node

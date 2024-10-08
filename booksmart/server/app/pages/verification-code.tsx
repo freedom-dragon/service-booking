@@ -568,6 +568,7 @@ async function checkEmailVerificationCode(
             avatar: null,
             nickname: null,
             is_admin: false,
+            is_creating_shop: false,
           })
         break
       }

@@ -69,6 +69,7 @@ export function attachRoutes(app: Application) {
         password_hash: null,
         tel: null,
         username: null,
+        is_creating_shop: true,
       })
       // TODO store into liveview session
       req.session.user = {

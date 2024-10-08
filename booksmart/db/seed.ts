@@ -30,6 +30,7 @@ let admin = seedUser({
     'cs.playsmarthk@gmail.com',
   tel: '+85269330678',
   avatar: null,
+  is_creating_shop: null,
 })
 
 let katy = seedUser({
@@ -42,6 +43,7 @@ let katy = seedUser({
     'the.balconi.artstudio@mailinator.com',
   tel: '+85265432198',
   avatar: null,
+  is_creating_shop: null,
 })
 
 let beeno = seedUser({
@@ -52,6 +54,7 @@ let beeno = seedUser({
   email: 'info@beenocodingstudio.com',
   tel: '+85298222913',
   avatar: null,
+  is_creating_shop: null,
 })
 
 function seedShop(

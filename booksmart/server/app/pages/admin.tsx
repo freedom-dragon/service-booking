@@ -330,6 +330,7 @@ function AdminSubmitShop(attrs: {}, context: DynamicContext) {
       tel,
       avatar: null,
       is_admin: false,
+      is_creating_shop: false,
     })
     proxy.shop.push({
       owner_id: owner_id,

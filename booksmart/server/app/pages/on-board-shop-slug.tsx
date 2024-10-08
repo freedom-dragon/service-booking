@@ -2,9 +2,9 @@ import { o } from '../jsx/jsx.js'
 import { mapArray } from '../components/fragment.js'
 import { proxy, User } from '../../../db/proxy.js'
 import Style from '../components/style.js'
-import { Routes, StaticPageRoute } from '../routes.js'
+import { Routes } from '../routes.js'
 import { LayoutType, apiEndpointTitle, config, title } from '../../config.js'
-import { getAuthUser, getAuthUserRole } from '../auth/user.js'
+import { getAuthUser, getAuthUserId, getAuthUserRole } from '../auth/user.js'
 import {
   Context,
   DynamicContext,
@@ -12,7 +12,6 @@ import {
   getContextFormBody,
   WsContext,
 } from '../context.js'
-import { writeUserIdToCookie } from '../auth/user.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib'
 import { db } from '../../../db/db.js'
 import { HttpError, MessageException } from '../../exception.js'
@@ -28,7 +27,6 @@ import { Script } from '../components/script.js'
 import onBoard from './on-board.js'
 import { ServerMessage } from '../../../client/types.js'
 import { count } from 'better-sqlite3-proxy'
-import onBoardShopSlug from './on-board-shop-slug.js'
 
 let host = new URL(env.ORIGIN).host
 
@@ -118,6 +116,7 @@ ion-button {
   font-size: 2.5rem; 
   left: 0.93rem;
   background: transparent;
+  color: #68a1e2;
 }
 
 .text-input {
@@ -170,6 +169,7 @@ ion-item div.label-text-wrapper div.label-text {
 
   .arrowIcon {
       font-size: 2rem;
+      color: #68a1e2;
       text-size-adjust: auto;
       position: relative;
       background: transparent; /* Smaller arrow icon */
@@ -188,6 +188,7 @@ h2 {
   height: 2rem;
   border-radius: 3rem;
   border: 0.0625rem solid #ddd;
+  border-color: #68a1e2;
   font-size: 1rem;
   --padding-start: 1rem;
   color: var(--ion-color-medium);
@@ -218,19 +219,20 @@ h2 {
 }
 `)
 
-// let slug_regex = /^[\w-._]{1,32}$/
-// let shop_slug_parser = string({ nonEmpty: true, match: slug_regex })
+let slug_regex = /^[\w-._]{1,32}$/
+let shop_slug_parser = string({ nonEmpty: true, match: slug_regex })
 
-// let CheckShopSlugParser = object({
-//   args: object({
-//     0: shop_slug_parser,
-//   }),
-// })
+let CheckShopSlugParser = object({
+  args: object({
+    0: shop_slug_parser,
+  }),
+})
 
-let SubmitAccountParser = object({
+let SubmitShopParser = object({
   nickname: string({ nonEmpty: true }),
   email: email({ nonEmpty: true }),
   tel: string({ nonEmpty: true }),
+  shop_slug: shop_slug_parser,
 })
 
 /*
@@ -250,10 +252,20 @@ function roleCheck(user: User | null) {
   }
 }
 */
-function CreateAccount(attrs: {}, context: Context) {
-  let user = getAuthUser(context)
+
+function CreateShopSlug(attrs: {}, context: DynamicContext) {
   
-  //console.log(context);
+  let user_id = getAuthUserId(context)
+  let body = getContextFormBody(context)
+  console.log(body)
+  let SubmitAccountParser = object({
+    nickname: string({ nonEmpty: true }),
+    email: email({ nonEmpty: true }),
+    tel: string({ nonEmpty: true }),
+  })
+  let input: ParseResult<typeof SubmitAccountParser>
+  //input = SubmitAccountParser.parse(body, { name: 'req.body' })
+  //console.log(input)
   //let fallback = roleCheck(user)
   //if (!user) return fallback
   return (
@@ -261,70 +273,142 @@ function CreateAccount(attrs: {}, context: Context) {
       {style}
       <ion-header>
         <ion-toolbar color="primary">
-          <IonBackButton
-            href={toRouteUrl(onBoard.routes, '/on-board')}
-            color="light"
-            backText="Admin"
-          />
+          <IonBackButton href={'/'} color="light" backText="Home" />
           <ion-title role="heading" aria-level="1">
             {createShopTitle}
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content class="ion-padding">
+      <ion-content class="ion-padding" id="CreateShopPage">
         <form
           method="POST"
-          action={toRouteUrl(routes, '/on-board/account/submit')}
+          action={toRouteUrl(routes, '/on-board/shop-slug/slug-check')}
           onsubmit="emitForm(event)"
         >
-          <ion-list>
-            <ion-item>
+          <div class="form-body">
+            <h2>選擇店舖連結</h2>
+            <ion-item lines="none" style="margin-bottom: 0.5rem">
               <ion-input
-                label="商戶(聯絡人)暱稱"
-                label-placement="floating"
-                name="nickname"
-              />
+                class="slug-input"
+                type="text"
+                label={'/shop/'}
+                oninput="checkSlugInput(event)"
+                placeholder="my.shop.id"
+              >
+                <ion-buttons slot="end">
+                  <ion-button id="submitButton" disabled type="submit">
+                    <ion-icon
+                      id="submitButtonIcon"
+                      name="arrow-forward-circle"
+                    ></ion-icon>
+                  </ion-button>
+                </ion-buttons>
+              </ion-input>
             </ion-item>
-            <ion-item>
-              <ion-input
-                label="商戶(聯絡人)電郵"
-                label-placement="floating"
-                type="email"
-                name="email"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                label="商戶(聯絡人)電話"
-                label-placement="floating"
-                type="tel"
-                name="tel"
-              />
-            </ion-item>
-          </ion-list>
-          <ion-button
-            type="submit"
-            rel="nofollow"
-            expand="block"
-            class="ion-margin"
-          >
-            註冊商戶
-          </ion-button>
-          <p id="submitMessage"></p>
+            <ion-note
+              class="item--hint ion-text-center"
+              id="preview_url"
+              color="dark"
+            >
+              預覽: {host + '/shop/'}
+            </ion-note>
+
+            <p class="ion-text-center">
+              <ion-text id="submitMessage"></ion-text>
+            </p>
+          </div>
         </form>
+
+        {Script(/* javascript */ `
+async function checkSlugInput(event) {
+  let slug = event.target.value
+  preview_url.textContent = '預覽: ${host}/shop/' + slug
+
+  let url = ${toRouteUrl(routes, '/on-board/shop-slug/slug-check', { json: true })}
+  emit(url, slug)
+}
+`)}
       </ion-content>
     </>
   )
 }
 
-
-function SubmitAccount(attrs: {}, context: DynamicContext ){
-  let body = getContextFormBody(context)
-  let res = (context as ExpressContext).res
-  let input: ParseResult<typeof SubmitAccountParser>
-  let user_id: number | null = null
+function OnBoardShopSlugCheck(attrs: {}, context: WsContext) {
   try {
-    input = SubmitAccountParser.parse(body, { name: 'req.body' })
+    // let {
+    //   args: { 0: slug },
+    // } = CheckShopSlugParser.parse(context)
+    let slug = (context.args?.[0] || '') as string
+    let is_valid = slug && slug_regex.test(slug)
+    let is_available = is_valid && count(proxy.shop, { slug }) == 0
+    let messages: ServerMessage[] = [
+      ['update-props', '#submitButton', { disabled: !is_available }],
+      [
+        'update-props',
+        '#submitButtonIcon',
+        {
+          name: is_available
+            ? 'arrow-forward-circle'
+            : 'arrow-forward-circle-outline',
+        },
+      ],
+      [
+        'update-text',
+        '#submitMessage',
+        !slug
+          ? ''
+          : is_available
+            ? '這個 link 可以使用'
+            : !is_valid
+              ? '請輸入 1 至 32 個字元的店舖 link，只能包含英文字母、數字及符號「_」、「-」或「.」。例如：「my.dance.studio」'
+              : '這個 link 已被使用（不可重複使用）',
+      ],
+      [
+        'update-props',
+        '#submitMessage',
+        { color: is_available ? 'primary' : 'danger' },
+      ],
+    ]
+    if (!is_available) {
+      messages.push(['update-text', '#preview_url', ''])
+    }
+    throw new MessageException(['batch', messages])
+  } catch (error) {
+    if (error instanceof MessageException) {
+      throw error
+    }
+    let message = String(error)
+    throw new MessageException([
+      'batch',
+      [
+        ['update-text', '#preview_url', ''],
+        ['update-text', '#submitMessage', message],
+        ['update-props', '#submitMessage', { color: 'danger' }],
+      ],
+    ])
+  }
+
+  // TODO
+  return (
+    <>
+      <Redirect href={toRouteUrl(onBoard.routes, '/on-board')} />
+    </>
+  )
+}
+
+function SubmitShop(attrs: {}, context: DynamicContext) {
+  let user = getAuthUser(context)
+  if (!user) {
+    throw new MessageException([
+      'update-text',
+      '#submitMessage',
+      'Only registered users can create shop',
+    ])
+  }
+  let body = getContextFormBody(context)
+  let input: ParseResult<typeof SubmitShopParser>
+  try {
+    input = SubmitShopParser.parse(body, { name: 'req.body' })
   } catch (error) {
     let message = String(error)
     let match = message.match(
@@ -343,33 +427,49 @@ function SubmitAccount(attrs: {}, context: DynamicContext ){
       'Invalid tel, expect hk mobile phone number',
     ])
   }
-  
-  try {
-    let insert_shop = db.transaction(() => {
-      user_id = proxy.user.push({
-        username: null,
-        nickname: input.nickname,
-        password_hash: null,
-        email: input.email,
-        tel,
-        avatar: null,
-        is_admin: false,
-        is_creating_shop: false,
-      })
-      
-      
+  let insert_shop = db.transaction(() => {
+    let owner_id = proxy.user.push({
+      username: null,
+      nickname: input.nickname,
+      password_hash: null,
+      email: input.email,
+      tel,
+      avatar: null,
+      is_admin: false,
+      is_creating_shop: false,
     })
+    proxy.shop.push({
+      owner_id: owner_id,
+      slug: input.shop_slug,
+      name: input.nickname + ' Shop',
+      bio: null,
+      desc: null,
+      owner_name: input.nickname,
+      address: null,
+      address_remark: null,
+      tel,
+      email: null,
+      facebook: null,
+      messenger: null,
+      instagram: null,
+      youtube: null,
+      whatsapp: tel,
+      telegram: null,
+      twitter: null,
+      floating_contact_method: 'whatsapp',
+      payme_tel: null,
+      payme_link: null,
+      fps_tel: null,
+      fps_email: null,
+      fps_id: null,
+      bank_name: null,
+      bank_account_num: null,
+      bank_account_name: null,
+      accept_cash: true,
+    })
+  })
+  try {
     insert_shop()
-    if (!user_id) {
-      throw new HttpError(
-        400,
-        '未能成功登記，請重新嘗試',
-      )
-    }
-    console.log(context)
-    console.log(user_id)
-    console.log(context as ExpressContext)
-  writeUserIdToCookie(res, user_id)
   } catch (error) {
     let message = String(error)
     let match = message.match(
@@ -382,26 +482,31 @@ function SubmitAccount(attrs: {}, context: DynamicContext ){
   }
   return (
     <Redirect
-      href={toRouteUrl(onBoardShopSlug.routes, '/on-board/shop-slug')}
+      href={toRouteUrl(login.routes, '/shop/:shop_slug/login', {
+        params: { shop_slug: input.shop_slug },
+      })}
     />
   )
 }
 
 let routes = {
-  '/on-board/account': {
-    resolve(context){
-      return{
-        title: title(createShopTitle),
-        description: 'create account',
-        adminOnly: false,
-        node: <CreateAccount />,
-      }
-    }
-    
+  '/on-board/shop-slug': {
+    title: title(createShopTitle),
+    description: 'create shop slug',
+    adminOnly: false,
+    node: <CreateShopSlug />,
   },
-  '/on-board/account/submit': {
-    streaming: false,
-    resolve: context => SubmitAccount({}, context)
+  '/on-board/shop-slug/submit': {
+    title: apiEndpointTitle,
+    description: 'submit shop and merchant profile',
+    adminOnly: false,
+    node: <SubmitShop />,
+  },
+  '/on-board/shop-slug/slug-check': {
+    title: apiEndpointTitle,
+    description: 'checking show slug',
+    adminOnly: false,
+    node: <OnBoardShopSlugCheck />,
   },
 } satisfies Routes
 

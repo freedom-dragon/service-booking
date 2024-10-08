@@ -2483,6 +2483,7 @@ let routes = {
             tel: tel,
             avatar: null,
             is_admin: false,
+            is_creating_shop: false,
           })
           bookingUser = proxy.user[user_id]
         }
