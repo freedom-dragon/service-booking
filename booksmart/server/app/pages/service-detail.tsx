@@ -2387,11 +2387,6 @@ let routes = {
           '#guestInfo',
           nodeToVNode(
             <>
-              <ion-note color="dark" class="ion-margin">
-                這個電話號碼已經註冊了，歡迎再次預約！
-                <br />
-                （請按「立即預約」繼續）
-              </ion-note>
               <div class="guestInfo--message"></div>
             </>,
             context,
@@ -2403,9 +2398,6 @@ let routes = {
           '#guestInfo',
           nodeToVNode(
             <>
-              <ion-note color="dark" class="ion-margin">
-                這個電話號碼未登記，請提供更多聯絡資料。
-              </ion-note>
               <ion-item>
                 <div slot="start">
                   <ion-icon name="at-outline"></ion-icon> 電郵
