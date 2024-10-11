@@ -18,6 +18,8 @@ export let env = {
   ORIGIN: '',
   GOOGLE_CLIENT_ID: 'skip',
   GOOGLE_CLIENT_SECRET: 'skip',
+  FACEBOOK_APP_ID: 'skip',
+  FACEBOOK_APP_SECRET: 'skip',
 }
 applyDefaultEnv()
 
