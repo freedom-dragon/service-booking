@@ -1,35 +1,31 @@
 import { o } from '../jsx/jsx.js'
-import { mapArray } from '../components/fragment.js'
-import { proxy, User } from '../../../db/proxy.js'
+import { proxy } from '../../../db/proxy.js'
 import Style from '../components/style.js'
-import { Routes, StaticPageRoute } from '../routes.js'
-import { LayoutType, apiEndpointTitle, config, title } from '../../config.js'
-import { getAuthUser, getAuthUserRole } from '../auth/user.js'
+import { Routes } from '../routes.js'
+import { apiEndpointTitle, title } from '../../config.js'
+import { getAuthUser, getAuthUserId } from '../auth/user.js'
 import {
   Context,
-  DynamicContext,
   ExpressContext,
   getContextFormBody,
-  WsContext,
+  resolveExpressContext,
 } from '../context.js'
 import { writeUserIdToCookie } from '../auth/user.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib'
-import { db } from '../../../db/db.js'
-import { HttpError, MessageException } from '../../exception.js'
+import { EarlyTerminate, HttpError, MessageException } from '../../exception.js'
 import { toRouteUrl } from '../../url.js'
-import { Link, Redirect } from '../components/router.js'
+import { Redirect } from '../components/router.js'
 import { ParseResult, email, object, string } from 'cast.ts'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { env } from '../../env.js'
-import login from './login.js'
-import shopHome from './shop-home.js'
-import { Input } from '../components/input.js'
-import { Script } from '../components/script.js'
 import onBoard from './on-board.js'
 import { ServerMessage } from '../../../client/types.js'
-import { count } from 'better-sqlite3-proxy'
 import onBoardShopSlug from './on-board-shop-slug.js'
 import verificationCode from './verification-code.js'
+import formidable, { Formidable } from 'formidable'
+import { renderError } from '../components/error.js'
+import { Router } from 'express'
+import { placeholderForAttachRoutes } from '../components/placeholder.js'
 
 let host = new URL(env.ORIGIN).host
 
@@ -83,12 +79,6 @@ let style = Style(/* css */ `
 //   }),
 // })
 
-let SubmitAccountParser = object({
-  nickname: string({ nonEmpty: true }),
-  email: email({ nonEmpty: true }),
-  tel: string({ nonEmpty: true }),
-})
-
 /*
 function roleCheck(user: User | null) {
   console.log(user)
@@ -108,7 +98,7 @@ function roleCheck(user: User | null) {
 */
 function CreateAccount(attrs: {}, context: Context) {
   let user = getAuthUser(context)
-  
+
   //console.log(context);
   //let fallback = roleCheck(user)
   //if (!user) return fallback
@@ -131,7 +121,7 @@ function CreateAccount(attrs: {}, context: Context) {
         <form
           method="POST"
           action={toRouteUrl(routes, '/on-board/account/submit')}
-          //onsubmit="emitForm(event)"
+          onsubmit="uploadForm(event).then(handleMessageResponse)"
         >
           <ion-list>
             <ion-item>
@@ -173,32 +163,63 @@ function CreateAccount(attrs: {}, context: Context) {
   )
 }
 
-export function UserInsert(input: ParseResult<typeof SubmitAccountParser>, tel: string){
+export function UserInsert(
+  input: ParseResult<typeof SubmitAccountParser>,
+  tel: string,
+) {
   console.log(input.nickname)
   console.log(input.email)
   console.log(tel)
-    let user_id = proxy.user.push({
-      username: null,
-      nickname: input.nickname,
-      password_hash: null,
-      email: input.email,
-      tel,
-      avatar: null,
-      is_admin: false,
-      is_creating_shop: true,
-    })
+  let user_id = proxy.user.push({
+    username: null,
+    nickname: input.nickname,
+    password_hash: null,
+    email: input.email,
+    tel,
+    avatar: null,
+    is_admin: false,
+    is_creating_shop: true,
+  })
   if (!user_id) {
-    throw new HttpError(
-      400,
-      '未能成功登記，請重新嘗試',
-    )
+    throw new HttpError(400, '未能成功登記，請重新嘗試')
   }
   console.log(user_id)
   return user_id
 }
 
+let SubmitAccountParser = object({
+  nickname: string(),
+  email: string(),
+  tel: string(),
+})
 
-async function SubmitAccount(context: ExpressContext){
+let submitParser = object({
+  nickname: object({ 0: string() }),
+  email: object({ 0: string() }),
+  tel: object({ 0: string() }),
+})
+
+async function SubmitAccount(attrs: {}, context: ExpressContext) {
+  try {
+    let body = getContextFormBody(context)
+    let form = new formidable.Formidable()
+    let {} = await form.parse(context.req)
+    console.log({ body })
+    let input = SubmitAccountParser.parse(body, { name: 'req.body' })
+    throw new Error('todo')
+  } catch (error) {
+    let message: ServerMessage = [
+      'update-text',
+      '#submitMessage',
+      String(error),
+    ]
+    context.res.json({ message })
+    throw EarlyTerminate
+    // throw new MessageException(['update-text', '#submitMessage', String(error)])
+  }
+}
+
+function SubmitAccount_1(attrs: {}, context: ExpressContext) {
   let body = getContextFormBody(context)
   let res = context.res
   let input: ParseResult<typeof SubmitAccountParser>
@@ -227,19 +248,16 @@ async function SubmitAccount(context: ExpressContext){
       'Invalid tel, expect hk mobile phone number',
     ])
   }
-  toRouteUrl(
-    verificationCode.routes,
-    '/user/verify/email/submit',
-  )
+  toRouteUrl(verificationCode.routes, '/user/verify/email/submit')
   try {
     console.log('6')
     user_id = UserInsert(input, tel)
-    
+
     // console.log(context)
     // console.log(user_id)
     // console.log(context.res)
-  writeUserIdToCookie(context.res, user_id)
-  console.log('7')
+    writeUserIdToCookie(context.res, user_id)
+    console.log('7')
   } catch (error) {
     let message = String(error)
     let match = message.match(
@@ -249,7 +267,6 @@ async function SubmitAccount(context: ExpressContext){
       message = match[1] + ' 已經註冊了，不可重複使用'
     }
     throw new MessageException(['update-text', '#submitMessage', message])
-    
   }
   return (
     <Redirect
@@ -258,28 +275,63 @@ async function SubmitAccount(context: ExpressContext){
   )
 }
 
+function attachRoutes(app: Router) {
+  app.post(
+    '/on-board/account/submit' satisfies keyof typeof routes,
+    async (req, res, next) => {
+      try {
+        let context = resolveExpressContext(req, res, next)
+        let user = getAuthUser(context)
+        if (!user) {
+          throw new MessageException([
+            'redirect',
+            toRouteUrl(onBoard.routes, '/on-board'),
+          ])
+        }
+        let form = new Formidable()
+        let [fields] = await form.parse(req)
+        let input = submitParser.parse(fields, { name: 'form fields' })
+        console.log({ input })
+        if (!input.nickname[0]) {
+          throw 'missing nickname'
+        }
+        if (!input.email[0]) {
+          throw 'missing email'
+        }
+        if (!input.tel[0]) {
+          throw 'missing tel'
+        }
+        console.log('id:', user?.id)
+        throw new MessageException(['redirect', '/123'])
+      } catch (error) {
+        if (error instanceof MessageException) {
+          res.json({ message: error.message })
+          return
+        }
+        res.status(400)
+        let message: ServerMessage = [
+          'update-text',
+          '#submitMessage',
+          String(error),
+        ]
+        res.json({ message })
+      }
+    },
+  )
+}
+
 let routes = {
   '/on-board/account': {
-    resolve(context){
-      return{
+    resolve(context) {
+      return {
         title: title(createShopTitle),
         description: 'create account',
         adminOnly: false,
         node: <CreateAccount />,
       }
-    }
-    
+    },
   },
-  '/on-board/account/submit': {
-    streaming: false,
-    async resolve(context: Context): Promise<StaticPageRoute> {
-      return{
-        title: title(createShopTitle),
-        description: 'create account',
-        node: await SubmitAccount(context as ExpressContext),
-      }
-    }
-  },
+  '/on-board/account/submit': placeholderForAttachRoutes,
 } satisfies Routes
 
-export default { routes }
+export default { routes, attachRoutes }

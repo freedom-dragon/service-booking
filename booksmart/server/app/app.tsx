@@ -44,6 +44,7 @@ import { Link } from './components/router.js'
 import verificationCode from './pages/verification-code.js'
 import ServiceDetail from './pages/service-detail.js'
 import shopAdmin from './pages/shop-admin.js'
+import OnBoardAccount from './pages/on-board-account.js'
 
 if (config.development) {
   scanTemplateDir('template')
@@ -202,6 +203,7 @@ export function attachRoutes(app: Router) {
   Profile.attachRoutes(app)
   ServiceDetail.attachRoutes(app)
   shopAdmin.attachRoutes(app)
+  OnBoardAccount.attachRoutes(app)
 
   // redirect routes
   Object.entries(redirectDict).forEach(([from, to]) =>
