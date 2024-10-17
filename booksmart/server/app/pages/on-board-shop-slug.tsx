@@ -27,6 +27,8 @@ import { Script } from '../components/script.js'
 import onBoard from './on-board.js'
 import { ServerMessage } from '../../../client/types.js'
 import { count } from 'better-sqlite3-proxy'
+import { getContextCookies } from '../cookie.js'
+import onBoardAccount from './on-board-account.js'
 
 let host = new URL(env.ORIGIN).host
 
@@ -181,10 +183,10 @@ ion-item div.label-text-wrapper div.label-text {
 }
 `)
 style = Style(/* css */ `
-h2 {
+#CreateShopPage h2 {
   font-size: 1.25rem;
 }
-.slug-input {
+#CreateShopPage .slug-input {
   height: 2rem;
   border-radius: 3rem;
   border: 0.0625rem solid #ddd;
@@ -193,13 +195,13 @@ h2 {
   --padding-start: 1rem;
   color: var(--ion-color-medium);
 }
-.slug-input .label-text-wrapper {
+#CreateShopPage .slug-input .label-text-wrapper {
   margin-inline: 0 !important;
 }
-.slug-input .native-input {
+#CreateShopPage .slug-input .native-input {
   color: var(--ion-color-primary);
 }
-.slug-input ion-button {
+#CreateShopPage .slug-input ion-button {
   font-size: 1.25rem;
 }
 #CreateShopPage .hint {
@@ -254,10 +256,33 @@ function roleCheck(user: User | null) {
 */
 
 function CreateShopSlug(attrs: {}, context: DynamicContext) {
+  let user_id: number | null;
+  let user: User | null;
+  try {
+    user_id = getAuthUserId(context)
+    user = getAuthUser(context)
+    if (user == null) {
+      return (
+        <Redirect
+          href={toRouteUrl(onBoardAccount.routes, '/on-board/account')}
+        />
+      )
+    }
+  } catch (error) {
+    let message = String(error)
+    let match = message.match(
+      /^SqliteError: UNIQUE constraint failed: ([\w.]+)$/,
+    )
+    if (match) {
+      message = match[1] + ' 已經註冊了，不可重複使用'
+    }
+    throw new MessageException(['update-text', '#submitMessage', message])
+  }
   
-  let user_id = getAuthUserId(context)
-  let body = getContextFormBody(context)
-  console.log(body)
+  console.log(user.nickname)
+  console.log(user.tel)
+  console.log(user.email)
+
   let SubmitAccountParser = object({
     nickname: string({ nonEmpty: true }),
     email: email({ nonEmpty: true }),

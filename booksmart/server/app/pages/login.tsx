@@ -244,7 +244,9 @@ async function submit(context: ExpressContext) {
     if (!matched) {
       return <Redirect href={loginRouteUrl(context, { code: 'wrong' })} />
     }
-    
+    // console.log(context.res)
+    // console.log(user.id)
+    // console.log(context.res)
     writeUserIdToCookie(context.res, user.id)
 
     return <Redirect href={loginRouteUrl(context, { code: 'ok' })} />

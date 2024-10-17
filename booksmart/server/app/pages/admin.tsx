@@ -308,6 +308,8 @@ function AdminSubmitShop(attrs: {}, context: DynamicContext) {
     let match = message.match(
       /^TypeError: Invalid non-empty \w+ "req.body.(\w+)", got empty string$/,
     )
+    console.log('match: ' + match)
+    console.log('message: ' + message)
     if (match) {
       message = 'Missing ' + match[1]
     }

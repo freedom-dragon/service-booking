@@ -662,6 +662,19 @@ let routes = {
     resolve: context =>
       checkEmailVerificationCode(getContextShop(context), context),
   },
+  '/user/verify/email/submit': {
+    streaming: false,
+    resolve: context => requestEmailVerification(null, context),
+  },
+  '/user/verify/email/result': {
+    resolve(context) {
+      return {
+        title: title('電郵驗證'),
+        description: 'Input email verification code for authentication',
+        node: <VerifyEmailPage shop={null} />,
+      }
+    },
+  },
   '/admin/verify/email/submit': {
     streaming: false,
     resolve: context => requestEmailVerification(null, context),

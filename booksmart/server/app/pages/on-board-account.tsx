@@ -29,162 +29,18 @@ import onBoard from './on-board.js'
 import { ServerMessage } from '../../../client/types.js'
 import { count } from 'better-sqlite3-proxy'
 import onBoardShopSlug from './on-board-shop-slug.js'
+import verificationCode from './verification-code.js'
 
 let host = new URL(env.ORIGIN).host
 
 let createShopTitle = '商戶註冊'
 let iconText = 'arrow-forward-circle-outline'
+
 let style = Style(/* css */ `
-  /*
-    .card-normal-text {
-    font-size: 0.8rem;
-    margin-bottom: 0.25rem;
-    }
-
-    ion-input.custom
-    .rounded-input {
-      text-size-adjust: auto;
-      border-radius: 50px;
-      padding: 10px;
-      background-color: #fff;
-      border: 1px solid #ddd;
-      height: 40px;
-    }
-    
-    .rounded-input::placeholder {
-      color: #ccc;
-    }
-    
-    .arrowIcon {
-      text-size-adjust: auto;
-      position: relative;
-      font-size: 40px;
-      left: 15px;
-    }
-
-    .ion-padding {
-      text-size-adjust: auto;
-      border-radius: 50px;
-      padding: 1px;
-      background-color: #fff;
-      border: 1px solid #ddd;
-      height: 60px;
-      font-size: 30px;
-    }
-
-    ion-item > ion-label{
-      flex: content;
-    }
-
-    ion-item div.label-text-wrapper.sc-ion-input-ios,
-    ion-item div.label-text-wrapper.sc-ion-input-md {
-      max-width: none;
-      width: 400px;
-    }
-
-    ion-item div.label-text-wrapper div.label-text {
-      text-overflow: unset;
-      overflow: visible;
-      margin-right: 0px;
-      padding-right: 0px;
-    }
-*/
-.card-normal-text {
-  font-size: 0.8rem; /* Base font size */
-  margin-bottom: 0.25rem;
-}
-
-.label-text-wrapper.sc-ion-input-ios{
-    
-}
-ion-input.custom .rounded-input {
-  text-size-adjust: auto;
-  border-radius: 5rem; 
-  background-color: #fff;
-  border: 1px solid #ddd; 
-  height: 3.5rem; 
-}
-
-ion-button {
-  z-index = -1;
-}
-.rounded-input::placeholder {
-  color: #ccc;
-}
-
-.arrowIcon {
-  text-size-adjust: auto;
-  position: relative;
-  font-size: 2.5rem; 
-  left: 0.93rem;
-  background: transparent;
-}
-
-.text-input {
-  text-align: left;
-}
-
-.ion-padding {
-  height: 3.75rem;
-  text-size-adjust: auto;
-  padding: 0;
-  border-radius: 3rem;
-  background-color: #fff; /* placeholder*/
-  border: 0.0625rem solid #ddd;
-  font-size: 1.875rem;
-}
-
-span{
-  vertical-align: middle;
-}
-
-ion-item > ion-label {
-  flex: content;
-}
-
-
-ion-item div.label-text-wrapper.sc-ion-input-ios,
-ion-item div.label-text-wrapper.sc-ion-input-md {
-  max-width: none;
-  width: 100%; /* Make it responsive */
-}
-
-
-ion-item div.label-text-wrapper div.label-text {
-  text-overflow: unset;
-  overflow: visible;
-  margin-right: 0px;
-  padding-right: 0px;
-}
-
-/* Media Queries for Responsive Design */
-@media (max-width: 768px) {
-  .card-normal-text {
-      font-size: 0.7rem; /* Smaller text for mobile */
-  }
-
-  .ion-padding {
-      height: 3rem; /* Relative height for mobile */
-      font-size: 1.5rem; /* Smaller font size for mobile */
-  }
-
-  .arrowIcon {
-      font-size: 2rem;
-      text-size-adjust: auto;
-      position: relative;
-      background: transparent; /* Smaller arrow icon */
-  }
-
-  ion-input.custom .rounded-input {
-      height: 2rem; /* Relative height for mobile */
-  }
-}
-`)
-style = Style(/* css */ `
-h2 {
+#CreateShopPage2 h2 {
   font-size: 1.25rem;
 }
-.slug-input {
+#CreateShopPage2 .slug-input {
   height: 2rem;
   border-radius: 3rem;
   border: 0.0625rem solid #ddd;
@@ -192,28 +48,28 @@ h2 {
   --padding-start: 1rem;
   color: var(--ion-color-medium);
 }
-.slug-input .label-text-wrapper {
+#CreateShopPage2 .slug-input .label-text-wrapper {
   margin-inline: 0 !important;
 }
-.slug-input .native-input {
+#CreateShopPage2 .slug-input .native-input {
   color: var(--ion-color-primary);
 }
-.slug-input ion-button {
+#CreateShopPage2 .slug-input ion-button {
   font-size: 1.25rem;
 }
-#CreateShopPage .hint {
+#CreateShopPage2 .hint {
   border-inline-start: 3px solid #748;
   background-color: #edf;
   padding: 1rem;
   margin: 0.5rem 0;
   width: fit-content;
 }
-#CreateShopPage form {
+#CreateShopPage2 form {
   height: calc(100% - 2rem);
   display: flex;
   flex-direction: column;
 }
-#CreateShopPage .form-body {
+#CreateShopPage2 .form-body {
   margin: auto;
 }
 `)
@@ -271,11 +127,11 @@ function CreateAccount(attrs: {}, context: Context) {
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content class="ion-padding">
+      <ion-content id="CreateShopPage2" class="ion-padding">
         <form
           method="POST"
           action={toRouteUrl(routes, '/on-board/account/submit')}
-          onsubmit="emitForm(event)"
+          //onsubmit="emitForm(event)"
         >
           <ion-list>
             <ion-item>
@@ -317,10 +173,34 @@ function CreateAccount(attrs: {}, context: Context) {
   )
 }
 
+export function UserInsert(input: ParseResult<typeof SubmitAccountParser>, tel: string){
+  console.log(input.nickname)
+  console.log(input.email)
+  console.log(tel)
+    let user_id = proxy.user.push({
+      username: null,
+      nickname: input.nickname,
+      password_hash: null,
+      email: input.email,
+      tel,
+      avatar: null,
+      is_admin: false,
+      is_creating_shop: true,
+    })
+  if (!user_id) {
+    throw new HttpError(
+      400,
+      '未能成功登記，請重新嘗試',
+    )
+  }
+  console.log(user_id)
+  return user_id
+}
 
-function SubmitAccount(attrs: {}, context: DynamicContext ){
+
+async function SubmitAccount(context: ExpressContext){
   let body = getContextFormBody(context)
-  let res = (context as ExpressContext).res
+  let res = context.res
   let input: ParseResult<typeof SubmitAccountParser>
   let user_id: number | null = null
   try {
@@ -330,9 +210,13 @@ function SubmitAccount(attrs: {}, context: DynamicContext ){
     let match = message.match(
       /^TypeError: Invalid non-empty \w+ "req.body.(\w+)", got empty string$/,
     )
+    console.log('match: ' + match)
+    console.log('message: ' + message)
     if (match) {
       message = 'Missing ' + match[1]
     }
+    console.log('33')
+    console.log('message: ' + message)
     throw new MessageException(['update-text', '#submitMessage', message])
   }
   let tel = to_full_hk_mobile_phone(input.tel)
@@ -343,33 +227,19 @@ function SubmitAccount(attrs: {}, context: DynamicContext ){
       'Invalid tel, expect hk mobile phone number',
     ])
   }
-  
+  toRouteUrl(
+    verificationCode.routes,
+    '/user/verify/email/submit',
+  )
   try {
-    let insert_shop = db.transaction(() => {
-      user_id = proxy.user.push({
-        username: null,
-        nickname: input.nickname,
-        password_hash: null,
-        email: input.email,
-        tel,
-        avatar: null,
-        is_admin: false,
-        is_creating_shop: false,
-      })
-      
-      
-    })
-    insert_shop()
-    if (!user_id) {
-      throw new HttpError(
-        400,
-        '未能成功登記，請重新嘗試',
-      )
-    }
-    console.log(context)
-    console.log(user_id)
-    console.log(context as ExpressContext)
-  writeUserIdToCookie(res, user_id)
+    console.log('6')
+    user_id = UserInsert(input, tel)
+    
+    // console.log(context)
+    // console.log(user_id)
+    // console.log(context.res)
+  writeUserIdToCookie(context.res, user_id)
+  console.log('7')
   } catch (error) {
     let message = String(error)
     let match = message.match(
@@ -379,6 +249,7 @@ function SubmitAccount(attrs: {}, context: DynamicContext ){
       message = match[1] + ' 已經註冊了，不可重複使用'
     }
     throw new MessageException(['update-text', '#submitMessage', message])
+    
   }
   return (
     <Redirect
@@ -401,7 +272,13 @@ let routes = {
   },
   '/on-board/account/submit': {
     streaming: false,
-    resolve: context => SubmitAccount({}, context)
+    async resolve(context: Context): Promise<StaticPageRoute> {
+      return{
+        title: title(createShopTitle),
+        description: 'create account',
+        node: await SubmitAccount(context as ExpressContext),
+      }
+    }
   },
 } satisfies Routes
 
