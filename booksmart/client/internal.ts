@@ -9,8 +9,10 @@ export type WindowStub = {
   onServerMessage(message: ServerMessage): void
   get(url: string): Promise<Response>
   del(url: string): Promise<Response>
+  post(url: string, body: object): Promise<Response>
   uploadForm(event: Event): Promise<Response>
   upload(url: string, formData: FormData): Promise<Response>
+  handleMessageResponse(res: Response): void
   remount(): void
   _navigation_type_: 'static' | 'express' | 'ws'
   _navigation_method_: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'

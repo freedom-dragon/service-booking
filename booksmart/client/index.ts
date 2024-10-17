@@ -231,6 +231,17 @@ function del(url: string) {
 }
 win.del = del
 
+function post(url: string, body: object) {
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+}
+win.post = post
+
 function uploadForm(event: Event) {
   let form = event.target as HTMLFormElement
   let result = upload(form.action, new FormData(form))
@@ -246,3 +257,13 @@ function upload(url: string, formData: FormData) {
   })
 }
 win.upload = upload
+
+win.handleMessageResponse = async function (res: Response) {
+  try {
+    let json = await res.json()
+    if (json.error) throw json.error
+    onServerMessage(json.message)
+  } catch (error) {
+    alert(String(error))
+  }
+}
