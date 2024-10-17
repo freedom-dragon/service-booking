@@ -35,6 +35,11 @@ connectWS({
       ws.send(Array.from(arguments) as ClientMessage)
     }
 
+    function goto(url: string): void {
+      history.pushState(null, document.title, url)
+      emit(url)
+    }
+
     function emitHref(event: MouseEvent, flag?: LinkFlag) {
       if (event.ctrlKey || event.shiftKey) {
         return // do not prevent open in new tab or new window
@@ -67,6 +72,17 @@ connectWS({
 
     function submitForm(form: HTMLFormElement) {
       let formData = new FormData(form)
+      if (form.dataset.trimEmpty) {
+        let keys: string[] = []
+        formData.forEach((value, key) => {
+          if (value == '') {
+            keys.push(key)
+          }
+        })
+        for (let key of keys) {
+          formData.delete(key)
+        }
+      }
       if (form.method === 'get') {
         let url = new URL(form.action || location.href)
         url.search = new URLSearchParams(formData as {}).toString()
@@ -98,6 +114,7 @@ connectWS({
     }
 
     win.emit = emit
+    win.goto = goto
     win.emitHref = emitHref
     win.emitForm = emitForm
     win.submitForm = submitForm
