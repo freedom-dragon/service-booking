@@ -33,10 +33,10 @@ let createShopTitle = '商戶註冊'
 let iconText = 'arrow-forward-circle-outline'
 
 let style = Style(/* css */ `
-#CreateShopPage2 h2 {
+#OnBoardAccount h2 {
   font-size: 1.25rem;
 }
-#CreateShopPage2 .slug-input {
+#OnBoardAccount .slug-input {
   height: 2rem;
   border-radius: 3rem;
   border: 0.0625rem solid #ddd;
@@ -44,28 +44,28 @@ let style = Style(/* css */ `
   --padding-start: 1rem;
   color: var(--ion-color-medium);
 }
-#CreateShopPage2 .slug-input .label-text-wrapper {
+#OnBoardAccount .slug-input .label-text-wrapper {
   margin-inline: 0 !important;
 }
-#CreateShopPage2 .slug-input .native-input {
+#OnBoardAccount .slug-input .native-input {
   color: var(--ion-color-primary);
 }
-#CreateShopPage2 .slug-input ion-button {
+#OnBoardAccount .slug-input ion-button {
   font-size: 1.25rem;
 }
-#CreateShopPage2 .hint {
+#OnBoardAccount .hint {
   border-inline-start: 3px solid #748;
   background-color: #edf;
   padding: 1rem;
   margin: 0.5rem 0;
   width: fit-content;
 }
-#CreateShopPage2 form {
+#OnBoardAccount form {
   height: calc(100% - 2rem);
   display: flex;
   flex-direction: column;
 }
-#CreateShopPage2 .form-body {
+#OnBoardAccount .form-body {
   margin: auto;
 }
 `)
@@ -117,7 +117,7 @@ function CreateAccount(attrs: {}, context: Context) {
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content id="CreateShopPage2" class="ion-padding">
+      <ion-content id="OnBoardAccount" class="ion-padding">
         <form
           method="POST"
           action={toRouteUrl(routes, '/on-board/account/submit')}
@@ -169,13 +169,13 @@ export function UserInsert(
 ) {
   console.log(input.nickname)
   console.log(input.email)
-  console.log(tel)
+  console.log(input.tel)
   let user_id = proxy.user.push({
     username: null,
     nickname: input.nickname,
     password_hash: null,
     email: input.email,
-    tel,
+    tel: input.tel,
     avatar: null,
     is_admin: false,
     is_creating_shop: true,
@@ -231,13 +231,11 @@ function SubmitAccount_1(attrs: {}, context: ExpressContext) {
     let match = message.match(
       /^TypeError: Invalid non-empty \w+ "req.body.(\w+)", got empty string$/,
     )
-    console.log('match: ' + match)
-    console.log('message: ' + message)
+    // console.log('match: ' + match)
+    // console.log('message: ' + message)
     if (match) {
       message = 'Missing ' + match[1]
     }
-    console.log('33')
-    console.log('message: ' + message)
     throw new MessageException(['update-text', '#submitMessage', message])
   }
   let tel = to_full_hk_mobile_phone(input.tel)
@@ -250,14 +248,12 @@ function SubmitAccount_1(attrs: {}, context: ExpressContext) {
   }
   toRouteUrl(verificationCode.routes, '/user/verify/email/submit')
   try {
-    console.log('6')
     user_id = UserInsert(input, tel)
 
     // console.log(context)
     // console.log(user_id)
     // console.log(context.res)
     writeUserIdToCookie(context.res, user_id)
-    console.log('7')
   } catch (error) {
     let message = String(error)
     let match = message.match(

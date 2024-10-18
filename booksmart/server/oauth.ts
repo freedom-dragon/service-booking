@@ -1,8 +1,10 @@
-import { Application } from 'express'
+import { Application, Router } from 'express'
 import grant from 'grant'
 import { env } from './env.js'
 import { find } from 'better-sqlite3-proxy'
 import { proxy } from '../db/proxy.js'
+import { Routes } from './app/routes.js'
+import { placeholderForAttachRoutes } from './app/components/placeholder.js'
 
 type GoogleProfile = {
   email: string
@@ -12,7 +14,7 @@ type GoogleProfile = {
   locale: string
 }
 
-export function attachRoutes(app: Application) {
+export function attachRoutes(app: Router) {
   app.use(
     grant.express({
       defaults: {
@@ -33,7 +35,6 @@ export function attachRoutes(app: Application) {
   app.get('/login/google', async (req, res, next) => {
     try {
       let access_token = req.session?.grant?.response?.access_token
-
       let googleRes = await fetch(
         'https://www.googleapis.com/oauth2/v2/userinfo',
         {
@@ -42,7 +43,6 @@ export function attachRoutes(app: Application) {
         },
       )
       let googleJson: GoogleProfile = await googleRes.json()
-
       let user = find(proxy.user, { email: googleJson.email })
       if (user) {
         // existing user
@@ -87,4 +87,7 @@ export function attachRoutes(app: Application) {
   })
 }
 
-export default { attachRoutes }
+let routes = {
+  '/login/google': placeholderForAttachRoutes,
+} satisfies Routes
+export default { routes, attachRoutes }

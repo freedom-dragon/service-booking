@@ -16,10 +16,11 @@ export let env = {
   EMAIL_USER: '',
   EMAIL_PASSWORD: '',
   ORIGIN: '',
-  GOOGLE_CLIENT_ID: 'skip',
-  GOOGLE_CLIENT_SECRET: 'skip',
-  FACEBOOK_APP_ID: 'skip',
-  FACEBOOK_APP_SECRET: 'skip',
+  GOOGLE_CLIENT_ID:
+    '181718440927-aj8ts47abu75a51prit944ha79nm36ui.apps.googleusercontent.com',
+  GOOGLE_CLIENT_SECRET: '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',
+  FACEBOOK_APP_ID: '586106162979247',
+  FACEBOOK_APP_SECRET: '3206dc3d7053a235d9563beb160e2a10',
 }
 applyDefaultEnv()
 

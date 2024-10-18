@@ -34,6 +34,8 @@ import { Script } from '../components/script.js'
 import { Button } from '../components/button.js';
 import home from './home.js'
 import onBoardAccount from './on-board-account.js'
+import oauth from '../../oauth.js'
+import onBoardEmail from './on-board-email.js'
 
 let createShopTitle = '登錄'
 
@@ -118,17 +120,17 @@ function OnBoard(attrs: {}, context: DynamicContext) {
           </ion-row>
           
           <ion-row>
-            <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
+            <ion-button class="oauth-provider-list" href={'/connect/google'}>
               <ion-col size="1">
                 <ion-icon name="logo-google" class="icontest"></ion-icon>
               </ion-col>
               <ion-col size="11.5">
                 <ion-label>Continue with Google</ion-label>
               </ion-col>
-            </ion-Button>
+            </ion-button>
           </ion-row>
           <ion-row>
-            <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
+            <ion-Button class="oauth-provider-list" href={'/connect/facebook'}>
               <ion-col size="1">
                 <ion-icon name="logo-apple"></ion-icon>
               </ion-col>
@@ -158,7 +160,7 @@ function OnBoard(attrs: {}, context: DynamicContext) {
             </ion-Button>
           </ion-row>
           <ion-row>
-            <ion-Button class="oauth-provider-list" href={toRouteUrl(onBoardAccount.routes, '/on-board/account')}>
+            <ion-Button class="oauth-provider-list" href={toRouteUrl(onBoardEmail.routes, '/on-board/email')}>
               <ion-col size="1">
                 <ion-icon name="mail-outline"></ion-icon>
               </ion-col>

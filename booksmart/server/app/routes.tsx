@@ -23,7 +23,9 @@ import Login from './pages/login.js'
 import Register from './pages/register.js'
 import onBoardShopSlug from './pages/on-board-shop-slug.js'
 import onBoardAccount from './pages/on-board-account.js'
+import onBoardEmail from './pages/on-board-email.js'
 import onBoard from './pages/on-board.js'
+import oauth from '../oauth.js'
 import Profile from './pages/profile.js'
 import VerificationCode from './pages/verification-code.js'
 import type { MenuRoute } from './components/menu'
@@ -110,6 +112,8 @@ let routeDict = {
   ...onBoardShopSlug.routes,
   ...onBoardAccount.routes,
   ...onBoard.routes,
+  ...onBoardEmail.routes,
+  ...oauth.routes,
   ...Register.routes,
   ...Profile.routes,
   ...VerificationCode.routes,

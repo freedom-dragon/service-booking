@@ -1,3 +1,4 @@
+import { Application } from 'express-serve-static-core'
 import { o } from '../jsx/jsx.js'
 import type { DynamicPageRoute } from '../routes'
 

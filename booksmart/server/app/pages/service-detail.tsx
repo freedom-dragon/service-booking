@@ -2487,6 +2487,7 @@ let routes = {
           })
           bookingUser = proxy.user[user_id]
         }
+        // bookingUser.is_creating_shop=true
         let booking_user_id = bookingUser.id!
         let booking: Booking = db.transaction(() => {
           let ticket = getUserTicket({

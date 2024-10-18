@@ -37,6 +37,7 @@ import { LoginLink, loginRouteUrl } from './login.js'
 import { toRouteUrl } from '../../url.js'
 import verificationCode from './verification-code.js'
 import { getContextShop } from '../auth/shop.js'
+import { loadClientPlugin } from '../../client-plugin.js'
 
 let style = Style(/* css */ `
 .oauth-provider-list a {
@@ -115,7 +116,8 @@ if (config.layout_type === LayoutType.ionic) {
 }
 
 function Main(_attrs: {}, context: DynamicContext) {
-  let shop = getContextShop(context)
+  //let shop = getContextShop(context)
+  let shop = proxy.shop[1]
   let user_id = getAuthUserId(context)
   if (user_id) {
     return <UserMessageInGuestView user_id={user_id} />
@@ -143,6 +145,7 @@ function Main(_attrs: {}, context: DynamicContext) {
       ) : (
         <div style="height: 0.5rem"></div>
       )}
+      {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
       <form
         method="POST"
         action={toRouteUrl(
@@ -150,7 +153,7 @@ function Main(_attrs: {}, context: DynamicContext) {
           '/shop/:shop_slug/verify/email/submit',
           { params: { shop_slug: shop.slug } },
         )}
-        // onsubmit="emitForm(event)"
+        onsubmit="emitForm(event)"
       >
         {emailFormBody}
       </form>

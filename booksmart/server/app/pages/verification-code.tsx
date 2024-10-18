@@ -33,6 +33,7 @@ import profile from './profile.js'
 import serviceDetail from './service-detail.js'
 import shopHome from './shop-home.js'
 import { findUserByTel } from '../user-store.js'
+import onBoard from './on-board.js'
 
 let log = debugLog('app:verification-code')
 log.enabled = true
@@ -89,6 +90,7 @@ let email_parser = email()
 async function requestEmailVerification(
   shop: Shop | null,
   context: DynamicContext,
+  onboard?: boolean,
 ): Promise<StaticPageRoute> {
   try {
     let body = getContextFormBody(context)
@@ -194,9 +196,13 @@ async function requestEmailVerification(
                   params: { shop_slug: shop.slug },
                   query: { email },
                 })
-              : toRouteUrl(routes, '/admin/verify/email/result', {
-                  query: { email },
-                })
+              : onboard === true
+                ? toRouteUrl(routes, '/merchant/verify/email/result', {
+                    query: { email },
+                  })
+                : toRouteUrl(routes, '/admin/verify/email/result', {
+                    query: { email },
+                  })
           }
         />
       ),
@@ -219,11 +225,17 @@ async function requestEmailVerification(
                     error: String(error),
                   },
                 })
-              : toRouteUrl(routes, '/admin/verify/email/result', {
-                  query: {
-                    error: String(error),
-                  },
-                })
+              : onboard === true
+                ? toRouteUrl(routes, '/merchant/verify/email/result', {
+                    query: {
+                      error: String(error),
+                    },
+                  })
+                : toRouteUrl(routes, '/admin/verify/email/result', {
+                    query: {
+                      error: String(error),
+                    },
+                  })
           }
         />
       ),
@@ -234,7 +246,12 @@ async function requestEmailVerification(
 // TODO translate to zh-hk
 
 export function verificationCodeEmail(
-  attrs: { passcode: string; email: string | null; shop: Shop | null },
+  attrs: {
+    passcode: string
+    email: string | null
+    shop: Shop | null
+    onboard?: boolean
+  },
   context: DynamicContext,
 ) {
   let { shop } = attrs
@@ -310,7 +327,7 @@ let style = Style(/* css */ `
 `)
 
 function VerifyEmailPage(
-  attrs: { shop: Shop | null },
+  attrs: { shop: Shop | null; onboard?: boolean },
   context: DynamicContext,
 ) {
   let params = new URLSearchParams(context.routerMatch?.search)
@@ -338,7 +355,11 @@ function VerifyEmailPage(
             </span>
           </p>
 
-          <VerifyEmailForm params={params} shop={attrs.shop} />
+          <VerifyEmailForm
+            params={params}
+            shop={attrs.shop}
+            onboard={attrs.onboard}
+          />
         </>
       )}
     </div>
@@ -358,7 +379,7 @@ function VerifyEmailPage(
   )
 }
 function VerifyEmailForm(
-  attrs: { params: URLSearchParams; shop: Shop | null },
+  attrs: { params: URLSearchParams; shop: Shop | null; onboard?: boolean },
   context: DynamicContext,
 ) {
   let shop = attrs.shop
@@ -373,7 +394,9 @@ function VerifyEmailForm(
           ? toRouteUrl(routes, '/shop/:shop_slug/verify/email/code/submit', {
               params: { shop_slug: shop.slug },
             })
-          : toRouteUrl(routes, '/admin/verify/email/code/submit')
+          : attrs.onboard === true
+            ? toRouteUrl(routes, '/merchant/verify/email/code/submit')
+            : toRouteUrl(routes, '/admin/verify/email/code/submit')
       }
     >
       {/* 
@@ -689,6 +712,23 @@ let routes = {
     },
   },
   '/admin/verify/email/code/submit': {
+    streaming: false,
+    resolve: context => checkEmailVerificationCode(null, context),
+  },
+  '/merchant/verify/email/submit': {
+    streaming: false,
+    resolve: context => requestEmailVerification(null, context, true),
+  },
+  '/merchant/verify/email/result': {
+    resolve(context) {
+      return {
+        title: title('電郵驗證'),
+        description: 'Input email verification code for authentication',
+        node: <VerifyEmailPage shop={null} onboard={true} />,
+      }
+    },
+  },
+  '/merchant/verify/email/code/submit': {
     streaming: false,
     resolve: context => checkEmailVerificationCode(null, context),
   },

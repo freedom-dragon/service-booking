@@ -45,6 +45,7 @@ import verificationCode from './pages/verification-code.js'
 import ServiceDetail from './pages/service-detail.js'
 import shopAdmin from './pages/shop-admin.js'
 import OnBoardAccount from './pages/on-board-account.js'
+import oauth from '../oauth.js'
 
 if (config.development) {
   scanTemplateDir('template')
@@ -204,6 +205,7 @@ export function attachRoutes(app: Router) {
   ServiceDetail.attachRoutes(app)
   shopAdmin.attachRoutes(app)
   OnBoardAccount.attachRoutes(app)
+  oauth.attachRoutes(app)
 
   // redirect routes
   Object.entries(redirectDict).forEach(([from, to]) =>
@@ -214,7 +216,7 @@ export function attachRoutes(app: Router) {
   app.use(handleLiveView)
 }
 
-function handleLiveView(req: Request, res: Response, next: NextFunction) {
+async function handleLiveView(req: Request, res: Response, next: NextFunction) {
   sendHTMLHeader(res)
 
   let context: ExpressContext = {
@@ -225,19 +227,39 @@ function handleLiveView(req: Request, res: Response, next: NextFunction) {
     url: req.url,
   }
 
-  then(matchRoute(context), route => {
-    if (route.status) {
-      res.status(route.status)
-    }
+  try {
+    await then(
+      matchRoute(context),
+      route => {
+        if (route.status) {
+          res.status(route.status)
+        }
 
-    route.description = route.description.replace(/"/g, "'")
+        route.description = route.description.replace(/"/g, "'")
 
-    if (route.streaming === false) {
-      responseHTML(res, context, route)
-    } else {
-      streamHTML(res, context, route)
+        if (route.streaming === false) {
+          responseHTML(res, context, route)
+        } else {
+          streamHTML(res, context, route)
+        }
+      },
+      onError,
+    )
+  } catch (error) {
+    onError(error)
+  }
+  function onError(error: unknown) {
+    if (error == EarlyTerminate) {
+      return
     }
-  })
+    if (error instanceof MessageException) {
+      res.json({ message: error.message })
+      return
+    }
+    res.status(500)
+    res.json({ error: String(error) })
+    console.error(error)
+  }
 }
 
 function responseHTML(
