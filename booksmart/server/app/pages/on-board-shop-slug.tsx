@@ -231,10 +231,10 @@ let CheckShopSlugParser = object({
 })
 
 let SubmitShopParser = object({
-  nickname: string({ nonEmpty: true }),
-  email: email({ nonEmpty: true }),
-  tel: string({ nonEmpty: true }),
-  shop_slug: shop_slug_parser,
+  // nickname: string({ nonEmpty: true }),
+  // email: email({ nonEmpty: true }),
+  // tel: string({ nonEmpty: true }),
+  slug: shop_slug_parser,
 })
 
 /*
@@ -255,9 +255,19 @@ function roleCheck(user: User | null) {
 }
 */
 
+let script = Script(/* javascript */ `
+  async function checkSlugInput(event) {
+    let slug = event.target.value
+    preview_url.textContent = '預覽: ${host}/shop/' + slug
+  
+    let url = event.target.closest('[data-check-url]').dataset.checkUrl
+    emit(url, slug)
+  }
+  `)
+
 function CreateShopSlug(attrs: {}, context: DynamicContext) {
-  let user_id: number | null;
-  let user: User | null;
+  let user_id: number | null
+  let user: User | null
   try {
     user_id = getAuthUserId(context)
     user = getAuthUser(context)
@@ -278,10 +288,10 @@ function CreateShopSlug(attrs: {}, context: DynamicContext) {
     }
     throw new MessageException(['update-text', '#submitMessage', message])
   }
-  
-  console.log(user.nickname)
-  console.log(user.tel)
-  console.log(user.email)
+
+  // console.log(user.nickname)
+  // console.log(user.tel)
+  // console.log(user.email)
 
   let SubmitAccountParser = object({
     nickname: string({ nonEmpty: true }),
@@ -307,18 +317,26 @@ function CreateShopSlug(attrs: {}, context: DynamicContext) {
       <ion-content class="ion-padding" id="CreateShopPage">
         <form
           method="POST"
-          action={toRouteUrl(routes, '/on-board/shop-slug/slug-check')}
+          action={toRouteUrl(routes, '/on-board/shop-slug/submit')}
           onsubmit="emitForm(event)"
         >
           <div class="form-body">
             <h2>選擇店舖連結</h2>
-            <ion-item lines="none" style="margin-bottom: 0.5rem">
+            <ion-item
+              lines="none"
+              style="margin-bottom: 0.5rem"
+              data-check-url={toRouteUrl(
+                routes,
+                '/on-board/shop-slug/slug-check',
+              )}
+            >
               <ion-input
                 class="slug-input"
                 type="text"
                 label={'/shop/'}
                 oninput="checkSlugInput(event)"
                 placeholder="my.shop.id"
+                name="slug"
               >
                 <ion-buttons slot="end">
                   <ion-button id="submitButton" disabled type="submit">
@@ -344,15 +362,7 @@ function CreateShopSlug(attrs: {}, context: DynamicContext) {
           </div>
         </form>
 
-        {Script(/* javascript */ `
-async function checkSlugInput(event) {
-  let slug = event.target.value
-  preview_url.textContent = '預覽: ${host}/shop/' + slug
-
-  let url = ${toRouteUrl(routes, '/on-board/shop-slug/slug-check', { json: true })}
-  emit(url, slug)
-}
-`)}
+        {script}
       </ion-content>
     </>
   )
@@ -366,6 +376,9 @@ function OnBoardShopSlugCheck(attrs: {}, context: WsContext) {
     let slug = (context.args?.[0] || '') as string
     let is_valid = slug && slug_regex.test(slug)
     let is_available = is_valid && count(proxy.shop, { slug }) == 0
+    console.log({ slug })
+    console.log({ is_available })
+    console.log({ is_valid })
     let messages: ServerMessage[] = [
       ['update-props', '#submitButton', { disabled: !is_available }],
       [
@@ -422,7 +435,13 @@ function OnBoardShopSlugCheck(attrs: {}, context: WsContext) {
 }
 
 function SubmitShop(attrs: {}, context: DynamicContext) {
+  let user_id = getAuthUserId(context)
   let user = getAuthUser(context)
+  if (!user_id) {
+    return (
+      <Redirect href={toRouteUrl(onBoardAccount.routes, '/on-board/account')} />
+    )
+  }
   if (!user) {
     throw new MessageException([
       'update-text',
@@ -434,6 +453,8 @@ function SubmitShop(attrs: {}, context: DynamicContext) {
   let input: ParseResult<typeof SubmitShopParser>
   try {
     input = SubmitShopParser.parse(body, { name: 'req.body' })
+    console.log({ input })
+    console.log(input.slug)
   } catch (error) {
     let message = String(error)
     let match = message.match(
@@ -444,36 +465,62 @@ function SubmitShop(attrs: {}, context: DynamicContext) {
     }
     throw new MessageException(['update-text', '#submitMessage', message])
   }
-  let tel = to_full_hk_mobile_phone(input.tel)
+  if (!user.tel) {
+    throw new MessageException([
+      'update-text',
+      '#submitMessage',
+      'Invalid tel, please go back to the previous page to fill in hk telephone number',
+    ])
+  }
+  let tel = to_full_hk_mobile_phone(user.tel)
   if (!tel) {
     throw new MessageException([
       'update-text',
       '#submitMessage',
-      'Invalid tel, expect hk mobile phone number',
+      'Invalid tel, expect hk mobile phone number. Please go back to the previous page to fill it in.',
     ])
   }
+  if (!user.nickname) {
+    throw new MessageException([
+      'update-text',
+      '#submitMessage',
+      'Invalid username, expected non-empty username string. Please go back to the previous page to fill it in.',
+    ])
+  }
+  if (!user.email) {
+    throw new MessageException([
+      'update-text',
+      '#submitMessage',
+      'Invalid email, expected non-empty email string. Please go back to the previous page to fill it in.',
+    ])
+  }
+
+  let name_email_parser = string({ nonEmpty: true })
+  let nickname = name_email_parser.parse(user.nickname)
+  let email = name_email_parser.parse(user.email)
+
   let insert_shop = db.transaction(() => {
-    let owner_id = proxy.user.push({
-      username: null,
-      nickname: input.nickname,
-      password_hash: null,
-      email: input.email,
-      tel,
-      avatar: null,
-      is_admin: false,
-      is_creating_shop: false,
-    })
+    // let owner_id = proxy.user.push({
+    //   username: null,
+    //   nickname: input.nickname,
+    //   password_hash: null,
+    //   email: input.email,
+    //   tel,
+    //   avatar: null,
+    //   is_admin: false,
+    //   is_creating_shop: false,
+    // })
     proxy.shop.push({
-      owner_id: owner_id,
-      slug: input.shop_slug,
-      name: input.nickname + ' Shop',
+      owner_id: user_id,
+      slug: input.slug,
+      name: user.nickname + ' Shop',
       bio: null,
       desc: null,
-      owner_name: input.nickname,
+      owner_name: nickname,
       address: null,
       address_remark: null,
       tel,
-      email: null,
+      email: email,
       facebook: null,
       messenger: null,
       instagram: null,
@@ -508,7 +555,7 @@ function SubmitShop(attrs: {}, context: DynamicContext) {
   return (
     <Redirect
       href={toRouteUrl(login.routes, '/shop/:shop_slug/login', {
-        params: { shop_slug: input.shop_slug },
+        params: { shop_slug: input.slug },
       })}
     />
   )

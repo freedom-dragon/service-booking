@@ -1,6 +1,6 @@
 import { LayoutType, apiEndpointTitle, config, title } from '../../config.js'
 import { commonTemplatePageText } from '../components/common-template.js'
-import { Link } from '../components/router.js'
+import { Link, Redirect } from '../components/router.js'
 import Style from '../components/style.js'
 import {
   Context,
@@ -31,6 +31,7 @@ import { toRouteUrl } from '../../url.js'
 import verificationCode from './verification-code.js'
 import { getContextShop } from '../auth/shop.js'
 import { loadClientPlugin } from '../../client-plugin.js'
+import onBoardAccount from './on-board-account.js'
 
 let style = Style(/* css */ `
   .oauth-provider-list a {
@@ -111,9 +112,12 @@ if (config.layout_type === LayoutType.ionic) {
 function Main(_attrs: {}, context: DynamicContext) {
   //let shop = getContextShop(context)
   let user_id = getAuthUserId(context)
-  if (user_id) {
-    return <UserMessageInGuestView user_id={user_id} />
-  }
+  // if (user_id) {
+  //   return (
+  //     <Redirect href={toRouteUrl(onBoardAccount.routes, '/on-board/account')} />
+  //   )
+  //   // <UserMessageInGuestView user_id={user_id} />
+  // }
   return (
     <>
       {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
@@ -270,13 +274,13 @@ function validateEmail(email: string): ValidateResult {
   }
 
   let user = find(proxy.user, { email })
-  if (user) {
-    return {
-      type: 'found' as const,
-      text: `email "${email}" is already used`,
-      user,
-    }
-  }
+  // if (user) {
+  //   return {
+  //     type: 'found' as const,
+  //     text: `email "${email}" is already used`,
+  //     user,
+  //   }
+  // }
 
   return { type: 'ok', text: `email "${email}" is valid` }
 }

@@ -6,6 +6,7 @@ import { apiEndpointTitle, title } from '../../config.js'
 import { getAuthUser, getAuthUserId } from '../auth/user.js'
 import {
   Context,
+  DynamicContext,
   ExpressContext,
   getContextFormBody,
   resolveExpressContext,
@@ -14,7 +15,7 @@ import { writeUserIdToCookie } from '../auth/user.js'
 import { to_full_hk_mobile_phone } from '@beenotung/tslib'
 import { EarlyTerminate, HttpError, MessageException } from '../../exception.js'
 import { toRouteUrl } from '../../url.js'
-import { Redirect } from '../components/router.js'
+import { Link, Redirect } from '../components/router.js'
 import { ParseResult, email, object, string } from 'cast.ts'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { env } from '../../env.js'
@@ -26,6 +27,7 @@ import formidable, { Formidable } from 'formidable'
 import { renderError } from '../components/error.js'
 import { Router } from 'express'
 import { placeholderForAttachRoutes } from '../components/placeholder.js'
+import { loginRouteUrl } from './login.js'
 
 let host = new URL(env.ORIGIN).host
 
@@ -96,8 +98,20 @@ function roleCheck(user: User | null) {
   }
 }
 */
-function CreateAccount(attrs: {}, context: Context) {
+function CreateAccount(attrs: {}, context: DynamicContext) {
   let user = getAuthUser(context)
+  if (!user) {
+    return (
+      // <>
+      //   <p>正在以訪客身份瀏覽此頁。</p>
+      //   <p>
+      //     你可以<Link href={loginRouteUrl(context)}>登入</Link>
+      //     以管理你的聯絡資料。
+      //   </p>
+      // </>
+      <Redirect href={toRouteUrl(onBoard.routes, '/on-board')} />
+    )
+  }
 
   //console.log(context);
   //let fallback = roleCheck(user)
@@ -125,6 +139,36 @@ function CreateAccount(attrs: {}, context: Context) {
         >
           <ion-list>
             <ion-item>
+              <div slot="start">
+                <ion-icon name="happy-outline"></ion-icon> 名稱
+              </div>
+              <ion-input name="nickname" value={user.nickname} />
+            </ion-item>
+            <ion-item>
+              <div slot="start">
+                <ion-icon name="call-outline"></ion-icon> 電話
+              </div>
+              <ion-input
+                type="tel"
+                name="tel"
+                minlength="8"
+                maxlength="8"
+                value={user.tel?.replace('+852', '')}
+              />
+            </ion-item>
+            <ion-item>
+              <div slot="start">
+                <ion-icon name="at-outline"></ion-icon> 電郵
+              </div>
+              <ion-input
+                type="email"
+                name="email"
+                value={user.email}
+                readonly
+                disabled
+              />
+            </ion-item>
+            {/* <ion-item>
               <ion-input
                 label="商戶(聯絡人)暱稱"
                 label-placement="floating"
@@ -146,7 +190,7 @@ function CreateAccount(attrs: {}, context: Context) {
                 type="tel"
                 name="tel"
               />
-            </ion-item>
+            </ion-item> */}
           </ion-list>
           <ion-button
             type="submit"
@@ -163,113 +207,114 @@ function CreateAccount(attrs: {}, context: Context) {
   )
 }
 
-export function UserInsert(
-  input: ParseResult<typeof SubmitAccountParser>,
-  tel: string,
-) {
-  console.log(input.nickname)
-  console.log(input.email)
-  console.log(input.tel)
-  let user_id = proxy.user.push({
-    username: null,
-    nickname: input.nickname,
-    password_hash: null,
-    email: input.email,
-    tel: input.tel,
-    avatar: null,
-    is_admin: false,
-    is_creating_shop: true,
-  })
-  if (!user_id) {
-    throw new HttpError(400, '未能成功登記，請重新嘗試')
-  }
-  console.log(user_id)
-  return user_id
-}
+// export function UserInsert(name: string, tel: string, email: string) {
+//   try {
+//     console.log('name: ' + name + ' tel: ' + tel + ' email: ' + email)
+//     let user_id = proxy.user.push({
+//       username: null,
+//       nickname: name,
+//       password_hash: null,
+//       email: email,
+//       tel: tel,
+//       avatar: null,
+//       is_admin: false,
+//       is_creating_shop: true,
+//     })
+//     if (!user_id) {
+//       throw new HttpError(400, '未能成功登記，請重新嘗試')
+//     }
+//     console.log('user_id: ' + user_id)
+//     return user_id
+//   } catch (error) {
+//     throw new HttpError(400, '未能成功登記，請重新嘗試2')
+//   }
+// }
 
-let SubmitAccountParser = object({
-  nickname: string(),
-  email: string(),
-  tel: string(),
-})
+// let SubmitAccountParser = object({
+//   nickname: string(),
+//   email: string(),
+//   tel: string(),
+// })
 
 let submitParser = object({
   nickname: object({ 0: string() }),
-  email: object({ 0: string() }),
   tel: object({ 0: string() }),
 })
 
-async function SubmitAccount(attrs: {}, context: ExpressContext) {
-  try {
-    let body = getContextFormBody(context)
-    let form = new formidable.Formidable()
-    let {} = await form.parse(context.req)
-    console.log({ body })
-    let input = SubmitAccountParser.parse(body, { name: 'req.body' })
-    throw new Error('todo')
-  } catch (error) {
-    let message: ServerMessage = [
-      'update-text',
-      '#submitMessage',
-      String(error),
-    ]
-    context.res.json({ message })
-    throw EarlyTerminate
-    // throw new MessageException(['update-text', '#submitMessage', String(error)])
-  }
-}
+// async function SubmitAccount(attrs: {}, context: ExpressContext) {
+//   try {
+//     let body = getContextFormBody(context)
+//     let form = new formidable.Formidable()
+//     let {} = await form.parse(context.req)
+//     console.log({ body })
+//     let input = SubmitAccountParser.parse(body, { name: 'req.body' })
+//     throw new Error('todo')
+//   } catch (error) {
+//     let message: ServerMessage = [
+//       'update-text',
+//       '#submitMessage',
+//       String(error),
+//     ]
+//     context.res.json({ message })
+//     throw EarlyTerminate
+//     // throw new MessageException(['update-text', '#submitMessage', String(error)])
+//   }
+// }
 
-function SubmitAccount_1(attrs: {}, context: ExpressContext) {
-  let body = getContextFormBody(context)
-  let res = context.res
-  let input: ParseResult<typeof SubmitAccountParser>
-  let user_id: number | null = null
-  try {
-    input = SubmitAccountParser.parse(body, { name: 'req.body' })
-  } catch (error) {
-    let message = String(error)
-    let match = message.match(
-      /^TypeError: Invalid non-empty \w+ "req.body.(\w+)", got empty string$/,
-    )
-    // console.log('match: ' + match)
-    // console.log('message: ' + message)
-    if (match) {
-      message = 'Missing ' + match[1]
-    }
-    throw new MessageException(['update-text', '#submitMessage', message])
-  }
-  let tel = to_full_hk_mobile_phone(input.tel)
-  if (!tel) {
-    throw new MessageException([
-      'update-text',
-      '#submitMessage',
-      'Invalid tel, expect hk mobile phone number',
-    ])
-  }
-  toRouteUrl(verificationCode.routes, '/user/verify/email/submit')
-  try {
-    user_id = UserInsert(input, tel)
+// function SubmitAccount_1(attrs: {}, context: ExpressContext) {
+//   let body = getContextFormBody(context)
+//   let res = context.res
+//   let input: ParseResult<typeof SubmitAccountParser>
+//   let user_id = getAuthUserId(context)
+//   if (!user_id) throw 'not login'
+//   let user = proxy.user[user_id]
+//   if (!user) throw 'user not found'
+//   try {
+//     input = SubmitAccountParser.parse(body, { name: 'req.body' })
+//   } catch (error) {
+//     let message = String(error)
+//     let match = message.match(
+//       /^TypeError: Invalid non-empty \w+ "req.body.(\w+)", got empty string$/,
+//     )
+//     // console.log('match: ' + match)
+//     // console.log('message: ' + message)
+//     if (match) {
+//       message = 'Missing ' + match[1]
+//     }
+//     throw new MessageException(['update-text', '#submitMessage', message])
+//   }
+//   let tel = to_full_hk_mobile_phone(input.tel)
+//   if (!tel) {
+//     throw new MessageException([
+//       'update-text',
+//       '#submitMessage',
+//       'Invalid tel, expect hk mobile phone number',
+//     ])
+//   }
+//   toRouteUrl(verificationCode.routes, '/user/verify/email/submit')
+//   try {
+//     user_id = UserInsert(input, tel)
 
-    // console.log(context)
-    // console.log(user_id)
-    // console.log(context.res)
-    writeUserIdToCookie(context.res, user_id)
-  } catch (error) {
-    let message = String(error)
-    let match = message.match(
-      /^SqliteError: UNIQUE constraint failed: ([\w.]+)$/,
-    )
-    if (match) {
-      message = match[1] + ' 已經註冊了，不可重複使用'
-    }
-    throw new MessageException(['update-text', '#submitMessage', message])
-  }
-  return (
-    <Redirect
-      href={toRouteUrl(onBoardShopSlug.routes, '/on-board/shop-slug')}
-    />
-  )
-}
+//     // console.log(context)
+//     // console.log(user_id)
+//     // console.log(context.res)
+//     writeUserIdToCookie(context.res, user_id)
+//   } catch (error) {
+//     let message = String(error)
+//     let match = message.match(
+//       /^SqliteError: UNIQUE constraint failed: ([\w.]+)$/,
+//     )
+//     if (match) {
+//       message = match[1] + ' 已經註冊了，不可重複使用'
+//     }
+//     throw new MessageException(['update-text', '#submitMessage', message])
+//   }
+//   return (
+//     <Redirect
+//       href={toRouteUrl(onBoardShopSlug.routes, '/on-board/shop-slug')}
+//     />
+//   )
+// }
 
 function attachRoutes(app: Router) {
   app.post(
@@ -277,13 +322,20 @@ function attachRoutes(app: Router) {
     async (req, res, next) => {
       try {
         let context = resolveExpressContext(req, res, next)
-        let user = getAuthUser(context)
+        let user_id = getAuthUserId(context)
+        if (!user_id) throw 'not login'
+        let user = proxy.user[user_id]
         if (!user) {
           throw new MessageException([
             'redirect',
             toRouteUrl(onBoard.routes, '/on-board'),
           ])
         }
+        // console.log(user.nickname)
+        // console.log(user.tel?.replace('+852', ''))
+        // console.log(user.tel)
+
+        let email = user.email
         let form = new Formidable()
         let [fields] = await form.parse(req)
         let input = submitParser.parse(fields, { name: 'form fields' })
@@ -291,15 +343,40 @@ function attachRoutes(app: Router) {
         if (!input.nickname[0]) {
           throw 'missing nickname'
         }
-        if (!input.email[0]) {
+        if (!email) {
           throw 'missing email'
         }
         if (!input.tel[0]) {
           throw 'missing tel'
         }
-        console.log('id:', user?.id)
-        throw new MessageException(['redirect', '/123'])
+        let tel = to_full_hk_mobile_phone(input.tel[0])
+        if (!tel) {
+          throw new MessageException([
+            'update-text',
+            '#submitMessage',
+            'Invalid tel, expect hk mobile phone number',
+          ])
+        }
+        console.log('id:' + user?.id)
+        user.nickname = input.nickname[0]
+        user.tel = tel
+        //let user_id = UserInsert(input.nickname[0], tel, email)
+
+        writeUserIdToCookie(context.res, user_id)
+        throw new MessageException(['redirect', '/on-board/shop-slug'])
       } catch (error) {
+        let messageError = String(error)
+        let match = messageError.match(
+          /^SqliteError: UNIQUE constraint failed: ([\w.]+)$/,
+        )
+        if (match) {
+          messageError = match[1] + ' 已經註冊了，不可重複使用'
+          throw new MessageException([
+            'update-text',
+            '#submitMessage',
+            messageError,
+          ])
+        }
         if (error instanceof MessageException) {
           res.json({ message: error.message })
           return
