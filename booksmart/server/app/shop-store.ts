@@ -1,6 +1,6 @@
 import { find } from 'better-sqlite3-proxy'
 import { Shop, Ticket, proxy } from '../../db/proxy.js'
-import { existsSync, readdirSync, renameSync } from 'fs'
+import { existsSync, readdirSync, readFileSync, renameSync } from 'fs'
 import { values } from 'cast.ts'
 import { toVersionedUrl } from './url-version.js'
 import { db } from '../../db/db.js'

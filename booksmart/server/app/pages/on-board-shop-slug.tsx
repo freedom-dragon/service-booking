@@ -29,6 +29,7 @@ import { ServerMessage } from '../../../client/types.js'
 import { count } from 'better-sqlite3-proxy'
 import { getContextCookies } from '../cookie.js'
 import onBoardAccount from './on-board-account.js'
+import onBoardShopProfile from './on-board-shop-profile.js'
 
 let host = new URL(env.ORIGIN).host
 
@@ -318,7 +319,7 @@ function CreateShopSlug(attrs: {}, context: DynamicContext) {
         <form
           method="POST"
           action={toRouteUrl(routes, '/on-board/shop-slug/submit')}
-          onsubmit="emitForm(event)"
+          //onsubmit="emitForm(event)"
         >
           <div class="form-body">
             <h2>選擇店舖連結</h2>
@@ -542,6 +543,7 @@ function SubmitShop(attrs: {}, context: DynamicContext) {
   })
   try {
     insert_shop()
+    console.log(proxy.shop)
   } catch (error) {
     let message = String(error)
     let match = message.match(
@@ -554,9 +556,13 @@ function SubmitShop(attrs: {}, context: DynamicContext) {
   }
   return (
     <Redirect
-      href={toRouteUrl(login.routes, '/shop/:shop_slug/login', {
-        params: { shop_slug: input.slug },
-      })}
+      href={toRouteUrl(
+        onBoardShopProfile.routes,
+        '/on-board/:shop_slug/profile',
+        {
+          params: { shop_slug: input.slug },
+        },
+      )}
     />
   )
 }

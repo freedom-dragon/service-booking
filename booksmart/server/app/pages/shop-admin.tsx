@@ -649,6 +649,16 @@ let routes = {
           ],
         )
       } else {
+        if (field == 'name') {
+          let name = find(proxy.shop, { name: value })
+          if (!name) {
+            messages.push([
+              'eval',
+              `showToast('商鋪名稱已被使用，請重新輸入。','warning')`,
+            ])
+          }
+        }
+
         shop[field] = value
         messages.push(['eval', `showToast('更新了${label}','info')`])
       }
@@ -693,7 +703,7 @@ let routes = {
           description: 'update shop locale',
           node: <Redirect href={`/`} />,
         }
-      }      
+      }
       let { is_owner } = getAuthRole(context)
       if (!is_owner) {
         return {
