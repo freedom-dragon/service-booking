@@ -128,22 +128,12 @@ function GenerateImage(attrs: {}, context: DynamicContext) {
   console.log('template: ' + templates)
   if (!templates)
     return 'error retrieving template images, please try again later.'
-  // {
-  //   templates.map(item => console.log(item))
-  // }
-  // let element = template.join(' ')
-  // console.log(element)
-  // (
-  //   for (let strings of template) {
-  //     element.push
-  //   }
-  // )
   return (
     <>
       <swiper-container
         class="mySwiper"
-        pagination="true"
-        pagination-clickable="true"
+        // pagination="true"
+        // pagination-clickable="true"
         space-between="30"
         slides-per-view="3"
       >
@@ -155,34 +145,6 @@ function GenerateImage(attrs: {}, context: DynamicContext) {
       </swiper-container>
     </>
   )
-  // template.join
-  {
-    /* template.forEach
-    {mapArray(attrs.images, (slide, i) => (
-                <span
-                  class="swiper-pagination-image"
-                  onclick={`swiperSlide(this, '${i}')`}
-                >
-                  {slide}
-                </span>
-              ))} */
-  }
-  {
-    /* mapArray(attrs.images, (slide, i) => (
-                <span
-                  class="swiper-pagination-image"
-                  onclick={`swiperSlide(this, '${i}')`}
-                >
-                  {slide}
-                </span>
-              )) */
-  }
-  {
-    /* template.map
-      <SwiperSlide>
-        <img src={template[i]} alt="template" />
-      </SwiperSlide> */
-  }
 }
 
 function CreateAccount(attrs: {}, context: DynamicContext) {
@@ -201,20 +163,6 @@ function CreateAccount(attrs: {}, context: DynamicContext) {
   }
 }
 
-// let SwiperContent = (
-//   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" >
-//     <Swiper
-//       spaceBetween={50}
-//       slidesPerView={3}
-//       onSlideChange={() => console.log('slide change')}
-//       onSwiper={swiper => console.log(swiper)}
-//     >
-//       <SwiperSlide>Slide 1</SwiperSlide>
-//       <SwiperSlide>Slide 2</SwiperSlide>
-//       <SwiperSlide>Slide 3</SwiperSlide>
-//       <SwiperSlide>Slide 4</SwiperSlide>
-//     </Swiper>
-// )
 let OnBoardTemplatePage = (
   <div id="OnBoardEmail">
     {style}
@@ -262,7 +210,6 @@ function OnBoardTemplate(_attrs: {}, context: DynamicContext) {
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
       />
-      {/* {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node} */}
       <div>Continue with:</div>
       <form
         id="container"
@@ -273,93 +220,6 @@ function OnBoardTemplate(_attrs: {}, context: DynamicContext) {
         )}
         onsubmit="emitForm(event)"
       >
-        {/* <div class="template"></div>
-        <div class="template"></div>
-        <div class="template"></div>
-        <div class="template"></div>
-        <div class="template"></div>
-        <div class="template"></div>
-        <div class="template"></div>
-        <div class="template"></div> */}
-        {/* <swiper-container
-          class="mySwiper"
-          pagination="true"
-          pagination-clickable="true"
-          slides-per-view="4"
-          centered-slides="true"
-          space-between="30"
-          grab-cursor="true"
-        >
-          <swiper-slide>Slide 1</swiper-slide>
-          <swiper-slide>Slide 2</swiper-slide>
-          <swiper-slide>Slide 3</swiper-slide>
-          <swiper-slide>Slide 4</swiper-slide>
-          <swiper-slide>Slide 5</swiper-slide>
-          <swiper-slide>Slide 6</swiper-slide>
-          <swiper-slide>Slide 7</swiper-slide>
-          <swiper-slide>Slide 8</swiper-slide>
-          <swiper-slide>Slide 9</swiper-slide>
-        </swiper-container> */}
-
-        {/* <div class="ion-margin-horizontal">
-          <Swiper
-            id="TemplateImages"
-            images={templates.map(url => (
-              <img src={url} />
-            ))}
-            showArrow
-            style="flex: 0 0 33%;"
-          />
-        </div> */}
-        {/* <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js">
-          <SwiperContent />
-          <Swiper
-            spaceBetween={50}
-            slidesPerView={3}
-            onSlideChange={() => console.log('slide change')}
-            onSwiper={swiper => console.log(swiper)}
-          >
-            <SwiperSlide>Slide 1</SwiperSlide>
-            <SwiperSlide>Slide 2</SwiperSlide>
-            <SwiperSlide>Slide 3</SwiperSlide>
-            <SwiperSlide>Slide 4</SwiperSlide>
-            ...
-          </Swiper> */}
-        {/* let swiper = new Swiper(".mySwiper", {
-              slidesPerView: 3,
-              spaceBetween: 30,
-              pagination: {
-                el: ".swiper-pagination",
-                clickable: true,
-              },
-            }); */}
-        {/* </script>
-        <script></script> */}
-        {/* <div class="swiper-container mySwiper">
-          <div class="swiper-wrapper">
-            <div class="swiper-slide">Slide 1</div>
-            <div class="swiper-slide">Slide 2</div>
-            <div class="swiper-slide">Slide 3</div>
-            <div class="swiper-slide">Slide 4</div>
-            <div class="swiper-slide">Slide 5</div>
-          </div>
-          <div class="swiper-pagination"></div>
-          <div class="swiper-button-next"></div>
-          <div class="swiper-button-prev"></div>
-        </div> */}
-
-        {/* <swiper-container
-          class="mySwiper"
-          pagination="true"
-          pagination-clickable="true"
-          space-between="30"
-          slides-per-view="3"
-        > */}
-        {/* {getTemplateImageLinks().template.map(item => (
-        <SwiperSlide>
-          <img src={item} />
-        </SwiperSlide>
-      ))} */}
         {<GenerateImage />}
         {/* <swiper-slide>Slide 1</swiper-slide>
           <swiper-slide>Slide 2</swiper-slide>
@@ -371,7 +231,7 @@ function OnBoardTemplate(_attrs: {}, context: DynamicContext) {
           <swiper-slide>Slide 8</swiper-slide>
           <swiper-slide>Slide 9</swiper-slide> */}
         {/* </swiper-container> */}
-
+        <div></div>
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
       </form>
       {/* {onBoardTemplateScripts} */}
