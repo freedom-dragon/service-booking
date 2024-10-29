@@ -42,12 +42,6 @@ import { toVersionedUrl } from '../url-version.js'
 import { Script } from '../components/script.js'
 import { mapArray } from '../components/fragment.js'
 
-// // init Swiper:
-// const swiper = new Swiper('.swiper', {
-//   // configure Swiper to use modules
-//   modules: [Navigation, Pagination],
-// })
-
 let host = new URL(env.ORIGIN).host
 
 let createShopTitle = ''
@@ -106,6 +100,61 @@ let style = Style(/* css */ `
 //     )}
 //   </>
 // )
+
+let onBoardTemplateScripts = (
+  <>
+    {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
+    {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
+    {Script(/* javascript */ `
+    // let swiperEl = element.parentElement.querySelector('swiper-container')
+    // console.log('swiperEl: ' + swiperEl.innerHTML)
+    
+    // if (swiperEl) {
+          
+      
+
+      
+    //   swiperEl.addEventListener('slidechange', event => {
+    //     console.log('slide changed')
+    //   })
+    // }
+      function getProgress(element) {
+        let swiperEl = element.parentElement.querySelector('swiper-container')
+        if (swiperEl) {
+          let index = swiperEl.swiper.realIndex + 1;
+          console.log(index)
+        // swiperEl.addEventListener('progress', event => {
+        //   console.log(event)
+        //   // let onProgress = event => {
+        //   //   let [swiper, progress] = event.detail
+        //   //   console.log(progress)
+        //   // }
+        //   // const [swiper, progress] = event.detail;
+        // })
+      
+        // swiperEl.addEventListener('slidechange', event => {
+        //   console.log('slide changed')
+        // })
+      }
+      }
+      
+        
+    `)}
+  </>
+)
+// function GetProgress(attrs: {}, context: DynamicContext) {
+//   const swiperEl = document.querySelector('swiper-container')
+//   console.log('swiperEl: ' + swiperEl)
+//   if (!swiperEl) return
+//   swiperEl.addEventListener('progress', event => {
+//     console.log(event)
+//     // const [swiper, progress] = event.detail;
+//   })
+
+//   swiperEl.addEventListener('slidechange', event => {
+//     console.log('slide changed')
+//   })
+// }
 export function getTemplateImageLinks() {
   let dir = `assets/templates`
   let filenames: string[]
@@ -124,8 +173,9 @@ export function getTemplateImageLinks() {
 
 function GenerateImage(attrs: {}, context: DynamicContext) {
   let templates = getTemplateImageLinks().template
-  console.log('template: ', templates)
-  console.log('template: ' + templates)
+
+  // console.log('template: ', templates)
+  // console.log('template: ' + templates)
   if (!templates)
     return 'error retrieving template images, please try again later.'
   return (
@@ -136,6 +186,7 @@ function GenerateImage(attrs: {}, context: DynamicContext) {
         // pagination-clickable="true"
         space-between="30"
         slides-per-view="3"
+        centered-slides="true"
       >
         {mapArray(templates, item => (
           <swiper-slide>
@@ -196,6 +247,7 @@ if (config.layout_type === LayoutType.ionic) {
           </p>
           <OnBoardTemplate />
         </div>
+        <p id="testing">tests</p>
       </ion-content>
     </>
   )
@@ -214,34 +266,28 @@ function OnBoardTemplate(_attrs: {}, context: DynamicContext) {
       <form
         id="container"
         method="POST"
-        action={toRouteUrl(
-          verificationCode.routes,
-          '/merchant/verify/email/submit',
-        )}
+        // action={toRouteUrl(
+        //   verificationCode.routes,
+        //   '/merchant/verify/email/submit',
+        // )}
         onsubmit="emitForm(event)"
       >
-        {<GenerateImage />}
-        {/* <swiper-slide>Slide 1</swiper-slide>
-          <swiper-slide>Slide 2</swiper-slide>
-          <swiper-slide>Slide 3</swiper-slide>
-          <swiper-slide>Slide 4</swiper-slide>
-          <swiper-slide>Slide 5</swiper-slide>
-          <swiper-slide>Slide 6</swiper-slide>
-          <swiper-slide>Slide 7</swiper-slide>
-          <swiper-slide>Slide 8</swiper-slide>
-          <swiper-slide>Slide 9</swiper-slide> */}
-        {/* </swiper-container> */}
-        <div></div>
+        <GenerateImage />
+        <button onclick="getProgress(this)" type="submit">
+          test
+        </button>
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
       </form>
+
       {/* {onBoardTemplateScripts} */}
+      {onBoardTemplateScripts}
       {wsStatus.safeArea}
     </>
   )
 }
 
 let routes: Routes = {
-  '/on-board/template': {
+  '/on-board/:shop_slug/template': {
     title: title('選擇商店界面樣式'),
     description: `Register to access exclusive content and functionality. Join our community on ${config.short_site_name}.`,
     guestOnly: true,
