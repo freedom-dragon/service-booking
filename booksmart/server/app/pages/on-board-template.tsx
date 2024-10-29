@@ -52,14 +52,15 @@ let style = Style(/* css */ `
     width: 80%;
     height: 30%;
     margin: auto;
-    border: solid black 2px;
-    overflow-x: scroll;
+    overflow-x: none;
     overflow-y: hidden;
     white-space: nowrap;
     scroll-snap-type: x mandatory;
     scroll-snap-align: center;
     cursor: grab;
+    max-height: 300px;
   }
+
   .template {
     background-color: lightblue;
     display: inline-block;
@@ -68,93 +69,36 @@ let style = Style(/* css */ `
     width: 12rem;
     scroll-snap-align: center;
   }
+
+  img {
+    border-radius: 2rem;
+    max-height: 300px;
+    
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+  }
+
 `)
-
-// let onBoardTemplateScripts = (
-//   <>
-//     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-//     {Script(
-//       /* javascript */
-//       `
-//         import 'swiper/css';
-
-//         export default () => {
-//           return (
-//             <Swiper
-//               spaceBetween={50}
-//               slidesPerView={3}
-//               onSlideChange={() => console.log('slide change')}
-//               onSwiper={(swiper) => console.log(swiper)}
-//             >
-//               <SwiperSlide>Slide 1</SwiperSlide>
-//               <SwiperSlide>Slide 2</SwiperSlide>
-//               <SwiperSlide>Slide 3</SwiperSlide>
-//               <SwiperSlide>Slide 4</SwiperSlide>
-//               <SwiperSlide>Slide 4</SwiperSlide>
-//               <SwiperSlide>Slide 4</SwiperSlide>
-//               <SwiperSlide>Slide 4</SwiperSlide>
-//             </Swiper>
-//           );
-//         };
-//         `,
-//     )}
-//   </>
-// )
 
 let onBoardTemplateScripts = (
   <>
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
     {Script(/* javascript */ `
-    // let swiperEl = element.parentElement.querySelector('swiper-container')
-    // console.log('swiperEl: ' + swiperEl.innerHTML)
-    
-    // if (swiperEl) {
-          
-      
-
-      
-    //   swiperEl.addEventListener('slidechange', event => {
-    //     console.log('slide changed')
-    //   })
-    // }
       function getProgress(element) {
         let swiperEl = element.parentElement.querySelector('swiper-container')
         if (swiperEl) {
           let index = swiperEl.swiper.realIndex + 1;
           console.log(index)
-        // swiperEl.addEventListener('progress', event => {
-        //   console.log(event)
-        //   // let onProgress = event => {
-        //   //   let [swiper, progress] = event.detail
-        //   //   console.log(progress)
-        //   // }
-        //   // const [swiper, progress] = event.detail;
-        // })
-      
-        // swiperEl.addEventListener('slidechange', event => {
-        //   console.log('slide changed')
-        // })
-      }
+        }
       }
       
         
     `)}
   </>
 )
-// function GetProgress(attrs: {}, context: DynamicContext) {
-//   const swiperEl = document.querySelector('swiper-container')
-//   console.log('swiperEl: ' + swiperEl)
-//   if (!swiperEl) return
-//   swiperEl.addEventListener('progress', event => {
-//     console.log(event)
-//     // const [swiper, progress] = event.detail;
-//   })
 
-//   swiperEl.addEventListener('slidechange', event => {
-//     console.log('slide changed')
-//   })
-// }
 export function getTemplateImageLinks() {
   let dir = `assets/templates`
   let filenames: string[]
@@ -185,7 +129,7 @@ function GenerateImage(attrs: {}, context: DynamicContext) {
         // pagination="true"
         // pagination-clickable="true"
         space-between="30"
-        slides-per-view="3"
+        slides-per-view="5"
         centered-slides="true"
       >
         {mapArray(templates, item => (
@@ -273,12 +217,12 @@ function OnBoardTemplate(_attrs: {}, context: DynamicContext) {
         onsubmit="emitForm(event)"
       >
         <GenerateImage />
-        <button onclick="getProgress(this)" type="submit">
-          test
-        </button>
+
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
       </form>
-
+      <button onclick="getProgress(this)" type="submit">
+        test
+      </button>
       {/* {onBoardTemplateScripts} */}
       {onBoardTemplateScripts}
       {wsStatus.safeArea}
