@@ -3,7 +3,7 @@ import { Routes } from '../routes.js'
 import { title } from '../../config.js'
 import Style from '../components/style.js'
 import { mapArray } from '../components/fragment.js'
-import { ParseResult, object, string } from 'cast.ts'
+import { ParseResult, literal, object, optional, string, values } from 'cast.ts'
 import { Redirect } from '../components/router.js'
 import {
   shopFieldsParser,
@@ -40,6 +40,7 @@ import { updateUrlVersion } from '../url-version.js'
 import { getAuthRole } from '../auth/role.js'
 import shopHome from './shop-home.js'
 import { toRouteUrl } from '../../url.js'
+import onBoardTemplate from './on-board-template.js'
 
 let pageTitle = '商戶管理'
 
@@ -580,9 +581,14 @@ let routes = {
           ),
         }
       }
-      let { 0: value, 1: label } = object({
+      let {
+        0: value,
+        1: label,
+        2: from,
+      } = object({
         0: string({ nonEmpty: false, trim: true }),
         1: string({ nonEmpty: true }),
+        2: optional(values(['onboarding' as const])),
       }).parse(context.args)
 
       let field: ParseResult<typeof shopFieldsParser>
@@ -661,6 +667,16 @@ let routes = {
 
         shop[field] = value
         messages.push(['eval', `showToast('更新了${label}','info')`])
+        if (from == 'onboarding') {
+          messages.push([
+            'redirect',
+            toRouteUrl(
+              onBoardTemplate.routes,
+              '/on-board/:shop_slug/template',
+              { params: { shop_slug } },
+            ),
+          ])
+        }
       }
 
       if (contactFields.includes(field as any)) {

@@ -106,7 +106,7 @@ let style = Style(/* css */ `
   .circle{
     width: 10rem;
     height: 10rem;
-    border-radius: 10rem;
+    border-radius: 13rem;
     background-color: #e6e6e6;
     display: flex;
     flex-direction: column;
@@ -161,12 +161,12 @@ let onBoardShopProfileScripts = (
       //     item.parentElement.querySelector('#image-wrapper').style.display = 'none'
       //   }
       // }
-      function editImage(editButton, selectFn) {
+      async function editImage(editButton, selectFn) {
         let saveButton = editButton.parentElement.parentElement.querySelector('[data-upload-url]')
         console.log(saveButton)
         let item = editButton.closest('.image-field')
         let image = item.querySelector('.image-field--image')
-        let icon = item.querySelector('.icon')
+        //let icon = item.querySelector('.icon')
         console.log("image: ", image)
         let photo = await selectFn()
         console.log("photo: ", photo)
@@ -174,7 +174,7 @@ let onBoardShopProfileScripts = (
         console.log("dataUrl: " + photo.dataUrl)
 
         image.style.display = 'block'
-        icon.style.display = 'none'
+        // icon.style.display = 'none'
         
         has_logo = true
         image.src = photo.dataUrl
@@ -198,7 +198,6 @@ let onBoardShopProfileScripts = (
         
         if (json.error) {
           showToast(json.error, 'error')
-          //return
         }
         // if (json.message) {
         //   onServerMessage(json.message)
@@ -209,11 +208,17 @@ let onBoardShopProfileScripts = (
         console.log("test: ", input.value)
         value = input.value
         let submit_url = saveButton.dataset.submitUrl
-        emit(submit_url, value, label)
-
-        
-      showToast('更新了' + label, 'info')
-      return <Redirect href={toRouteUrl(Home.routes, '/')} />
+        res = await emit(submit_url, value, label, 'onboarding')
+        console.log("res: " + res)
+        json = await res.json()
+        if (json.error) {
+          showToast(json.error, 'error')
+        }
+        showToast('更新了' + label, 'info')
+        if (json.message) {
+            onServerMessage(json.message)
+          }
+        return //(<Redirect href={toRouteUrl(Home.routes, '/')} />)
       }
     `)}
   </>
@@ -234,6 +239,7 @@ function OnBoardShopProfilePage(attrs: {}, context: DynamicContext) {
   }
 
   let logo_url = getShopLogoImage(shop_slug)
+  let name = shop.name
   let has_logo = logo_url.includes('?t=')
 
   return (
@@ -279,13 +285,15 @@ function OnBoardShopProfilePage(attrs: {}, context: DynamicContext) {
                 class="image-field--image shop-logo"
                 id="image-wrapper"
                 src={logo_url}
+                onload="this.parentElement.querySelector('ion-icon').style.display='none'"
+                onerror="this.onerror=null; this.style.display='none'; this.parentElement.querySelector('ion-icon').style.display='block'"
               />
-              {/* <ion-icon
+              <ion-icon
                 name="image"
                 slot="icon-only"
                 class="icon"
-                style="display: block"
-              ></ion-icon> */}
+                style="display: none"
+              ></ion-icon>
             </button>
           </div>
           <div class="input-body">
@@ -294,7 +302,7 @@ function OnBoardShopProfilePage(attrs: {}, context: DynamicContext) {
               name="shop_name"
               type="text"
               placeholderForAttachRoutes="shopName"
-              placeholder="shop name"
+              value={name}
             ></input>
           </div>
           <button
@@ -328,8 +336,8 @@ function OnBoardShopProfilePage(attrs: {}, context: DynamicContext) {
         <p class="ion-text-center">
           <ion-text id="submitMessage"></ion-text>
         </p>
+        {onBoardShopProfileScripts}
       </ion-content>
-      {onBoardShopProfileScripts}
     </>
   )
 }
