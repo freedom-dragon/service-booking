@@ -29,9 +29,9 @@ import { IonBackButton } from '../components/ion-back-button.js'
 import { env } from '../../env.js'
 import login from './login.js'
 import shopHome from './shop-home.js'
-import { Input } from '../components/input.js';
+import { Input } from '../components/input.js'
 import { Script } from '../components/script.js'
-import { Button } from '../components/button.js';
+import { Button } from '../components/button.js'
 import home from './home.js'
 import onBoardAccount from './on-board-account.js'
 import oauth from '../../oauth.js'
@@ -53,13 +53,14 @@ let style = Style(/* css */ `
   }
   .fontstyle2{
     color: #68a1e2;
-    width: 19rem;
+    width: 22rem;
     justify-content: center;
     flex-wrap: wrap;
     text-align: center;
     align-items: center;
     margin-inline: auto;
     font-size: 13px;
+    margin-bottom: 1rem;
   }
 
   .oauth-provider-list {
@@ -94,89 +95,97 @@ let style = Style(/* css */ `
 
   }
   `)
- 
-
 
 function OnBoard(attrs: {}, context: DynamicContext) {
   return (
     <>
       {style}
-        <ion-header>
+      <ion-header>
         <ion-toolbar color="primary">
-            <IonBackButton href={'/'} color="light" backText="Home" />
-            <ion-title role="heading" aria-level="1">
-              {createShopTitle}
-            </ion-title>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content>
-          <ion-row class="fontstyle">
-            <h1>Create Your Account</h1>
-          </ion-row>
-          <ion-row class="fontstyle2">
-            <ion-col size="auto">
-              By creating an account, you agree to our Terms of Service and have read and understood the Privacy Policy
+          <IonBackButton href={'/'} color="light" backText="Home" />
+          <ion-title role="heading" aria-level="1">
+            {createShopTitle}
+          </ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-row class="fontstyle">
+          <h1>Create Your Account</h1>
+        </ion-row>
+        <ion-row class="fontstyle2">
+          <ion-col size="auto">
+            By creating an account, you agree to our Terms of Service and have
+            read and understood the Privacy Policy
+          </ion-col>
+        </ion-row>
+
+        <ion-row>
+          <ion-button class="oauth-provider-list" href={'/connect/google'}>
+            <ion-col size="1">
+              <ion-icon name="logo-google" class="icontest"></ion-icon>
             </ion-col>
-          </ion-row>
-          
-          <ion-row>
-            <ion-button class="oauth-provider-list" href={'/connect/google'}>
-              <ion-col size="1">
-                <ion-icon name="logo-google" class="icontest"></ion-icon>
-              </ion-col>
-              <ion-col size="11.5">
-                <ion-label>Continue with Google</ion-label>
-              </ion-col>
-            </ion-button>
-          </ion-row>
-          <ion-row>
-            <ion-Button class="oauth-provider-list" href={'/connect/facebook'}>
-              <ion-col size="1">
-                <ion-icon name="logo-apple"></ion-icon>
-              </ion-col>
-              <ion-col size="11.5">
-                <ion-label>Continue with Apple</ion-label>
-              </ion-col>
-            </ion-Button>
-          </ion-row>
-          <ion-row>
-            <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
-              <ion-col size="1">
-                <ion-icon name="logo-facebook"></ion-icon>
-              </ion-col>
-              <ion-col size="11.5">
-                <ion-label>Continue with Facebook</ion-label>
-              </ion-col>
-            </ion-Button>
-          </ion-row>
-          <ion-row>
-            <ion-Button class="oauth-provider-list" href={toRouteUrl(home.routes, '/')}>
-              <ion-col size="1">
-                <ion-icon name="logo-instagram"></ion-icon>
-              </ion-col>
-              <ion-col size="11.5">
-                <ion-label>Continue with Instagram</ion-label>
-              </ion-col>
-            </ion-Button>
-          </ion-row>
-          <ion-row>
-            <ion-Button class="oauth-provider-list" href={toRouteUrl(onBoardEmail.routes, '/on-board/email')}>
-              <ion-col size="1">
-                <ion-icon name="mail-outline"></ion-icon>
-              </ion-col>
-              <ion-col size="11.5">
-                <ion-label>Continue with Email</ion-label>
-              </ion-col>
-            </ion-Button>
-          </ion-row>
-        </ion-content>
+            <ion-col size="11.5">
+              <ion-label>Continue with Google</ion-label>
+            </ion-col>
+          </ion-button>
+        </ion-row>
+        <ion-row>
+          <ion-Button class="oauth-provider-list" href={'/connect/facebook'}>
+            <ion-col size="1">
+              <ion-icon name="logo-apple"></ion-icon>
+            </ion-col>
+            <ion-col size="11.5">
+              <ion-label>Continue with Apple</ion-label>
+            </ion-col>
+          </ion-Button>
+        </ion-row>
+        <ion-row>
+          <ion-Button
+            class="oauth-provider-list"
+            href={toRouteUrl(home.routes, '/')}
+          >
+            <ion-col size="1">
+              <ion-icon name="logo-facebook"></ion-icon>
+            </ion-col>
+            <ion-col size="11.5">
+              <ion-label>Continue with Facebook</ion-label>
+            </ion-col>
+          </ion-Button>
+        </ion-row>
+        <ion-row>
+          <ion-Button
+            class="oauth-provider-list"
+            href={toRouteUrl(home.routes, '/')}
+          >
+            <ion-col size="1">
+              <ion-icon name="logo-instagram"></ion-icon>
+            </ion-col>
+            <ion-col size="11.5">
+              <ion-label>Continue with Instagram</ion-label>
+            </ion-col>
+          </ion-Button>
+        </ion-row>
+        <ion-row>
+          <ion-Button
+            class="oauth-provider-list"
+            href={toRouteUrl(onBoardEmail.routes, '/on-board/email')}
+          >
+            <ion-col size="1">
+              <ion-icon name="mail-outline"></ion-icon>
+            </ion-col>
+            <ion-col size="11.5">
+              <ion-label>Continue with Email</ion-label>
+            </ion-col>
+          </ion-Button>
+        </ion-row>
+      </ion-content>
     </>
   )
 }
 let routes = {
   '/on-board': {
     title: apiEndpointTitle,
-    description: 'creating account',  
+    description: 'creating account',
     adminOnly: false,
     node: <OnBoard />,
   },

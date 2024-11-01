@@ -21,6 +21,7 @@ import NotFoundPageRoute from './pages/not-found.js'
 import { then } from '@beenotung/tslib/result.js'
 import Login from './pages/login.js'
 import Register from './pages/register.js'
+import onBoardSocials from './pages/on-board-socials.js'
 import onBoardTemplate from './pages/on-board-template.js'
 import onBoardShopProfile from './pages/on-board-shop-profile.js'
 import onBoardShopSlug from './pages/on-board-shop-slug.js'
@@ -111,6 +112,7 @@ let routeDict = {
     node: UserAgents,
   },
   ...Login.routes,
+  ...onBoardSocials.routes,
   ...onBoardShopProfile.routes,
   ...onBoardShopSlug.routes,
   ...onBoardAccount.routes,
