@@ -13,16 +13,8 @@ import {
 } from '../context.js'
 import { EarlyTerminate, MessageException } from '../../exception.js'
 import { o } from '../jsx/jsx.js'
-import { find } from 'better-sqlite3-proxy'
 import { proxy, Shop, User } from '../../../db/proxy.js'
-import { ServerMessage } from '../../../client/types.js'
-import { is_email } from '@beenotung/tslib'
-import { Raw } from '../components/raw.js'
-import { hashPassword } from '../../hash.js'
 import { Routes, StaticPageRoute } from '../routes.js'
-import { Node } from '../jsx/types.js'
-import { renderError } from '../components/error.js'
-import { getContextCookies, getWsCookies } from '../cookie.js'
 import { getAuthUser, getAuthUserId } from '../auth/user.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import { toRouteUrl } from '../../url.js'
@@ -37,13 +29,9 @@ import {
   ShopContact,
 } from '../shop-store.js'
 import { object, ParseResult, string } from 'cast.ts'
-import { Formidable } from 'formidable'
-import { placeholderForAttachRoutes } from '../components/placeholder.js'
-import { Router } from 'express'
-import onBoard from './on-board.js'
 import shopAdmin from './shop-admin.js'
-import { ShopContacts, ShopContactsStyle } from '../components/shop-contact.js'
 import { mapArray } from '../components/fragment.js'
+import home from './home.js'
 
 let style = Style(/* css */ `
   #OnBoardShopSocials {
@@ -143,11 +131,25 @@ let style = Style(/* css */ `
     margin: 0.5rem 0;
   }
 `)
-let onBoardShopProfileScripts = (
+let onBoardShopSocialsScripts = (
   <>
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
     {Script(/* javascript */ `
+      function socialsSubmit(saveButton, contacts) {
+        console.log('hello world')
+        console.log(contacts)
+        
+        
+
+      }
+      function saveField(button) {
+        let url = button.dataset.saveUrl
+        let item = button.closest('ion-item')
+        let input = item.querySelector('ion-input')
+                || item.querySelector('ion-textarea')
+        emit(url, input.value, input.label)
+      }
       async function Next(saveButton) {
         
         let url = saveButton.dataset.uploadUrl
@@ -195,18 +197,24 @@ export function OnBoardShopContacts(attrs: {
   shop: Shop
   items: ShopContact[]
 }) {
+  let shop_slug = attrs.shop.slug
   let { shop } = attrs
   return (
-    <form class="social-media-inputs ion-margin">
+    <form
+      class="social-media-inputs ion-margin"
+      method="POST"
+      onsubmit="uploadForm(event)"
+    >
       {mapArray(attrs.items, item => {
         let slug = shop[item.field]
         return slug ? (
           <ion-input
             class="img-icon--text"
-            name={item.label}
+            id={item.label}
             value={slug}
             href={item.prefix + slug}
             target="_blank"
+            data-save-url={`/shop/${shop_slug}/admin/save/${item.field}`}
           >
             <img
               class="img-icon"
@@ -237,6 +245,25 @@ export function OnBoardShopContacts(attrs: {
           </ion-input>
         )
       })}
+      <button
+        class="submit-button"
+        id="submit_button"
+        type="submit"
+        onclick="socialsSubmit(this)"
+        data-submit-url={toRouteUrl(
+          shopAdmin.routes,
+          '/shop/:shop_slug/admin/save/:field',
+          {
+            params: { shop_slug, field: 'name' },
+          },
+        )}
+      >
+        <ion-icon
+          name="chevron-forward-circle"
+          class="icon"
+          style="font-size: 3rem;"
+        ></ion-icon>
+      </button>
     </form>
   )
 }
@@ -244,6 +271,7 @@ export function OnBoardShopContacts(attrs: {
 function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
   let user_id = getAuthUserId(context)
   let shop = getContextShop(context)
+  let contacts = getShopContacts(shop)
 
   let shop_slug = shop.slug
 
@@ -256,7 +284,7 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
 
   let logo_url = getShopLogoImage(shop_slug)
   let name = shop.name
-  let contacts = getShopContacts(shop)
+
   let floating_contact = contacts.find(
     contact => contact.field == shop.floating_contact_method,
   )
@@ -286,119 +314,150 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
             Tell us about your links to your social media platforms (optional)
           </p>
         </div>
-        {/* <form class="form-inline" method="POST" onsubmit="uploadForm(event)">
-          <div class="input-body image-field">
-            <button
-              onclick="editImage(this, selectShopLogo)"
-              class="circle"
-              type="button"
-            >
-              <img
-                class="image-field--image shop-logo"
-                id="image-wrapper"
-                src={logo_url}
-                onload="this.parentElement.querySelector('ion-icon').style.display='none'"
-                onerror="this.onerror=null; this.style.display='none'; this.parentElement.querySelector('ion-icon').style.display='block'"
-              />
-              <ion-icon
-                name="image"
-                slot="icon-only"
-                class="icon"
-                style="display: none"
-              ></ion-icon>
-            </button>
+        <h2 class="ion-margin">聯絡方法</h2>
+        <ion-note color="dark">
+          <div class="ion-margin-horizontal">
+            這些聯絡方法會在商户主頁顯示。
           </div>
-          <div class="input-body">
-            <input
-              id="shop_name"
-              name="shop_name"
-              type="text"
-              placeholderForAttachRoutes="shopName"
-              value={name}
-            ></input>
-          </div>
-          <button
-            id="submit_button"
-            type="submit"
-            onclick="Next(this)"
-            data-upload-url={toRouteUrl(
-              shopAdmin.routes,
-              '/shop/:shop_slug/admin/image',
-              {
-                params: { shop_slug },
-                query: { name: 'logo' },
-              },
-            )}
-            data-submit-url={toRouteUrl(
-              shopAdmin.routes,
-              '/shop/:shop_slug/admin/save/:field',
-              {
-                params: { shop_slug, field: 'name' },
-              },
-            )}
-          >
+          <div class="ion-margin-horizontal">請提供至少一種聯絡方法。</div>
+        </ion-note>
+        {style}
+        <form
+          class="social-media-inputs ion-margin"
+          method="POST"
+          action={toRouteUrl(routes, '/on-board/:shop_slug/socials/submit', {
+            params: { shop_slug },
+          })}
+          //onsubmit="uploadForm(event)"
+        >
+          {mapArray(contacts, item => {
+            let slug = shop[item.field]
+            return slug ? (
+              <ion-input
+                class="img-icon--text"
+                name={item.field}
+                value={slug}
+                href={item.prefix + slug}
+                target="_blank"
+                data-save-url={`/shop/${shop_slug}/admin/save/${item.field}`}
+              >
+                <img
+                  class="img-icon"
+                  slot="icon-only"
+                  src={'/assets/contact-methods/' + item.icon}
+                  alt={'credit to ' + item.credit}
+                  aria-hidden="true"
+                />
+              </ion-input>
+            ) : (
+              <ion-input
+                class="img-icon--text"
+                name={item.field}
+                placeholder="Add handle here"
+                href={item.prefix}
+                target="_blank"
+              >
+                <img
+                  class="img-icon"
+                  slot="icon-only"
+                  src={'/assets/contact-methods/' + item.icon}
+                  alt={'credit to ' + item.credit}
+                  aria-hidden="true"
+                />
+                <span class="img-icon--text" title={item.label}>
+                  {slug}
+                </span>
+              </ion-input>
+            )
+          })}
+          <button class="submit-button" id="submit_button" type="submit">
             <ion-icon
               name="chevron-forward-circle"
               class="icon"
               style="font-size: 3rem;"
             ></ion-icon>
           </button>
-        </form> */}
-        <h2 class="ion-margin">聯絡方法</h2>
-        {style}
-        <OnBoardShopContacts shop={shop} items={contacts} />
-        <button
-          class="submit-button"
-          id="submit_button"
-          type="submit"
-          onclick="Next(this)"
-          data-upload-url={toRouteUrl(
-            shopAdmin.routes,
-            '/shop/:shop_slug/admin/image',
-            {
-              params: { shop_slug },
-              query: { name: 'logo' },
-            },
-          )}
-          data-submit-url={toRouteUrl(
-            shopAdmin.routes,
-            '/shop/:shop_slug/admin/save/:field',
-            {
-              params: { shop_slug, field: 'name' },
-            },
-          )}
-        >
-          <ion-icon
-            name="chevron-forward-circle"
-            class="icon"
-            style="font-size: 3rem;"
-          ></ion-icon>
-        </button>
-
-        {floating_contact ? (
-          <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-            <ion-fab-button
-              href={floating_contact.prefix + shop[floating_contact.field]}
-              target="_blank"
-            >
-              <img src={'/assets/contact-methods/' + floating_contact.icon} />
-            </ion-fab-button>
-          </ion-fab>
-        ) : null}
+        </form>
         <p class="ion-text-center">
           <ion-text id="submitMessage"></ion-text>
         </p>
+        {onBoardShopSocialsScripts}
+        {/* <OnBoardShopContacts shop={shop} items={contacts} /> */}
       </ion-content>
     </>
   )
 }
+let SubmitSocialsParser = object({
+  address: string(),
+  tel: string(),
+  email: string(),
+  facebook: string(),
+  messenger: string(),
+  instagram: string(),
+  youtube: string(),
+  whatsapp: string(),
+  telegram: string(),
+  twitter: string(),
+})
+function SubmitSocials(attrs: {}, context: DynamicContext) {
+  try {
+    let body = getContextFormBody(context)
+    let input: ParseResult<typeof SubmitSocialsParser>
+    let shop = getContextShop(context)
+    let contacts = getShopContacts(shop)
+    let shop_slug = shop.slug
+    input = SubmitSocialsParser.parse(body, { name: 'req.body' })
+    console.log(input)
+    for (let item of contacts) {
+      let field = item.field
+      let value = input[field] || null
+      if (shop[field] != value) {
+        shop[field] = value
+      }
+    }
 
+    return (
+      <Redirect
+        href={toRouteUrl(home.routes, '/on-board/:shop_slug/complete', {
+          params: { shop_slug },
+        })}
+      />
+    )
+    // {
+    //   mapArray(contacts, item => {
+    //     let field = item.field
+    //     let value = input[field]
+    //     console.log(field)
+    //     return (
+    //       <Link
+    //         href={toRouteUrl(
+    //           shopAdmin.routes,
+    //           '/shop/:shop_slug/admin/save/:field',
+    //           {
+    //             params: { shop_slug, field: field },
+    //           },
+    //         )}
+    //       />
+    //     )
+    //   })
+    // }
+  } catch (error) {
+    let message = String(error)
+    throw new MessageException(['update-text', '#submitMessage', message])
+  }
+}
 let routes = {
   '/on-board/:shop_slug/socials': {
     title: '商戶設置',
     description: `Manage shops for on-board users`,
     adminOnly: false,
     node: <OnBoardShopSocialsPage />,
+  },
+  '/on-board/:shop_slug/socials/submit': {
+    title: apiEndpointTitle,
+    description: 'submit shop and merchant profile',
+    adminOnly: false,
+    node: <SubmitSocials />,
   },
 } satisfies Routes
 

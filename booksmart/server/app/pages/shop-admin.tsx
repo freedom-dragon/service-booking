@@ -551,6 +551,7 @@ let routes = {
   '/shop/:shop_slug/admin/image': placeholderForAttachRoutes,
   '/shop/:shop_slug/admin/save/:field': {
     resolve(context) {
+      console.log('success')
       if (context.type !== 'ws') {
         return {
           title: title('method not supported'),
@@ -588,7 +589,9 @@ let routes = {
       } = object({
         0: string({ nonEmpty: false, trim: true }),
         1: string({ nonEmpty: true }),
-        2: optional(values(['onboarding' as const])),
+        2: optional(
+          values(['onboarding' as const, 'onboarding-social' as const]),
+        ),
       }).parse(context.args)
 
       let field: ParseResult<typeof shopFieldsParser>
@@ -668,6 +671,7 @@ let routes = {
         shop[field] = value
         messages.push(['eval', `showToast('更新了${label}','info')`])
         if (from == 'onboarding') {
+          console.log('onboarding works')
           messages.push([
             'redirect',
             toRouteUrl(
