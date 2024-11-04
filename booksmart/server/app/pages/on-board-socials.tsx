@@ -66,6 +66,7 @@ let style = Style(/* css */ `
   div {
     margin: 0 auto;
     display: flex;
+    padding: 0px !important;
     flex-direction: column;
     justify-content: space-around;
   }
@@ -308,7 +309,7 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content id="OnBoardShopSocials" class="ion-padding">
+      <ion-content id="OnBoardShopSocials">
         <div class="texts">
           <p class="socials">socials</p>
           <p class="description">

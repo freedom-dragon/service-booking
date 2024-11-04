@@ -38,7 +38,34 @@ import { env } from '../../env.js'
 let shopCompleteTitle = '注冊完成'
 
 let style = Style(/* css */ `
+
+  .content{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    flex-flow: column wrap-reverse;
+  }
+  .content :nth-child(1) { 
+    order: 1; 
+  }
+  .content :nth-child(2) { 
+    order: 2; 
+  }
+  .content :nth-child(3) { 
+    order: 3; 
+  }
+  #OnBoardComplete{
+    display: flex;
+    flex-wrap : wrap;
+    flex-direction: row-reverse;
+    flex-flow: column wrap-reverse;
+  }
+  .box{
+    flex: 1;
+  }
+
   .description {
+    width:35vw;
     font-family: sans-serif;
     text-align: center;
     min-height: 1rem;
@@ -66,18 +93,40 @@ let style = Style(/* css */ `
     width: 40vh;
     box-shadow: 3px 3px 10px 3px #aaaaaa;
   }
-  .circle{
-    width: 100vw;
-    height: 100vh;
-    border-radius: 13rem;
-    background-color: #e6e6e6;
+
+  .button-container{
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 1.75rem;
-    margin-bottom: 1.75rem;
+    justify-content: center;
+  }
+  .buttons{
+    font-size: 1rem;
+    width: 40vw;
+    height: 3rem;
+    padding: none;
+    border-radius: 0.5rem;
+    background-color: var(--ion-color-primary);
+    color: white;
     cursor: pointer;
-    overflow: hidden;
+    margin: 3vh 10px 0rem;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+  }
+  @media (max-width: 600px) {
+    .content{
+      display: flex;
+      flex-direction: column;
+    }
+    .content :nth-child(1) { order: 1; }
+    .content :nth-child(2) { order: 2; }
+    .content :nth-child(3) { order: 3; }
+    .description {
+      width: 70vw;
+    }
+    .buttons {
+      width: 40vw;
+    }
   }
   `)
 
@@ -103,7 +152,7 @@ let onBoardCompleteScript = (
         try {
           let url = element.dataset.submitUrl
           navigator.clipboard.writeText("我在BookSmart創立了一間店鋪，大家一起來觀看吧！ "+ url)
-          showToast("Url successfully copied to clipboard.", "success")
+          showToast("商店鏈接已複製到剪貼簿，請自行到相應的 app 裏貼上。", "success")
           return
         } catch (err){
           console.log(err)
@@ -124,6 +173,9 @@ function OnBoardComplete(attrs: {}, context: DynamicContext) {
     params: { shop_slug },
   })
   let url = host + urlSuffix
+  let shopAdminUrl = toRouteUrl(shopAdmin.routes, '/shop/:shop_slug/admin', {
+    params: { shop_slug },
+  })
 
   if (!shop) {
     return <Redirect href={toRouteUrl(Home.routes, '/')} />
@@ -151,30 +203,43 @@ function OnBoardComplete(attrs: {}, context: DynamicContext) {
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content id="OnBoardAccount" class="ion-padding">
-        <div>
-          <p class="title">Your site is now live!</p>
-          <p class="description">
-            Get more visitors by sharing your BookSmart shop everywhere
-          </p>
+      <ion-content id="OnBoardComplete">
+        <div class="content">
+          <div class="box text">
+            <p class="title">Your shop is now live!</p>
+            <p class="description">
+              Get more visitors by sharing your BookSmart shop everywhere
+            </p>
+          </div>
+          <div class="box shop-admin">
+            <iframe
+              src={urlSuffix}
+              name="targetframe"
+              class="frame"
+              allowTransparency="true"
+              scrolling="no"
+              frameborder="0"
+            >
+              <item class="circle"></item>
+            </iframe>
+          </div>
+          <div class="button-container box">
+            <button
+              class="continue-edit-button buttons"
+              onclick="emit(this.dataset.submitUrl)"
+              data-submit-url={shopAdminUrl}
+            >
+              continue editing
+            </button>
+            <button
+              class="share-button buttons"
+              onclick="shareUrl(this)"
+              data-submit-url={url}
+            >
+              share your shop
+            </button>
+          </div>
         </div>
-        <div>
-          <iframe
-            src={urlSuffix}
-            name="targetframe"
-            class="frame"
-            allowTransparency="true"
-            scrolling="no"
-            frameborder="0"
-          >
-            <item class="circle"></item>
-          </iframe>
-        </div>
-
-        <button onclick="shareUrl(this)" data-submit-url={url}>
-          share testing
-        </button>
-        <text class="shareResult"></text>
         {onBoardCompleteScript}
       </ion-content>
     </>
