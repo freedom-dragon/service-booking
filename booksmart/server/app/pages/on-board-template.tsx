@@ -42,14 +42,15 @@ import { toVersionedUrl } from '../url-version.js'
 import { Script } from '../components/script.js'
 import { mapArray } from '../components/fragment.js'
 import { number, object, string } from 'cast.ts'
+import { Swiper } from '../components/swiper.js'
 let host = new URL(env.ORIGIN).host
 let createShopTitle = ''
 let iconText = 'arrow-forward-circle-outline'
 let style = Style(/* css */ `
   
   #container {
-    width: 100%;
-    height: 30%;
+    width: 100vw;
+    height: 30vh;
     margin: auto;
     overflow: visible;
     white-space: nowrap;
@@ -99,7 +100,7 @@ let style = Style(/* css */ `
     align-items: center;
   }
   img {
-    border-radius: 2rem;
+    border-radius: 1rem;
     max-height: 300px;
     min-height: 250px;
     box-sizing: border-box;
@@ -119,6 +120,12 @@ let style = Style(/* css */ `
     transition: transform 0.3s ease;
   }
 
+
+.mySwiper .swiper {
+  overflow: visible;
+}
+
+
 `)
 
 let submitParser = object({
@@ -131,16 +138,18 @@ let onBoardTemplateScripts = (
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
     {Script(/* javascript */ `
-      
       async function getProgress(element) {
         try{
+          let swiper = element.parentElement.querySelector('swiper-container').shadowRoot.querySelector('.swiper').style
+          console.log("test: " + {swiper})
+          swiper.overflow = "visible"
           let swiperEl = element.parentElement.querySelector('swiper-container')
             if (swiperEl) {
               let index = swiperEl.swiper.realIndex + 1
               let length = swiperEl.swiper.slides.length
               let url = element.dataset.submitUrl
-              // console.log(index)
-              // console.log(swiperEl.swiper.slides.length)
+              console.log(index)
+              console.log(swiperEl.swiper.slides.length)
               res = await emit(url, index, length)
               // json = await res.json()
               // if (json.error) {
@@ -180,10 +189,23 @@ function GenerateImage(attrs: {}, context: DynamicContext) {
   let templates = getTemplateImageLinks().template
   if (!templates)
     return 'error retrieving template images, please try again later.'
+  if (!'dev') {
+    return (
+      <Swiper
+        id="testSlider"
+        showPagination
+        slideWidth="30%"
+        showArrow
+        slides={[<div style="background:red">1</div>, <>2</>, <>3</>]}
+      ></Swiper>
+    )
+  }
   return (
     <>
       <swiper-container
+        id="templateSlider"
         class="mySwiper"
+        onload="fixSwiperBorder()"
         // pagination="true"
         // pagination-clickable="true"
         space-between="50"
@@ -197,6 +219,18 @@ function GenerateImage(attrs: {}, context: DynamicContext) {
           </swiper-slide>
         ))}
       </swiper-container>
+      {Script(/* javascript */ `
+function fixTemplateSlider() {
+  console.log('fixTemplateSlider')
+  let node = templateSlider.shadowRoot?.querySelector('.swiper')
+  if (node) {
+    node.style.overflow = 'visible'
+  } else {
+    setTimeout(fixTemplateSlider,33)
+  }
+}
+setTimeout(fixTemplateSlider)
+`)}
     </>
   )
 }
@@ -239,7 +273,7 @@ if (config.layout_type === LayoutType.ionic) {
           <ion-title>選擇商店界面樣式</ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content class="ion-padding">
+      <ion-content>
         <div id="OnBoardTemplate">
           <p hidden>{commonTemplatePageText}</p>
           <h1>
@@ -282,6 +316,7 @@ function OnBoardTemplate(attrs: {}, context: DynamicContext) {
           id="submit_button"
           type="submit"
           class="buttons"
+          onload="fixSwiperBorder(this)"
           onclick="getProgress(this)"
           data-submit-url={toRouteUrl(
             routes,
