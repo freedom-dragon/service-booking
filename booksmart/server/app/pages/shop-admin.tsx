@@ -589,9 +589,7 @@ let routes = {
       } = object({
         0: string({ nonEmpty: false, trim: true }),
         1: string({ nonEmpty: true }),
-        2: optional(
-          values(['onboarding' as const, 'onboarding-social' as const]),
-        ),
+        2: optional(values(['onboarding' as const])),
       }).parse(context.args)
 
       let field: ParseResult<typeof shopFieldsParser>

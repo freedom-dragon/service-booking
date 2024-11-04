@@ -113,6 +113,8 @@ let routeDict = {
     node: UserAgents,
   },
   ...Login.routes,
+  ...onBoardComplete.routes,
+
   ...onBoardSocials.routes,
   ...onBoardShopProfile.routes,
   ...onBoardShopSlug.routes,

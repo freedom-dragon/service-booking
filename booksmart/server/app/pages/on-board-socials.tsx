@@ -32,6 +32,7 @@ import { object, ParseResult, string } from 'cast.ts'
 import shopAdmin from './shop-admin.js'
 import { mapArray } from '../components/fragment.js'
 import home from './home.js'
+import onBoardComplete from './on-board-complete.js'
 
 let style = Style(/* css */ `
   #OnBoardShopSocials {
@@ -415,32 +416,18 @@ function SubmitSocials(attrs: {}, context: DynamicContext) {
         shop[field] = value
       }
     }
-
+    console.log('shop_slug: ', shop_slug)
     return (
       <Redirect
-        href={toRouteUrl(home.routes, '/on-board/:shop_slug/complete', {
-          params: { shop_slug },
-        })}
+        href={toRouteUrl(
+          onBoardComplete.routes,
+          '/on-board/:shop_slug/complete',
+          {
+            params: { shop_slug },
+          },
+        )}
       />
     )
-    // {
-    //   mapArray(contacts, item => {
-    //     let field = item.field
-    //     let value = input[field]
-    //     console.log(field)
-    //     return (
-    //       <Link
-    //         href={toRouteUrl(
-    //           shopAdmin.routes,
-    //           '/shop/:shop_slug/admin/save/:field',
-    //           {
-    //             params: { shop_slug, field: field },
-    //           },
-    //         )}
-    //       />
-    //     )
-    //   })
-    // }
   } catch (error) {
     let message = String(error)
     throw new MessageException(['update-text', '#submitMessage', message])
