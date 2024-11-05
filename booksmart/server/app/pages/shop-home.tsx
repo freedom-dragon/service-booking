@@ -85,9 +85,19 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   let floating_contact = contacts.find(
     contact => contact.field == shop.floating_contact_method,
   )
+  let theme = {
+    // title: '#f005',
+    title: '',
+  }
+  let theme_style = Style(/* css */ `
+    h1 {
+      color: ${theme.title};
+    }
+  `)
   return (
     <>
       {style}
+      {theme_style}
       <ion-header hidden>
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
