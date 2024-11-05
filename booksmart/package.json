@@ -54,6 +54,7 @@
     "open": "^10.1.0",
     "sanitize-html": "^2.13.0",
     "sweetalert2-unrestricted": "^11.10.5",
+    "swiper": "^11.1.14",
     "timezone-date.ts": "^2.0.1",
     "url-router.ts": "^1.2.0",
     "ws": "^8.18.0"
@@ -71,6 +72,7 @@
     "@types/node": "^20.16.3",
     "@types/nodemailer": "^6.4.15",
     "@types/sanitize-html": "^2.13.0",
+    "@types/swiper": "^6.0.0",
     "@types/ws": "^8.5.12",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",

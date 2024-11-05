@@ -34,6 +34,7 @@ import serviceDetail from './service-detail.js'
 import shopHome from './shop-home.js'
 import { findUserByTel } from '../user-store.js'
 import onBoard from './on-board.js'
+import onBoardAccount from './on-board-account.js'
 
 let log = debugLog('app:verification-code')
 log.enabled = true
@@ -97,7 +98,6 @@ async function requestEmailVerification(
     let input = requestEmailVerificationParser.parse(body, { name: 'body' })
 
     let user: User | undefined
-
     if (input.email) {
       let email: string
       try {
@@ -109,34 +109,42 @@ async function requestEmailVerification(
         ])
       }
       user = find(proxy.user, { email })
-      if (!user) {
+      console.log(!user && !onboard)
+      if (!user && !onboard) {
         throw new MessageException([
           'eval',
           `showToast('這個電郵址未有登記。你可以在預約時自動登記。','info')`,
         ])
       }
-    } else if (input.tel) {
-      let tel = to_full_hk_mobile_phone(input.tel)
-      if (!tel) {
+    } else if (!onboard) {
+      if (input.tel) {
+        let tel = to_full_hk_mobile_phone(input.tel)
+        if (!tel) {
+          throw new MessageException([
+            'eval',
+            `showToast('請輸入香港的手提電話號碼','warning')`,
+          ])
+        }
+        user = findUserByTel(tel)
+        if (!user) {
+          throw new MessageException([
+            'eval',
+            `showToast('這個電話號碼未有登記。你可以在預約時自動登記。','info')`,
+          ])
+        }
+      } else {
         throw new MessageException([
           'eval',
-          `showToast('請輸入香港的手提電話號碼','warning')`,
+          `showToast('請輸入電話號碼或電郵地址','warning')`,
         ])
       }
-      user = findUserByTel(tel)
-      if (!user) {
-        throw new MessageException([
-          'eval',
-          `showToast('這個電話號碼未有登記。你可以在預約時自動登記。','info')`,
-        ])
-      }
-    } else {
-      throw new MessageException([
-        'eval',
-        `showToast('請輸入電話號碼或電郵地址','warning')`,
-      ])
     }
-    let email = user.email
+    let email: string | null | undefined
+    if (user) {
+      email = user.email
+    } else {
+      email = input.email
+    }
     if (!email) {
       throw new MessageException([
         'eval',
@@ -152,7 +160,7 @@ async function requestEmailVerification(
       request_time,
       revoke_time: null,
       match_id: null,
-      user_id: user.id || null,
+      user_id: user ? user.id || null : null,
       shop_id: shop ? shop.id! : null,
     })
     let { html, text } = verificationCodeEmail(
@@ -265,12 +273,19 @@ export function verificationCodeEmail(
               email: attrs.email,
             },
           })
-        : toRouteUrl(routes, '/admin/verify/email/result', {
-            query: {
-              code: attrs.passcode,
-              email: attrs.email,
-            },
-          }))
+        : onBoard
+          ? toRouteUrl(routes, '/admin/verify/email/result', {
+              query: {
+                code: attrs.passcode,
+                email: attrs.email,
+              },
+            })
+          : toRouteUrl(routes, '/merchant/verify/email/result', {
+              query: {
+                code: attrs.passcode,
+                email: attrs.email,
+              },
+            }))
     : null
   let node = (
     <div style="font-size: 1rem">
@@ -340,7 +355,10 @@ function VerifyEmailPage(
           <p>{title || '無法將驗證碼發送到您的電郵地址。'}.</p>
           {renderError(error, context)}
           <p>
-            您可以在「<Link href={loginRouteUrl(context)}>登入頁面</Link>
+            您可以在「
+            <Link href={loginRouteUrl(context, undefined, attrs.onboard)}>
+              登入頁面
+            </Link>
             」要求另一個驗證碼。
           </p>
         </>
@@ -534,6 +552,7 @@ limit 1
 async function checkEmailVerificationCode(
   shop: Shop | null,
   context: DynamicContext,
+  onboard?: Boolean,
 ): Promise<StaticPageRoute> {
   let res = (context as ExpressContext).res
   let email: string | null = null
@@ -618,7 +637,9 @@ async function checkEmailVerificationCode(
         <Redirect
           href={
             !shop
-              ? toRouteUrl(profile.routes, '/admin/profile')
+              ? onboard
+                ? toRouteUrl(onBoardAccount.routes, '/on-board/account')
+                : toRouteUrl(profile.routes, '/admin/profile')
               : lastBooking
                 ? toRouteUrl(
                     serviceDetail.routes,
@@ -655,9 +676,13 @@ async function checkEmailVerificationCode(
                   params: { shop_slug: shop.slug },
                   query,
                 })
-              : toRouteUrl(routes, '/admin/verify/email/result', {
-                  query,
-                })
+              : onboard
+                ? toRouteUrl(routes, '/merchant/verify/email/result', {
+                    query,
+                  })
+                : toRouteUrl(routes, '/admin/verify/email/result', {
+                    query,
+                  })
           }
         />
       ),
@@ -730,7 +755,7 @@ let routes = {
   },
   '/merchant/verify/email/code/submit': {
     streaming: false,
-    resolve: context => checkEmailVerificationCode(null, context),
+    resolve: context => checkEmailVerificationCode(null, context, true),
   },
 } satisfies Routes
 

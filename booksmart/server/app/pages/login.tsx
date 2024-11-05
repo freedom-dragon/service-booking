@@ -22,6 +22,7 @@ import verificationCode from './verification-code.js'
 import profile from './profile.js'
 import { IonBackButton } from '../components/ion-back-button.js'
 import home from './home.js'
+import onBoardEmail from './on-board-email.js'
 
 let style = Style(/* css */ `
 #login .field {
@@ -263,12 +264,19 @@ async function submit(context: ExpressContext) {
 export function loginRouteUrl(
   context: DynamicContext,
   query?: { code?: string },
+  onboard?: boolean,
 ) {
-  let shop_slug = getContextShopSlug(context)
-  return toRouteUrl(routes, '/shop/:shop_slug/login', {
-    params: { shop_slug },
-    query,
-  })
+  if (onboard) {
+    return toRouteUrl(onBoardEmail.routes, '/on-board/email', {
+      query,
+    })
+  } else {
+    let shop_slug = getContextShopSlug(context)
+    return toRouteUrl(routes, '/shop/:shop_slug/login', {
+      params: { shop_slug },
+      query,
+    })
+  }
 }
 
 export function LoginLink(attrs: {}, context: DynamicContext) {

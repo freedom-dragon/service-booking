@@ -21,6 +21,10 @@ import NotFoundPageRoute from './pages/not-found.js'
 import { then } from '@beenotung/tslib/result.js'
 import Login from './pages/login.js'
 import Register from './pages/register.js'
+import onBoardComplete from './pages/on-board-complete.js'
+import onBoardSocials from './pages/on-board-socials.js'
+import onBoardTemplate from './pages/on-board-template.js'
+import onBoardShopProfile from './pages/on-board-shop-profile.js'
 import onBoardShopSlug from './pages/on-board-shop-slug.js'
 import onBoardAccount from './pages/on-board-account.js'
 import onBoardEmail from './pages/on-board-email.js'
@@ -109,10 +113,15 @@ let routeDict = {
     node: UserAgents,
   },
   ...Login.routes,
+  ...onBoardComplete.routes,
+
+  ...onBoardSocials.routes,
+  ...onBoardShopProfile.routes,
   ...onBoardShopSlug.routes,
   ...onBoardAccount.routes,
   ...onBoard.routes,
   ...onBoardEmail.routes,
+  ...onBoardTemplate.routes,
   ...oauth.routes,
   ...Register.routes,
   ...Profile.routes,

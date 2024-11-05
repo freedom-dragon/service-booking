@@ -362,6 +362,10 @@ function AdminSubmitShop(attrs: {}, context: DynamicContext) {
       bank_account_num: null,
       bank_account_name: null,
       accept_cash: true,
+      background_color: null,
+      font_family: null,
+      top_banner: null,
+      booking_banner: null,
     })
   })
   try {

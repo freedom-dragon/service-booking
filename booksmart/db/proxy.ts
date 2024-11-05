@@ -1,5 +1,5 @@
 import { proxySchema } from 'better-sqlite3-proxy'
-import { db } from './db.js'
+import { db } from './db'
 
 export type Method = {
   id?: null | number
@@ -108,6 +108,10 @@ export type Shop = {
   bank_account_num: null | string
   bank_account_name: null | string
   accept_cash: null | boolean
+  background_color: null | string
+  font_family: null | string
+  top_banner: null | number
+  booking_banner: null | number
 }
 
 export type VerificationCode = {

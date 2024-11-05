@@ -17,6 +17,7 @@ export function Swiper(
     showPagination?: boolean
     keepTallest?: boolean
     maxHeight?: string // default "unset !important"
+    slideWidth?: string // default "100%"
   } & (
     | {
         slides: NodeList
@@ -47,6 +48,17 @@ export function Swiper(
   max-height: ${maxHeight};
 }
 `
+  }
+
+  let slideWidth = attrs.slideWidth ?? '100%'
+  if (attrs.slideWidth) {
+    if (maxHeight) {
+      css += /* css */ `
+#${attrs.id} .swiper-slide {
+  width: ${attrs.slideWidth};
+}
+`
+    }
   }
   if (attrs.images) {
     css += /* css */ `
@@ -141,7 +153,7 @@ function swiperSlide(swiper, dir) {
     : ((+wrapper.dataset.index || 0) + dir)
   index = (index + n) % n
   wrapper.dataset.index = index
-  wrapper.style.transform = 'translateX(-' + index + '00%)'
+  wrapper.style.transform = 'translateX(calc(-'+index+' * ${slideWidth}))'
   if (${!(attrs.keepTallest || false)}) {
     let slide = slides[index]
     swiper.style.maxHeight = 'auto'

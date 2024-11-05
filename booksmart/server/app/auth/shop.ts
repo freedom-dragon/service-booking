@@ -15,7 +15,6 @@ export function getContextShop(
   if (context.shop) return context.shop
 
   let shop_slug = getContextShopSlug(context)
-
   let shop = find(proxy.shop, { slug: shop_slug })
   if (!shop) throw new HttpError(404, 'shop not found')
 

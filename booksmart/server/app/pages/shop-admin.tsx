@@ -3,7 +3,7 @@ import { Routes } from '../routes.js'
 import { title } from '../../config.js'
 import Style from '../components/style.js'
 import { mapArray } from '../components/fragment.js'
-import { ParseResult, object, string } from 'cast.ts'
+import { ParseResult, literal, object, optional, string, values } from 'cast.ts'
 import { Redirect } from '../components/router.js'
 import {
   shopFieldsParser,
@@ -40,6 +40,8 @@ import { updateUrlVersion } from '../url-version.js'
 import { getAuthRole } from '../auth/role.js'
 import shopHome from './shop-home.js'
 import { toRouteUrl } from '../../url.js'
+import onBoardTemplate from './on-board-template.js'
+import onBoardSocials from './on-board-socials.js'
 
 let pageTitle = '商戶管理'
 
@@ -550,6 +552,7 @@ let routes = {
   '/shop/:shop_slug/admin/image': placeholderForAttachRoutes,
   '/shop/:shop_slug/admin/save/:field': {
     resolve(context) {
+      console.log('success')
       if (context.type !== 'ws') {
         return {
           title: title('method not supported'),
@@ -580,9 +583,14 @@ let routes = {
           ),
         }
       }
-      let { 0: value, 1: label } = object({
+      let {
+        0: value,
+        1: label,
+        2: from,
+      } = object({
         0: string({ nonEmpty: false, trim: true }),
         1: string({ nonEmpty: true }),
+        2: optional(values(['onboarding' as const])),
       }).parse(context.args)
 
       let field: ParseResult<typeof shopFieldsParser>
@@ -649,8 +657,27 @@ let routes = {
           ],
         )
       } else {
+        if (field == 'name') {
+          let name = find(proxy.shop, { name: value })
+          if (!name) {
+            messages.push([
+              'eval',
+              `showToast('商鋪名稱已被使用，請重新輸入。','warning')`,
+            ])
+          }
+        }
+
         shop[field] = value
         messages.push(['eval', `showToast('更新了${label}','info')`])
+        if (from == 'onboarding') {
+          console.log('onboarding works')
+          messages.push([
+            'redirect',
+            toRouteUrl(onBoardSocials.routes, '/on-board/:shop_slug/socials', {
+              params: { shop_slug },
+            }),
+          ])
+        }
       }
 
       if (contactFields.includes(field as any)) {
@@ -693,7 +720,7 @@ let routes = {
           description: 'update shop locale',
           node: <Redirect href={`/`} />,
         }
-      }      
+      }
       let { is_owner } = getAuthRole(context)
       if (!is_owner) {
         return {
