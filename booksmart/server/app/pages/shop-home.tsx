@@ -30,6 +30,7 @@ import { formatServiceDuration } from '../format/duration.js'
 import { getContextShop } from '../auth/shop.js'
 import { loginRouteUrl } from './login.js'
 import { toRouteUrl } from '../../url.js'
+import { Script } from '../components/script.js'
 
 let style = Style(/* css */ `
 #ShopHome {
@@ -53,7 +54,9 @@ ion-thumbnail {
   display: flex;
   align-items: center;
 }
+.thumbnail-size {
 
+}
 `)
 
 let select_service = db.prepare<
@@ -85,14 +88,55 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   let floating_contact = contacts.find(
     contact => contact.field == shop.floating_contact_method,
   )
+  let booking_banner_radius!: string | null
+
+  // console.log('background_color: ', background_color)
+  console.log('font_family: ', shop.font_family)
+  console.log('top_banner: ', shop.top_banner)
+  console.log('booking_banner: ', shop.booking_banner)
+  if (shop.booking_banner === 1) {
+    booking_banner_radius = '2rem'
+  } else if (shop.booking_banner === 2) {
+    booking_banner_radius = '2rem'
+  } else if (shop.booking_banner === 3) {
+    booking_banner_radius = '0rem 2rem 2rem 0rem'
+  }
+  let theme = {
+    // title: '#f005',
+    background_color: shop.background_color,
+    font_family: shop.font_family,
+    top_banner: shop.top_banner,
+    booking_banner: booking_banner_radius,
+  }
+
+  let loadUserStyle = Style(/* css */ `
+    #ShopHome {
+      background-color: ${theme.background_color};
+      --background: ${theme.background_color};
+      font-family: ${theme.font_family};
+    }
+    .ion-list--style {
+      background: ${theme.background_color};
+    }
+    .social-media-buttons .img-icon--text {
+      font-family: ${theme.font_family};
+    }
+    .service--card{
+      border-radius: ${theme.booking_banner};
+    }
+    
+  `)
   return (
     <>
       {style}
+      {loadUserStyle}
+
       <ion-header hidden>
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
             {name}
           </ion-title>
+          {shop.top_banner == 3 ? <p>top banner 3</p> : <p>not top banner 3</p>}
           <ion-buttons slot="end">
             {user ? (
               <Link tagName="ion-button" href="/shop-home/add">
@@ -166,7 +210,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         {services.length == 0 ? (
           <p class="ion-margin-horizontal">未有{locale.service}</p>
         ) : null}
-        <ion-list>
+        <ion-list class="ion-list--style">
           {mapArray(services, ({ id, timeslot_count }) => {
             let service = proxy.service[id]
             let { used, times } = countBooking({ service, user })
@@ -181,7 +225,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                 class="service--card"
               >
                 <div class="d-flex">
-                  <div>
+                  <div class="thumbnail-size">
                     <ion-thumbnail>
                       <img
                         src={getServiceCoverImage(shop_slug, service.slug)}

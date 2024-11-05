@@ -33,6 +33,7 @@ import shopAdmin from './shop-admin.js'
 import { mapArray } from '../components/fragment.js'
 import home from './home.js'
 import onBoardComplete from './on-board-complete.js'
+import onBoardShopProfile from './on-board-shop-profile.js'
 
 let style = Style(/* css */ `
   #OnBoardShopSocials {
@@ -295,17 +296,21 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
   let floating_contact = contacts.find(
     contact => contact.field == shop.floating_contact_method,
   )
-  console.log('')
-  console.log('contact: ' + { contacts })
-  console.log('shop: ' + shop)
-  console.log('floating contact: ' + floating_contact)
+  // console.log('')
+  // console.log('contact: ' + { contacts })
+  // console.log('shop: ' + shop)
+  // console.log('floating contact: ' + floating_contact)
   return (
     <>
       {style}
       <ion-header>
         <ion-toolbar color="primary">
           <IonBackButton
-            href={toRouteUrl(onBoardShopSlug.routes, '/on-board/shop-slug')}
+            href={toRouteUrl(
+              onBoardShopProfile.routes,
+              '/on-board/:shop_slug/profile',
+              { params: { shop_slug: shop_slug } },
+            )}
             color="light"
             backText="Admin"
           />

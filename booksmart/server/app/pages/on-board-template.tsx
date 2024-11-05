@@ -45,6 +45,7 @@ import { number, object, string, values } from 'cast.ts'
 import { Swiper } from '../components/swiper.js'
 import { getAuthRole } from '../auth/role.js'
 import onBoardShopProfile from './on-board-shop-profile.js'
+import onBoardShopSlug from './on-board-shop-slug.js'
 let host = new URL(env.ORIGIN).host
 let createShopTitle = ''
 let iconText = 'arrow-forward-circle-outline'
@@ -272,7 +273,11 @@ if (config.layout_type === LayoutType.ionic) {
       {style}
       <ion-header>
         <ion-toolbar color="primary">
-          <IonBackButton href="/" backText="Home" color="light" />
+          <IonBackButton
+            href={toRouteUrl(onBoardShopSlug.routes, '/on-board/shop-slug')}
+            backText="Home"
+            color="light"
+          />
           <ion-title>選擇商店界面樣式</ion-title>
         </ion-toolbar>
       </ion-header>

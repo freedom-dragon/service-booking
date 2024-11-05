@@ -38,6 +38,7 @@ import { placeholderForAttachRoutes } from '../components/placeholder.js'
 import { Router } from 'express'
 import onBoard from './on-board.js'
 import shopAdmin from './shop-admin.js'
+import onBoardTemplate from './on-board-template.js'
 
 let style = Style(/* css */ `
   #OnBoardShopProfile {
@@ -248,7 +249,11 @@ function OnBoardShopProfilePage(attrs: {}, context: DynamicContext) {
       <ion-header>
         <ion-toolbar color="primary">
           <IonBackButton
-            href={toRouteUrl(onBoardShopSlug.routes, '/on-board/shop-slug')}
+            href={toRouteUrl(
+              onBoardTemplate.routes,
+              '/on-board/:shop_slug/template',
+              { params: { shop_slug } },
+            )}
             color="light"
             backText="Admin"
           />
