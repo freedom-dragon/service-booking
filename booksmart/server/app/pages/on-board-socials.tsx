@@ -111,6 +111,10 @@ let style = Style(/* css */ `
   .img-icon--text {
     word-break: break-word;
     text-align: start;
+    background: var(--ion-color-secondary);
+    display: flex;
+    --border-radius: unset !important;
+    border-radius: 0.4rem;
   }
   .social-media-inputs {
     flex-direction: column;
@@ -132,6 +136,7 @@ let style = Style(/* css */ `
   ion-input {
     margin: 0.5rem 0;
   }
+
 `)
 let onBoardShopSocialsScripts = (
   <>
@@ -316,13 +321,13 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
             Tell us about your links to your social media platforms (optional)
           </p>
         </div>
-        <h2 class="ion-margin">聯絡方法</h2>
+        {/* <h2 class="ion-margin">聯絡方法</h2>
         <ion-note color="dark">
           <div class="ion-margin-horizontal">
             這些聯絡方法會在商户主頁顯示。
           </div>
           <div class="ion-margin-horizontal">請提供至少一種聯絡方法。</div>
-        </ion-note>
+        </ion-note> */}
         {style}
         <form
           class="social-media-inputs ion-margin"

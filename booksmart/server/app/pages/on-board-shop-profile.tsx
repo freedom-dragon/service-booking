@@ -257,7 +257,7 @@ function OnBoardShopProfilePage(attrs: {}, context: DynamicContext) {
           </ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content id="OnBoardShopProfile" class="ion-padding">
+      <ion-content id="OnBoardShopProfile">
         <div class="texts">
           <p class="profile">profile</p>
           <p class="description">
