@@ -41,6 +41,7 @@ import { getAuthRole } from '../auth/role.js'
 import shopHome from './shop-home.js'
 import { toRouteUrl } from '../../url.js'
 import onBoardTemplate from './on-board-template.js'
+import onBoardSocials from './on-board-socials.js'
 
 let pageTitle = '商戶管理'
 
@@ -672,11 +673,9 @@ let routes = {
           console.log('onboarding works')
           messages.push([
             'redirect',
-            toRouteUrl(
-              onBoardTemplate.routes,
-              '/on-board/:shop_slug/template',
-              { params: { shop_slug } },
-            ),
+            toRouteUrl(onBoardSocials.routes, '/on-board/:shop_slug/socials', {
+              params: { shop_slug },
+            }),
           ])
         }
       }

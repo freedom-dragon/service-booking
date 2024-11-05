@@ -137,7 +137,10 @@ bank_name text NULL
 bank_account_num text NULL
 bank_account_name text NULL
 accept_cash boolean NULL
-
+background_color text NULL
+font_family text NULL
+top_banner integer NULL
+booking_banner integer NULL
 
 shop_locale
 -----------

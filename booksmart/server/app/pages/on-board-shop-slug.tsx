@@ -30,6 +30,7 @@ import { count } from 'better-sqlite3-proxy'
 import { getContextCookies } from '../cookie.js'
 import onBoardAccount from './on-board-account.js'
 import onBoardShopProfile from './on-board-shop-profile.js'
+import onBoardTemplate from './on-board-template.js'
 
 let host = new URL(env.ORIGIN).host
 
@@ -539,6 +540,10 @@ function SubmitShop(attrs: {}, context: DynamicContext) {
       bank_account_num: null,
       bank_account_name: null,
       accept_cash: true,
+      background_color: null,
+      font_family: null,
+      top_banner: null,
+      booking_banner: null,
     })
   })
   try {
@@ -557,8 +562,8 @@ function SubmitShop(attrs: {}, context: DynamicContext) {
   return (
     <Redirect
       href={toRouteUrl(
-        onBoardShopProfile.routes,
-        '/on-board/:shop_slug/profile',
+        onBoardTemplate.routes,
+        '/on-board/:shop_slug/template',
         {
           params: { shop_slug: input.slug },
         },

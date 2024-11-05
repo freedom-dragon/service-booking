@@ -13,7 +13,7 @@ import {
 import { EarlyTerminate } from '../../exception.js'
 import { o } from '../jsx/jsx.js'
 import { find } from 'better-sqlite3-proxy'
-import { proxy, User } from '../../../db/proxy.js'
+import { Shop, proxy, User } from '../../../db/proxy.js'
 import { ServerMessage } from '../../../client/types.js'
 import { is_email } from '@beenotung/tslib'
 import { Raw } from '../components/raw.js'
@@ -41,13 +41,18 @@ import { readdirSync } from 'fs'
 import { toVersionedUrl } from '../url-version.js'
 import { Script } from '../components/script.js'
 import { mapArray } from '../components/fragment.js'
-import { number, object, string } from 'cast.ts'
+import { number, object, string, values } from 'cast.ts'
 import { Swiper } from '../components/swiper.js'
+import { getAuthRole } from '../auth/role.js'
+import onBoardShopProfile from './on-board-shop-profile.js'
 let host = new URL(env.ORIGIN).host
 let createShopTitle = ''
 let iconText = 'arrow-forward-circle-outline'
 let style = Style(/* css */ `
   
+  #OnBoardTemplate {
+    height: 80vh;
+  }
   #container {
     width: 100vw;
     height: 30vh;
@@ -140,16 +145,14 @@ let onBoardTemplateScripts = (
     {Script(/* javascript */ `
       async function getProgress(element) {
         try{
-          let swiper = element.parentElement.querySelector('swiper-container').shadowRoot.querySelector('.swiper').style
-          console.log("test: " + {swiper})
-          swiper.overflow = "visible"
           let swiperEl = element.parentElement.querySelector('swiper-container')
             if (swiperEl) {
               let index = swiperEl.swiper.realIndex + 1
               let length = swiperEl.swiper.slides.length
               let url = element.dataset.submitUrl
-              console.log(index)
-              console.log(swiperEl.swiper.slides.length)
+              // console.log("url: " + url)
+              // console.log("index: " + index)
+              // console.log("length: " + length)
               res = await emit(url, index, length)
               // json = await res.json()
               // if (json.error) {
@@ -189,17 +192,17 @@ function GenerateImage(attrs: {}, context: DynamicContext) {
   let templates = getTemplateImageLinks().template
   if (!templates)
     return 'error retrieving template images, please try again later.'
-  if (!'dev') {
-    return (
-      <Swiper
-        id="testSlider"
-        showPagination
-        slideWidth="30%"
-        showArrow
-        slides={[<div style="background:red">1</div>, <>2</>, <>3</>]}
-      ></Swiper>
-    )
-  }
+  // if (!'dev') {
+  //   return (
+  //     <Swiper
+  //       id="testSlider"
+  //       showPagination
+  //       slideWidth="30%"
+  //       showArrow
+  //       slides={[<div style="background:red">1</div>, <>2</>, <>3</>]}
+  //     ></Swiper>
+  //   )
+  // }
   return (
     <>
       <swiper-container
@@ -221,7 +224,7 @@ function GenerateImage(attrs: {}, context: DynamicContext) {
       </swiper-container>
       {Script(/* javascript */ `
 function fixTemplateSlider() {
-  console.log('fixTemplateSlider')
+  // console.log('fixTemplateSlider')
   let node = templateSlider.shadowRoot?.querySelector('.swiper')
   if (node) {
     node.style.overflow = 'visible'
@@ -287,13 +290,13 @@ if (config.layout_type === LayoutType.ionic) {
   )
 }
 function OnBoardTemplate(attrs: {}, context: DynamicContext) {
-  console.log('Context: ' + context)
+  // console.log('Context: ' + context)
   let user_id = getAuthUserId(context)
   let user = getAuthUser(context)
   console.log(user?.nickname)
   if (!user_id) return <Redirect href={toRouteUrl(home.routes, '/')} />
   let shop_slug = getContextShopSlug(context)
-  console.log('shop slug: ' + shop_slug)
+  // console.log('shop slug: ' + shop_slug)
   let shop = getContextShop(context)
   console.log('shop: ', shop)
   // let shop_slug = shop.slug
@@ -308,7 +311,7 @@ function OnBoardTemplate(attrs: {}, context: DynamicContext) {
         id="container"
         method="POST"
         // action={toRouteUrl(routes, '/on-board/:shop_slug/template/submit')}
-        onsubmit="emitForm(event)"
+        onsubmit="uploadForm(event)"
       >
         <GenerateImage />
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
@@ -334,7 +337,54 @@ function OnBoardTemplate(attrs: {}, context: DynamicContext) {
     </>
   )
 }
-function SubmitTemplate() {}
+function SubmitTemplate(
+  attrs: {
+    shop?: Shop
+    is_owner: boolean | null
+    index: number
+    length: number
+  },
+  context: DynamicContext,
+) {
+  console.log('testSubmit')
+  console.log('attrs.index: ' + attrs.index)
+  console.log('attrs.length: ' + attrs.length)
+  if (!attrs.shop) {
+    console.log('Your login info is invalid, please try again later.')
+    return <Redirect href={toRouteUrl(home.routes, '/')} />
+  }
+  if (!attrs.is_owner) {
+    console.log(
+      'Your are not the owner of this shop, please try to login with the correct account.',
+    )
+    return <Redirect href={toRouteUrl(home.routes, '/')} />
+  }
+  if (attrs.index === 1) {
+    attrs.shop['background_color'] = '#F7D4D2'
+    attrs.shop['font_family'] = 'Noto Serif'
+    attrs.shop['top_banner'] = 1
+    attrs.shop['booking_banner'] = 1
+  } else if (attrs.index === 2) {
+    attrs.shop['background_color'] = '#BDABAB'
+    attrs.shop['font_family'] = 'Noto Serif'
+    attrs.shop['top_banner'] = 2
+    attrs.shop['booking_banner'] = 2
+  } else if (attrs.index === 3) {
+    attrs.shop['background_color'] = '#C2DFFF'
+    attrs.shop['font_family'] = 'Noto Serif'
+    attrs.shop['top_banner'] = 3
+    attrs.shop['booking_banner'] = 3
+  }
+  return (
+    <Redirect
+      href={toRouteUrl(
+        onBoardShopProfile.routes,
+        '/on-board/:shop_slug/profile',
+        { params: { shop_slug: attrs.shop.slug } },
+      )}
+    />
+  )
+}
 let routes: Routes = {
   '/on-board/:shop_slug/template': {
     title: title('選擇商店界面樣式'),
@@ -343,10 +393,39 @@ let routes: Routes = {
     node: OnBoardTemplatePage,
   },
   '/on-board/:shop_slug/template/submit': {
-    title: apiEndpointTitle,
-    description: `API endpoint for ${config.short_site_name}`,
-    guestOnly: true,
-    node: <SubmitTemplate />,
+    resolve(context) {
+      if (context.type !== 'ws') {
+        return {
+          title: title('method not supported'),
+          description: 'update shop info',
+          node: 'this api is only for ws',
+        }
+      }
+      let shop = getContextShop(context)
+      let { is_owner } = getAuthRole(context)
+      console.log('shop: ' + shop['owner_id'])
+      console.log('is_owner: ' + is_owner)
+      let { 0: index, 1: length } = object({
+        0: number(),
+        1: number(),
+      }).parse(context.args)
+      console.log('index: ', index)
+      console.log('length: ', length)
+      return {
+        title: apiEndpointTitle,
+        description: `API endpoint for ${config.short_site_name}`,
+        guestOnly: true,
+
+        node: (
+          <SubmitTemplate
+            shop={shop}
+            is_owner={is_owner}
+            index={index}
+            length={length}
+          />
+        ),
+      }
+    },
   },
 }
 export default { routes }
