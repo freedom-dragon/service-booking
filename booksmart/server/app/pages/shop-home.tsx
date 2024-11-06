@@ -110,6 +110,9 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   }
 
   let loadUserStyle = Style(/* css */ `
+    h2 {
+      color: #fff;
+    }
     #ShopHome {
       background-color: ${theme.background_color};
       --background: ${theme.background_color};
@@ -118,25 +121,53 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
     .ion-list--style {
       background: ${theme.background_color};
     }
+    ion-button {
+      --background: ${theme.background_color} !important;
+    }
     .social-media-buttons .img-icon--text {
       font-family: ${theme.font_family};
     }
     .service--card{
       border-radius: ${theme.booking_banner};
     }
+    .circle{
+      width: 10rem;
+      height: 10rem;
+      border-radius: 13rem;
+      background-color: #e6e6e6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 1.75rem;
+      margin-bottom: 1.75rem;
+      cursor: pointer;
+      overflow: hidden;
+      max-height: 15vh;
+      max-width: 15vh;
+      position: relative;
+      bottom: 8.8vh;
+
+    }
+    
     
   `)
+  let loadDefaultStyle = Style(/* css */ `
+    .field-button {
+      --background: var(--ion-color-primary) !important;
+    }
+    `)
   return (
     <>
       {style}
       {loadUserStyle}
+      {theme.background_color === null ? loadDefaultStyle : null}
 
       <ion-header hidden>
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
             {name}
           </ion-title>
-          {shop.top_banner == 3 ? <p>top banner 3</p> : <p>not top banner 3</p>}
+
           <ion-buttons slot="end">
             {user ? (
               <Link tagName="ion-button" href="/shop-home/add">
@@ -155,23 +186,79 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="ShopHome">
-        <h1
-          class="ion-margin"
-          style="
-          display: flex;
-          gap: 0.5rem;
-          justify-content: center;
-          align-items: center;
-          flex-wrap: wrap;
-        "
-        >
-          <img class="shop-logo" src={getShopLogoImage(shop_slug)} />
-          {name}
-        </h1>
-        <img
-          class="ion-margin-horizontal shop-cover-image"
-          src={getShopCoverImage(shop_slug)}
-        />
+        {shop.top_banner === 1 ? (
+          <>
+            <img
+              class="shop-logo"
+              style="display: flex; justify-content: center; margin: 0.5rem auto 0;"
+              src={getShopLogoImage(shop_slug)}
+            />
+
+            <h1
+              class="ion-margin"
+              style="
+                display: flex;
+                gap: 0.5rem;
+                justify-content: center;
+                align-items: center;
+                flex-wrap: wrap;
+                margin-top: 0.2rem;
+              "
+            >
+              {name}
+            </h1>
+            <img
+              class="ion-margin-horizontal shop-cover-image"
+              src={getShopCoverImage(shop_slug)}
+            />
+          </>
+        ) : shop.top_banner === 3 ? (
+          <>
+            <h1
+              class="ion-margin"
+              style="
+                display: flex;
+                gap: 0.5rem;
+                justify-content: center;
+                align-items: center;
+                flex-wrap: wrap;
+                margin-top: 0.2rem;
+              "
+            >
+              {name}
+            </h1>
+            <img
+              class="shop-cover-image"
+              style="width: 100%"
+              src={getShopCoverImage(shop_slug)}
+            />
+            <img
+              class="shop-cover-image shop-logo circle"
+              style="display: flex; justify-content: center; margin: 0.5rem auto -4rem;"
+              src={getShopLogoImage(shop_slug)}
+            />
+          </>
+        ) : (
+          <>
+            <h1
+              class="ion-margin"
+              style="
+                display: flex;
+                gap: 0.5rem;
+                justify-content: center;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
+              <img class="shop-logo" src={getShopLogoImage(shop_slug)} />
+              {name}
+            </h1>
+            <img
+              class="ion-margin-horizontal shop-cover-image"
+              src={getShopCoverImage(shop_slug)}
+            />
+          </>
+        )}
 
         <h2
           class="ion-margin"
@@ -284,7 +371,12 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                         人同行，每人{formatPrice(service.peer_price)}
                       </p>
                     ) : null}
-                    <ion-button size="small" color="primary" fill="block">
+                    <ion-button
+                      class="field-button"
+                      size="small"
+                      color="primary"
+                      fill="block"
+                    >
                       立即預約
                     </ion-button>
                   </div>

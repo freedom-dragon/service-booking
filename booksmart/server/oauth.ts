@@ -26,13 +26,12 @@ export function attachRoutes(app: Router) {
         key: env.GOOGLE_CLIENT_ID,
         secret: env.GOOGLE_CLIENT_SECRET,
         scope: ['email', 'profile'],
-        callback: '/login/google',
+        callback: '/connect/google/callback',
       },
     }),
   )
-
   // TODO store user into liveview session (signed cookie) instead of express session
-  app.get('/login/google', async (req, res, next) => {
+  app.get('/connect/google', async (req, res, next) => {
     try {
       let access_token = req.session?.grant?.response?.access_token
       let googleRes = await fetch(
@@ -80,14 +79,17 @@ export function attachRoutes(app: Router) {
       req.session.save()
       // TODO redirect to original shop
       // res.json({ id })
-      res.redirect('/')
+      res.redirect('/on-board/shop-slug')
     } catch (error) {
       next(error)
     }
   })
+  app.get('/connect/google/callback', async (req, res) => {
+    console.log('google callback successfully ran')
+  })
 }
 
 let routes = {
-  '/login/google': placeholderForAttachRoutes,
+  '/connect/google': placeholderForAttachRoutes,
 } satisfies Routes
 export default { routes, attachRoutes }

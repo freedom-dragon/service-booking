@@ -69,6 +69,7 @@ let style = Style(/* css */ `
     margin: 0.5rem 0;
     width: fit-content;
   }
+
   `)
 
 let OnBoardEmailPage = (
@@ -149,17 +150,21 @@ let emailFormBody = (
     />
     {config.layout_type !== LayoutType.ionic ? (
       <div class="field">
-        <label>
+        <label>郵件可能會被當成垃圾郵件處理，請檢查垃圾郵件信箱。</label>
+        {/* <label>
           <input type="checkbox" name="include_link" /> Include magic link (more
           convince but may be treated as spam)
-        </label>
+        </label> */}
       </div>
     ) : (
       <ion-item>
-        <ion-checkbox slot="start" name="include_link" />
+        <ion-label>
+          郵件可能會被當成垃圾郵件處理，請檢查垃圾郵件信箱。
+        </ion-label>
+        {/* <ion-checkbox slot="start" name="include_link" />
         <ion-label>
           Include magic link (more convince but may be treated as spam)
-        </ion-label>
+        </ion-label> */}
       </ion-item>
     )}
     {config.layout_type !== LayoutType.ionic ? (

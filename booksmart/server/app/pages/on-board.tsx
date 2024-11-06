@@ -59,7 +59,7 @@ let style = Style(/* css */ `
     text-align: center;
     align-items: center;
     margin-inline: auto;
-    font-size: 13px;
+    font-size: 0.7rem;
     margin-bottom: 1rem;
   }
 
@@ -114,8 +114,8 @@ function OnBoard(attrs: {}, context: DynamicContext) {
         </ion-row>
         <ion-row class="fontstyle2">
           <ion-col size="auto">
-            By creating an account, you agree to our Terms of Service and have
-            read and understood the Privacy Policy
+            By creating an account, you agree to our End User License Agreement
+            and have read and understood the Privacy Policy
           </ion-col>
         </ion-row>
 

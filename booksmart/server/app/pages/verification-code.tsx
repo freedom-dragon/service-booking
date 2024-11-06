@@ -164,7 +164,11 @@ async function requestEmailVerification(
       shop_id: shop ? shop.id! : null,
     })
     let { html, text } = verificationCodeEmail(
-      { passcode, email: input.include_link ? email : null, shop: shop },
+      {
+        passcode,
+        email: input.include_link ? email : onboard ? email : null,
+        shop: shop,
+      },
       context,
     )
     let info = await sendEmail({
