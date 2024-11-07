@@ -408,10 +408,12 @@ export function ShopTopBanner(attrs: { shop: Shop }, context: DynamicContext) {
           <img class="shop-logo" src={getShopLogoImage(shop.slug)} />
           {name}
         </h1>
-        <img
+        <div
           class="ion-margin-horizontal shop-cover-image"
-          src={getShopCoverImage(shop_slug)}
-        />
+          style="width: 100vw"
+        ></div>
+        <img src={getShopCoverImage(shop_slug)} />
+        <img src={getShopCoverImage(shop_slug)} />
       </>
     )
   } else if (shop.top_banner === 3) {

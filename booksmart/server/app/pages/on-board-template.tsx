@@ -130,7 +130,9 @@ let style = Style(/* css */ `
 .mySwiper .swiper {
   overflow: visible;
 }
-
+.mySwiper::part(container) {
+  overflow: visible;
+}
 
 `)
 
@@ -223,18 +225,6 @@ function GenerateImage(attrs: {}, context: DynamicContext) {
           </swiper-slide>
         ))}
       </swiper-container>
-      {Script(/* javascript */ `
-function fixTemplateSlider() {
-  // console.log('fixTemplateSlider')
-  let node = templateSlider.shadowRoot?.querySelector('.swiper')
-  if (node) {
-    node.style.overflow = 'visible'
-  } else {
-    setTimeout(fixTemplateSlider,33)
-  }
-}
-setTimeout(fixTemplateSlider)
-`)}
     </>
   )
 }

@@ -19,7 +19,20 @@ import type {
   SweetAlertIcon,
   SweetAlertOptions,
 } from 'sweetalert2-unrestricted'
+import Style from './style.js'
 
+let ionDatetimeButtonFix = Style(/* css */ `
+  ion-datetime-button::part(native) {
+    margin: 0px;
+    --ion-color-base: #000 !important;
+} 
+ion-datetime-button::part(native):hover {
+  background-color: rgb(0 0 0 / 0.08);
+}
+  #date-button {
+    color: #fff;
+  }
+`)
 export function ServiceTimeslotPicker(attrs: {
   /* database proxy */
   service: Service
@@ -39,10 +52,14 @@ export function ServiceTimeslotPicker(attrs: {
 
   let dateItem = (
     <ion-item>
+      {ionDatetimeButtonFix}
       <div slot="start">
         <ion-icon name="calendar-outline"></ion-icon> 日期
       </div>
-      <ion-datetime-button datetime={attrs.datePicker}></ion-datetime-button>
+      <ion-datetime-button
+        datetime={attrs.datePicker}
+        style="margin: 0px"
+      ></ion-datetime-button>
       <ion-modal>
         <ion-datetime
           id={attrs.datePicker}
@@ -148,14 +165,15 @@ export function ServiceTimeslotPicker(attrs: {
         <ion-item slot="header">
           <div slot="start">
             <ion-icon name="time-outline"></ion-icon> 時間
-            <ion-button
-              id={attrs.selectedTimeButton}
-              color="light"
-              class="ion-padding-horizontal"
-            >
-              未選擇
-            </ion-button>
           </div>
+          <ion-button
+            id={attrs.selectedTimeButton}
+            color="light"
+            class="time-button"
+            style="padding-inline-start: 0px; padding-inline-end: 0px; --ion-color-base: #edeef0 !important; margin: 0px; --box-shadow: 0px; font-size: 1rem; --padding-top: 6px; --padding-bottom: 6px; --padding-start: 12px; --padding-end: 12px; --border-radius: 0.4rem;"
+          >
+            未選擇
+          </ion-button>
         </ion-item>
         <div class="ion-padding-horizontal" slot="content">
           <ion-radio-group
