@@ -196,82 +196,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="ShopHome">
-        {shop.top_banner === 1 ? (
-          <>
-            <img
-              class="shop-logo"
-              style="display: flex; justify-content: center; margin: 0.5rem auto 0;"
-              src={getShopLogoImage(shop_slug)}
-            />
-
-            <h1
-              class="ion-margin"
-              style="
-                display: flex;
-                gap: 0.5rem;
-                justify-content: center;
-                align-items: center;
-                flex-wrap: wrap;
-                margin-top: 0.2rem;
-              "
-            >
-              {name}
-            </h1>
-            <img
-              class="ion-margin-horizontal shop-cover-image"
-              src={getShopCoverImage(shop_slug)}
-            />
-          </>
-        ) : null}
-        {shop.top_banner === 3 ? (
-          <>
-            <h1
-              class="ion-margin"
-              style="
-                display: flex;
-                gap: 0.5rem;
-                justify-content: center;
-                align-items: center;
-                flex-wrap: wrap;
-                margin-top: 0.2rem;
-              "
-            >
-              {name}
-            </h1>
-            <img
-              class="shop-cover-image"
-              style="width: 100%"
-              src={getShopCoverImage(shop_slug)}
-            />
-            <img
-              class="shop-cover-image shop-logo circle"
-              style="display: flex; justify-content: center; margin: 0.5rem auto -4rem;"
-              src={getShopLogoImage(shop_slug)}
-            />
-          </>
-        ) : null}
-        {shop.top_banner === 2 ? (
-          <>
-            <h1
-              class="ion-margin"
-              style="
-                display: flex;
-                gap: 0.5rem;
-                justify-content: center;
-                align-items: center;
-                flex-wrap: wrap;
-              "
-            >
-              <img class="shop-logo" src={getShopLogoImage(shop_slug)} />
-              {name}
-            </h1>
-            <img
-              class="ion-margin-horizontal shop-cover-image"
-              src={getShopCoverImage(shop_slug)}
-            />
-          </>
-        ) : null}
-
+        <ShopTopBanner shop={shop} />
         <h2
           class="ion-margin"
           style="
@@ -436,6 +361,111 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   )
 }
 
+export function ShopTopBanner(attrs: { shop: Shop }, context: DynamicContext) {
+  let shop = attrs.shop
+  let { name, slug: shop_slug } = shop
+  if (shop.top_banner === 1) {
+    return (
+      <>
+        <img
+          class="shop-logo"
+          style="display: flex; justify-content: center; margin: 0.5rem auto 0;"
+          src={getShopLogoImage(shop_slug)}
+        />
+
+        <h1
+          class="ion-margin"
+          style="
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 0.2rem;
+          "
+        >
+          {name}
+        </h1>
+        <img
+          class="ion-margin-horizontal shop-cover-image"
+          src={getShopCoverImage(shop_slug)}
+        />
+      </>
+    )
+  } else if (shop.top_banner === 2) {
+    return (
+      <>
+        <h1
+          class="ion-margin"
+          style="
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+          "
+        >
+          <img class="shop-logo" src={getShopLogoImage(shop.slug)} />
+          {name}
+        </h1>
+        <img
+          class="ion-margin-horizontal shop-cover-image"
+          src={getShopCoverImage(shop_slug)}
+        />
+      </>
+    )
+  } else if (shop.top_banner === 3) {
+    return (
+      <>
+        <h1
+          class="ion-margin"
+          style="
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 0.2rem;
+          "
+        >
+          {name}
+        </h1>
+        <img
+          class="shop-cover-image"
+          style="width: 100%"
+          src={getShopCoverImage(shop_slug)}
+        />
+        <img
+          class="shop-cover-image shop-logo circle"
+          style="display: flex; justify-content: center; margin: 0.5rem auto -4rem;"
+          src={getShopLogoImage(shop_slug)}
+        />
+      </>
+    )
+  } else {
+    return (
+      <>
+        <h1
+          class="ion-margin"
+          style="
+              display: flex;
+              gap: 0.5rem;
+              justify-content: center;
+              align-items: center;
+              flex-wrap: wrap;
+            "
+        >
+          <img class="shop-logo" src={getShopLogoImage(shop.slug)} />
+          {name}
+        </h1>
+        <img
+          class="ion-margin-horizontal shop-cover-image"
+          src={getShopCoverImage(shop_slug)}
+        />
+      </>
+    )
+  }
+}
 function AddService(attrs: { shop: Shop }, context: DynamicContext) {
   if (context.type != 'ws') {
     throw new Error('expect ws mode')
