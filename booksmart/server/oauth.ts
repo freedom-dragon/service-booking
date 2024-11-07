@@ -28,6 +28,11 @@ export function attachRoutes(app: Router) {
         scope: ['email', 'profile'],
         callback: '/connect/google/callback',
       },
+      facebook: {
+        key: env.FACEBOOK_APP_ID,
+        secret: env.FACEBOOK_APP_SECRET,
+        callback: '/connect/facebook/callback',
+      },
     }),
   )
   // TODO store user into liveview session (signed cookie) instead of express session
@@ -91,5 +96,6 @@ export function attachRoutes(app: Router) {
 
 let routes = {
   '/connect/google': placeholderForAttachRoutes,
+  '/connect/facebook': placeholderForAttachRoutes,
 } satisfies Routes
 export default { routes, attachRoutes }

@@ -46,9 +46,14 @@ ion-thumbnail {
 .card-text-container {
   margin-inline-start: 1rem;
   flex-grow: 1;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 .card-text-container ion-button {
   margin-inline-end: 1rem;
+}
+.card-text {
+  margin-top: 0px;
 }
 .card--field {
   display: flex;
@@ -113,11 +118,16 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
     h2 {
       color: #fff;
     }
+    #add-service-button {
+      --background: #fff !important;
+      color: ${theme.background_color}; 
+    }
     #ShopHome {
       background-color: ${theme.background_color};
       --background: ${theme.background_color};
       font-family: ${theme.font_family};
     }
+    
     .ion-list--style {
       background: ${theme.background_color};
     }
@@ -212,7 +222,8 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
               src={getShopCoverImage(shop_slug)}
             />
           </>
-        ) : shop.top_banner === 3 ? (
+        ) : null}
+        {shop.top_banner === 3 ? (
           <>
             <h1
               class="ion-margin"
@@ -238,7 +249,8 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
               src={getShopLogoImage(shop_slug)}
             />
           </>
-        ) : (
+        ) : null}
+        {shop.top_banner === 2 ? (
           <>
             <h1
               class="ion-margin"
@@ -258,7 +270,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
               src={getShopCoverImage(shop_slug)}
             />
           </>
-        )}
+        ) : null}
 
         <h2
           class="ion-margin"
@@ -270,7 +282,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
         >
           {/* {owner_name} {locale.service} */}
           {/* Booking */}
-          立即預約
+          <span style="vertical-align: middle">立即預約</span>
           {shop.owner_id == user?.id ? (
             <>
               <Link
@@ -278,6 +290,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                   params: { shop_slug },
                 })}
                 tagName="ion-button"
+                id="add-service-button"
                 style="
                   margin-inline-start: 1rem;
                   margin-top: auto;
@@ -320,7 +333,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
                     </ion-thumbnail>
                   </div>
                   <div class="card-text-container">
-                    <h3>{service.name}</h3>
+                    <h3 class="card-text">{service.name}</h3>
                     {user_ticket_count > 0 ? (
                       <ion-badge>有套票</ion-badge>
                     ) : times > 1 ? (

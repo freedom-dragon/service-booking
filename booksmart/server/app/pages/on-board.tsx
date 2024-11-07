@@ -36,6 +36,7 @@ import home from './home.js'
 import onBoardAccount from './on-board-account.js'
 import oauth from '../../oauth.js'
 import onBoardEmail from './on-board-email.js'
+import { attachRoutes } from '../app.js'
 
 let createShopTitle = '登錄'
 
@@ -114,13 +115,20 @@ function OnBoard(attrs: {}, context: DynamicContext) {
         </ion-row>
         <ion-row class="fontstyle2">
           <ion-col size="auto">
-            By creating an account, you agree to our End User License Agreement
-            and have read and understood the Privacy Policy
+            By creating an account, you agree to our{' '}
+            <a href={'/end-user-license-agreement'}>
+              End User License Agreement
+            </a>{' '}
+            and have read and understood the{' '}
+            <a href={'/privacy-policy'}>Privacy Policy</a>
           </ion-col>
         </ion-row>
 
         <ion-row>
-          <ion-button class="oauth-provider-list" href={'/connect/google'}>
+          <ion-button
+            class="oauth-provider-list"
+            href={toRouteUrl(oauth.routes, '/connect/google')}
+          >
             <ion-col size="1">
               <ion-icon name="logo-google" class="icontest"></ion-icon>
             </ion-col>
@@ -130,7 +138,7 @@ function OnBoard(attrs: {}, context: DynamicContext) {
           </ion-button>
         </ion-row>
         <ion-row>
-          <ion-Button class="oauth-provider-list" href={'/connect/facebook'}>
+          <ion-Button class="oauth-provider-list" href={'/'}>
             <ion-col size="1">
               <ion-icon name="logo-apple"></ion-icon>
             </ion-col>
@@ -142,7 +150,7 @@ function OnBoard(attrs: {}, context: DynamicContext) {
         <ion-row>
           <ion-Button
             class="oauth-provider-list"
-            href={toRouteUrl(home.routes, '/')}
+            href={toRouteUrl(oauth.routes, '/connect/facebook')}
           >
             <ion-col size="1">
               <ion-icon name="logo-facebook"></ion-icon>
@@ -191,4 +199,4 @@ let routes = {
   },
 } satisfies Routes
 
-export default { routes }
+export default { routes, attachRoutes }
