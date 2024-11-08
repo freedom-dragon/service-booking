@@ -193,7 +193,8 @@ export function ServiceTimeslotPicker(attrs: {
   let timeScript = Script(
     /* javascript */ `
 ${attrs.timeRadioGroup}.addEventListener('ionChange', event => {
-  ${attrs.selectedTimeButton}.textContent = event.detail.value || '未選擇'
+  let selectedTimeSlot = event.detail.value.split(' ')
+  ${attrs.selectedTimeButton}.textContent = selectedTimeSlot[0] || '未選擇'
 })
 `,
     'no-minify',
