@@ -94,17 +94,29 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
     contact => contact.field == shop.floating_contact_method,
   )
   let booking_banner_radius!: string | null
-
+  let booking_banner_display!: string | null
+  let booking_banner_thumbnail!: string | null
   // console.log('background_color: ', background_color)
   console.log('font_family: ', shop.font_family)
   console.log('top_banner: ', shop.top_banner)
   console.log('booking_banner: ', shop.booking_banner)
+
   if (shop.booking_banner === 1) {
     booking_banner_radius = '2rem'
+    booking_banner_display = 'flex'
+    booking_banner_thumbnail = '12rem'
   } else if (shop.booking_banner === 2) {
     booking_banner_radius = '2rem'
+    booking_banner_display = 'block'
+    booking_banner_thumbnail = 'auto'
   } else if (shop.booking_banner === 3) {
     booking_banner_radius = '0rem 2rem 2rem 0rem'
+    booking_banner_display = 'flex'
+    booking_banner_thumbnail = '12rem'
+  } else {
+    booking_banner_radius = '2rem'
+    booking_banner_display = 'flex'
+    booking_banner_thumbnail = '12rem'
   }
   let theme = {
     // title: '#f005',
@@ -112,6 +124,8 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
     font_family: shop.font_family,
     top_banner: shop.top_banner,
     booking_banner: booking_banner_radius,
+    booking_banner_display,
+    booking_banner_thumbnail,
   }
 
   let loadUserStyle = Style(/* css */ `
@@ -137,8 +151,15 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
     .social-media-buttons .img-icon--text {
       font-family: ${theme.font_family};
     }
+    .d-flex{
+      display: ${theme.booking_banner_display};
+    }
     .service--card{
       border-radius: ${theme.booking_banner};
+    }
+    ion-card
+    ion-thumbnail {
+      --size: ${theme.booking_banner_thumbnail};
     }
     .circle{
       width: 10rem;
@@ -158,7 +179,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
       bottom: 8.8vh;
 
     }
-    
+
     
   `)
   let loadDefaultStyle = Style(/* css */ `
@@ -243,84 +264,171 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
               user_id: user?.id,
               service_id: service.id!,
             })
-            return (
-              <Link
-                tagName="ion-card"
-                href={`/shop/${shop.slug}/service/${service.slug}`}
-                class="service--card"
-              >
-                <div class="d-flex">
-                  <div class="thumbnail-size">
-                    <ion-thumbnail>
-                      <img
-                        src={getServiceCoverImage(shop_slug, service.slug)}
-                      />
-                    </ion-thumbnail>
-                  </div>
-                  <div class="card-text-container">
-                    <h3 class="card-text">{service.name}</h3>
-                    {user_ticket_count > 0 ? (
-                      <ion-badge>有套票</ion-badge>
-                    ) : times > 1 ? (
-                      <p class="card--field">
-                        <ion-icon name="copy-outline" />
-                        &nbsp;次數:{' '}
-                        {used ? (
-                          <>
-                            {used}/{times}
-                          </>
-                        ) : (
-                          times
-                        )}
-                      </p>
-                    ) : null}
-                    {!timeslot_count ? (
-                      <p class="card--field">
-                        <ion-icon name="ban-outline" color="danger" />
-                        &nbsp;未公開
-                      </p>
-                    ) : null}
-                    <p class="card--field">
-                      <ion-icon name="hourglass-outline" />
-                      &nbsp;時長: {formatServiceDuration(service)}
-                    </p>
-                    {service.original_price ? (
-                      <p
-                        class="card--field"
-                        style="text-decoration: line-through"
-                      >
-                        <ion-icon name="cash-outline" />
-                        &nbsp;原價:{' '}
-                        {+service.original_price
-                          ? '$' + service.original_price
-                          : service.original_price}
-                      </p>
-                    ) : null}
-                    <p class="card--field">
-                      <ion-icon name="cash-outline" />
-                      &nbsp;費用:{' '}
-                      {+service.unit_price!
-                        ? '$' + service.unit_price + '/' + service.price_unit
-                        : service.unit_price}
-                    </p>
-                    {service.peer_amount && service.peer_price ? (
-                      <p class="card--field">
-                        {service.peer_amount}
-                        人同行，每人{formatPrice(service.peer_price)}
-                      </p>
-                    ) : null}
-                    <ion-button
-                      class="field-button"
-                      size="small"
-                      color="primary"
-                      fill="block"
+            if (shop.booking_banner === 2) {
+              return (
+                <Link
+                  tagName="ion-card"
+                  href={`/shop/${shop.slug}/service/${service.slug}`}
+                  class="service--card"
+                >
+                  <div class="d-flex">
+                    <div class="thumbnail-size" style="height: 12rem;">
+                      <ion-thumbnail>
+                        <img
+                          src={getServiceCoverImage(shop_slug, service.slug)}
+                          style="object-fit: fill; height: 12rem;"
+                        />
+                      </ion-thumbnail>
+                    </div>
+                    <div
+                      class="card-text-container"
+                      style="margin-bottom: 1rem;"
                     >
-                      立即預約
-                    </ion-button>
+                      <h3 class="card-text" style="margin-top: 1rem;">
+                        {service.name}
+                      </h3>
+                      {user_ticket_count > 0 ? (
+                        <ion-badge>有套票</ion-badge>
+                      ) : times > 1 ? (
+                        <p class="card--field">
+                          <ion-icon name="copy-outline" />
+                          &nbsp;次數:{' '}
+                          {used ? (
+                            <>
+                              {used}/{times}
+                            </>
+                          ) : (
+                            times
+                          )}
+                        </p>
+                      ) : null}
+                      {!timeslot_count ? (
+                        <p class="card--field">
+                          <ion-icon name="ban-outline" color="danger" />
+                          &nbsp;未公開
+                        </p>
+                      ) : null}
+                      <p class="card--field">
+                        <ion-icon name="hourglass-outline" />
+                        &nbsp;時長: {formatServiceDuration(service)}
+                      </p>
+                      {service.original_price ? (
+                        <p
+                          class="card--field"
+                          style="text-decoration: line-through"
+                        >
+                          <ion-icon name="cash-outline" />
+                          &nbsp;原價:{' '}
+                          {+service.original_price
+                            ? '$' + service.original_price
+                            : service.original_price}
+                        </p>
+                      ) : null}
+                      <p class="card--field">
+                        <ion-icon name="cash-outline" />
+                        &nbsp;費用:{' '}
+                        {+service.unit_price!
+                          ? '$' + service.unit_price + '/' + service.price_unit
+                          : service.unit_price}
+                      </p>
+                      {service.peer_amount && service.peer_price ? (
+                        <p class="card--field">
+                          {service.peer_amount}
+                          人同行，每人{formatPrice(service.peer_price)}
+                        </p>
+                      ) : null}
+                      <ion-button
+                        class="field-button"
+                        size="small"
+                        color="primary"
+                        fill="block"
+                      >
+                        立即預約
+                      </ion-button>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            )
+                </Link>
+              )
+            } else {
+              return (
+                <Link
+                  tagName="ion-card"
+                  href={`/shop/${shop.slug}/service/${service.slug}`}
+                  class="service--card"
+                >
+                  <div class="d-flex">
+                    <div class="thumbnail-size">
+                      <ion-thumbnail>
+                        <img
+                          src={getServiceCoverImage(shop_slug, service.slug)}
+                        />
+                      </ion-thumbnail>
+                    </div>
+                    <div class="card-text-container">
+                      <h3 class="card-text">{service.name}</h3>
+                      {user_ticket_count > 0 ? (
+                        <ion-badge>有套票</ion-badge>
+                      ) : times > 1 ? (
+                        <p class="card--field">
+                          <ion-icon name="copy-outline" />
+                          &nbsp;次數:{' '}
+                          {used ? (
+                            <>
+                              {used}/{times}
+                            </>
+                          ) : (
+                            times
+                          )}
+                        </p>
+                      ) : null}
+                      {!timeslot_count ? (
+                        <p class="card--field">
+                          <ion-icon name="ban-outline" color="danger" />
+                          &nbsp;未公開
+                        </p>
+                      ) : null}
+                      <p class="card--field">
+                        <ion-icon name="hourglass-outline" />
+                        &nbsp;時長: {formatServiceDuration(service)}
+                      </p>
+                      {service.original_price ? (
+                        <p
+                          class="card--field"
+                          style="text-decoration: line-through"
+                        >
+                          <ion-icon name="cash-outline" />
+                          &nbsp;原價:{' '}
+                          {+service.original_price
+                            ? '$' + service.original_price
+                            : service.original_price}
+                        </p>
+                      ) : null}
+                      <p class="card--field">
+                        <ion-icon name="cash-outline" />
+                        &nbsp;費用:{' '}
+                        {+service.unit_price!
+                          ? '$' + service.unit_price + '/' + service.price_unit
+                          : service.unit_price}
+                      </p>
+                      {service.peer_amount && service.peer_price ? (
+                        <p class="card--field">
+                          {service.peer_amount}
+                          人同行，每人{formatPrice(service.peer_price)}
+                        </p>
+                      ) : null}
+                      <ion-button
+                        class="field-button"
+                        size="small"
+                        color="primary"
+                        fill="block"
+                      >
+                        立即預約
+                      </ion-button>
+                    </div>
+                  </div>
+                </Link>
+              )
+            }
           })}
         </ion-list>
 
