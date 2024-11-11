@@ -612,6 +612,13 @@ function submitBooking() {
   if (!bookingForm.amount.value) bookingForm.amount.value = 1
   if (!bookingForm.date.value) return showToast('請選擇日期', 'error')
   if (!bookingForm.time.value) return showToast('請選擇時間', 'error')
+  try{
+    let bookingForm_time_array = bookingForm.time.value.split(' ')
+    bookingForm.time.value = bookingForm_time_array[0].trim()
+  } catch (e) {return showToast(e, 'error')}
+    bookingForm.date.value.split('T')[0]
+    + ' ' +
+    bookingForm.time.value)
   if (!bookingForm.tel.value) return showToast('請提供電話號碼', 'error')
   let questions = document.querySelectorAll('[data-question-id]')
   let answers = []

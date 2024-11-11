@@ -133,7 +133,7 @@ export function ServiceTimeslotPicker(attrs: {
         for (let hour of hours) {
           let item = document.createElement('ion-item')
           let radio = document.createElement('ion-radio') as HTMLInputElement
-          radio.value = hour.start_time
+          radio.value = hour.start_time + ' - ' + hour.end_time
           if (hour.start_time == bookingForm.time.value) {
             isTimeAllowed = true
           }
@@ -193,8 +193,8 @@ export function ServiceTimeslotPicker(attrs: {
   let timeScript = Script(
     /* javascript */ `
 ${attrs.timeRadioGroup}.addEventListener('ionChange', event => {
-  let selectedTimeSlot = event.detail.value.split(' ')
-  ${attrs.selectedTimeButton}.textContent = selectedTimeSlot[0] || '未選擇'
+  let selectedTimeSlot = event.detail.value
+  ${attrs.selectedTimeButton}.textContent = selectedTimeSlot || '未選擇'
 })
 `,
     'no-minify',
