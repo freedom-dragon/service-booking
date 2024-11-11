@@ -65,7 +65,7 @@ let style = Style(/* css */ `
   }
 
   .description {
-    width:35vw;
+    width:40vw;
     font-family: sans-serif;
     text-align: center;
     min-height: 1rem;

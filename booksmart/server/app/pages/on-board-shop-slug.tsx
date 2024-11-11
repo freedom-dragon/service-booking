@@ -120,7 +120,7 @@ ion-button {
   font-size: 2.5rem; 
   left: 0.93rem;
   background: transparent;
-  color: #68a1e2;
+  color: var(--ion-color-primary);
 }
 
 .text-input {
@@ -173,7 +173,7 @@ ion-item div.label-text-wrapper div.label-text {
 
   .arrowIcon {
       font-size: 2rem;
-      color: #68a1e2;
+      color: var(--ion-color-primary);
       text-size-adjust: auto;
       position: relative;
       background: transparent; /* Smaller arrow icon */
@@ -192,7 +192,7 @@ style = Style(/* css */ `
   height: 2rem;
   border-radius: 3rem;
   border: 0.0625rem solid #ddd;
-  border-color: #68a1e2;
+  border-color: var(--ion-color-primary);
   font-size: 1rem;
   --padding-start: 1rem;
   color: var(--ion-color-medium);
@@ -353,6 +353,7 @@ function CreateShopSlug(attrs: {}, context: DynamicContext) {
             <ion-note
               class="item--hint ion-text-center"
               id="preview_url"
+              hidden="false"
               color="dark"
             >
               預覽: {host + '/shop/'}
@@ -378,11 +379,12 @@ function OnBoardShopSlugCheck(attrs: {}, context: WsContext) {
     let slug = (context.args?.[0] || '') as string
     let is_valid = slug && slug_regex.test(slug)
     let is_available = is_valid && count(proxy.shop, { slug }) == 0
-    console.log({ slug })
-    console.log({ is_available })
-    console.log({ is_valid })
+    // console.log({ slug })
+    // console.log({ is_available })
+    // console.log({ is_valid })
     let messages: ServerMessage[] = [
       ['update-props', '#submitButton', { disabled: !is_available }],
+      ['update-props', '#preview_url', { hidden: !is_available }],
       [
         'update-props',
         '#submitButtonIcon',

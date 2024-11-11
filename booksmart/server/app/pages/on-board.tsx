@@ -44,7 +44,7 @@ let style = Style(/* css */ `
   
 
   .fontstyle{
-    color: #68a1e2;
+    color: var(--ion-color-primary);
     width: 19rem;
     justify-content: center;
     flex-wrap: wrap;
@@ -53,7 +53,7 @@ let style = Style(/* css */ `
     margin-inline: auto;
   }
   .fontstyle2{
-    color: #68a1e2;
+    color: var(--ion-color-primary);
     width: 22rem;
     justify-content: center;
     flex-wrap: wrap;
