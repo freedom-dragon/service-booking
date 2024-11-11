@@ -273,7 +273,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
 
         <div class="ion-text-center">
           <img
-            src="/assets/powered-by-BookSmart.webp"
+            src="/assets/powered-by-BookSmart.png"
             style="max-width: 8rem; margin: 1rem"
           />
         </div>

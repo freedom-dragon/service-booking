@@ -487,7 +487,7 @@ function attachRoutes(app: Router) {
         let name = req.query.name
         switch (name) {
           case 'logo':
-            filename = 'logo.webp'
+            filename = 'logo.png'
             break
           case 'cover':
             filename = 'cover.webp'
