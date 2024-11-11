@@ -314,7 +314,7 @@ export function verificationCodeEmail(
                     <tr>
                       <td style="font-size: 20px; color: #333; font-family: Arial, sans-serif;">
                         <img
-                          src="https://booksmart.hkit.cc/assets/logo-square.webp"
+                          src="https://booksmart.hkit.cc/assets/logo-square.png"
                           alt="BookSmart Logo"
                           style="width: 20px; vertical-align: middle;"
                         ></img>
@@ -408,7 +408,7 @@ export function verificationCodeEmail(
                         style="font-family: Arial, sans-serif;"
                       >
                         <img
-                          src="https://booksmart.hkit.cc/assets/powered-by-BookSmart.webp"
+                          src="https://booksmart.hkit.cc/assets/powered-by-BookSmart.png"
                           alt="Powered By Booksmart"
                           style="height: 24px; vertical-align: middle;"
                         ></img>
