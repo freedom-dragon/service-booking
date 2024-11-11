@@ -292,30 +292,151 @@ export function verificationCodeEmail(
             }))
     : null
   let node = (
-    <div style="font-size: 1rem">
-      <p>
-        <code style="background-color: #eee; padding: 0.25rem; border-radius: 0.25rem">
-          {attrs.passcode}
-        </code>{' '}
-        is your verification code.
-      </p>
-      <p>
-        To complete the email verification process, please copy the code above
-        and paste it to the form.
-      </p>
-      {url ? (
-        <p>
-          You can also verify your email by opening this link:{' '}
-          <a href={url}>{url}</a>
-        </p>
-      ) : null}
-      <p>
-        If you did not request to authenticate on {config.site_name} (
-        {config.short_site_name} in short), it is safe to ignore this email.
-      </p>
-    </div>
+    <body style="margin: 0; padding: 0; background-color: #f3f4f7;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="center" valign="middle" style="padding: 20px;">
+            <table
+              width="100%"
+              cellpadding="0"
+              cellspacing="0"
+              border="0"
+              style="min-width: 280px; max-width: 600px; background-color: transparent;"
+            >
+              <tr>
+                <td style="padding: 15px 0;">
+                  <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                  >
+                    <tr>
+                      <td style="font-size: 20px; color: #333; font-family: Arial, sans-serif;">
+                        <img
+                          src="https://booksmart.hkit.cc/assets/logo-square.webp"
+                          alt="BookSmart Logo"
+                          style="width: 20px; vertical-align: middle;"
+                        ></img>
+                        <span style="vertical-align: middle;">
+                          <b>&nbsp;BookSmart | 電郵驗證</b>
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+                  <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                  >
+                    <tr>
+                      <td style="color: #d9534f; font-weight: bold; padding-bottom: 20px; font-size: 20px; font-family: Arial, sans-serif;">
+                        電郵驗證 - Email Verification
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding-bottom: 15px; font-family: Arial, sans-serif;">
+                        <table cellpadding="0" cellspacing="0" border="0">
+                          <tr>
+                            <td style="vertical-align: middle; font-size: 16px;">
+                              Your verification code is:&nbsp;
+                            </td>
+                            <td style="vertical-align: middle;">
+                              <span style="background-color: #eee; padding: 8px 16px; border-radius: 4px; font-family: monospace; display: inline-block; font-size: 16px;">
+                                {attrs.passcode}
+                              </span>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding-bottom: 15px; color: #555; font-size: 16px; line-height: 1.6; font-family: Arial, sans-serif;">
+                        To complete the email verification process, please copy
+                        the code above and paste it to the form.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding-bottom: 15px; font-size: 16px; color: #555; font-family: Arial, sans-serif;">
+                        You can also verify your email by clicking on this
+                        button:
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 15px 0;">
+                        <table
+                          width="100%"
+                          cellpadding="0"
+                          cellspacing="0"
+                          border="0"
+                        >
+                          <tr>
+                            <td
+                              align="center"
+                              style="background-color: #68a1e2; border-radius: 5px;"
+                            >
+                              <a
+                                href={url}
+                                style="display: block; width: 100%; padding: 12px 0; color: white; text-decoration: none; font-size: 16px; font-family: Arial, sans-serif; text-align: center;"
+                              >
+                                Verify Email
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top: 20px; text-align: center;">
+                  <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                  >
+                    <tr>
+                      <td
+                        align="center"
+                        style="font-family: Arial, sans-serif;"
+                      >
+                        <img
+                          src="https://booksmart.hkit.cc/assets/powered-by-BookSmart.webp"
+                          alt="Powered By Booksmart"
+                          style="height: 24px; vertical-align: middle;"
+                        ></img>
+                        <span style="color: #888; font-size: 12px;">
+                          &nbsp;&nbsp;|&nbsp;&nbsp;
+                        </span>
+                        <span style="color: #888; font-size: 12px;">
+                          Learn more about{' '}
+                          <a
+                            href="https://booksmart.hkit.cc"
+                            style="color: #68a1e2; text-decoration: none;"
+                          >
+                            BookSmart
+                          </a>
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
   )
   let html = nodeToHTML(node, context)
+  console.log(html)
   let text = `
 ${attrs.passcode} is your verification code.
 
