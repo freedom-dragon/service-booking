@@ -31,7 +31,7 @@ export function getShopLocale(shop_id: number): ShopLocales {
 }
 
 export function getShopLogoImage(shop_slug: string) {
-  return toVersionedUrl(`/assets/shops/${shop_slug}/logo.webp`)
+  return toVersionedUrl(`/assets/shops/${shop_slug}/logo.png`)
 }
 
 export function getShopCoverImage(shop_slug: string) {

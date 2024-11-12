@@ -36,6 +36,12 @@ let style = Style(/* css */ `
 #ShopHome {
 
 }
+.scroll-nav {
+  display: flex;
+  justify-content: space-around;
+  background-color: var(--ion-color-light);
+  padding: 0.5rem 0;
+}
 .service--card:first-child {
   margin-top: 0;
 }
@@ -215,12 +221,38 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
             )}
           </ion-buttons>
         </ion-toolbar>
+        <nav class="scroll-nav">
+          <a href="#top" onclick="scrollToSection(event)">
+            商鋪封面
+          </a>
+          <a href="#booking-section" onclick="scrollToSection(event)">
+            立即預約
+          </a>
+          <a href="#about-us" onclick="scrollToSection(event)">
+            關於我們
+          </a>
+          <a href="#contact-method" onclick="scrollToSection(event)">
+            聯絡方法
+          </a>
+        </nav>
       </ion-header>
       <ion-content id="ShopHome">
+        {Script(/* javascript */ `
+          function scrollToSection(event) {
+            event.preventDefault();
+            let target = document.querySelector(event.currentTarget.getAttribute('href'));
+            target.scrollIntoView({
+              behavior: 'smooth'
+            })
+          }
+        `)}
+        <section id="top"></section>
         <ShopTopBanner shop={shop} />
         <h2
+          id="booking-section"
           class="ion-margin"
           style="
+            scroll-margin-top: 1rem;
             margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
@@ -432,13 +464,21 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
           })}
         </ion-list>
 
-        <h2 class="ion-margin">關於我們</h2>
+        <h2 id="about-us" class="ion-margin" style="scroll-margin-top: 1rem;">
+          關於我們
+        </h2>
         <div class="ion-margin">
           <b>{shop.bio}</b>
           <p>{shop.desc}</p>
         </div>
 
-        <h2 class="ion-margin">聯絡方法</h2>
+        <h2
+          id="contact-method"
+          class="ion-margin"
+          style="scroll-margin-top: 1rem;"
+        >
+          聯絡方法
+        </h2>
         {ShopContactsStyle}
         <ShopContacts shop={shop} items={contacts} />
 
@@ -455,7 +495,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
 
         <div class="ion-text-center">
           <img
-            src="/assets/powered-by-BookSmart.webp"
+            src="/assets/powered-by-BookSmart.png"
             style="max-width: 8rem; margin: 1rem"
           />
         </div>

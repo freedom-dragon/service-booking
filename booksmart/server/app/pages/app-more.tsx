@@ -66,7 +66,7 @@ let page = (
       </ion-list>
       <div class="ion-text-center">
         <img
-          src="/assets/powered-by-BookSmart.webp"
+          src="/assets/powered-by-BookSmart.png"
           style="max-width: 8rem; margin-top: 2rem"
         />
       </div>
