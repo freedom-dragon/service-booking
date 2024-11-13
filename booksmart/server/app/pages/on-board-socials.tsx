@@ -138,6 +138,43 @@ let style = Style(/* css */ `
     margin: 0.5rem 0;
   }
 
+  .grid-outer-container {
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+  .grid-container {
+      display: grid;
+      grid-template-columns: repeat(6, 4rem);
+      gap: 1rem;
+      /* Center the entire grid */
+      justify-content: center;
+      
+      /* Remove default gap at edges */
+      margin: -1rem;
+      padding: 1rem;
+  }
+
+  .grid-item {
+      width: 4rem;
+      height: 4rem;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* Optional: add some styling */
+      border-radius: 0.5rem;
+      font-family: Arial, sans-serif;
+      color: #333;
+  }
+
+  @media (max-width: 1024px) {
+      .grid-container {
+          grid-template-columns: repeat(4, 4rem);
+          justify-content: center;
+      }
+  }
 `)
 let onBoardShopSocialsScripts = (
   <>
@@ -382,6 +419,23 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
               </ion-input>
             )
           })}
+          <div class="grid-outer-container">
+            <div class="grid-container">
+              <div class="grid-item">1</div>
+              <div class="grid-item">2</div>
+              <div class="grid-item">3</div>
+              <div class="grid-item">4</div>
+              <div class="grid-item">5</div>
+              <div class="grid-item">6</div>
+              <div class="grid-item">7</div>
+              <div class="grid-item">8</div>
+              <div class="grid-item">9</div>
+              <div class="grid-item">10</div>
+              <div class="grid-item">11</div>
+              <div class="grid-item">12</div>
+              <div class="grid-item">13</div>
+            </div>
+          </div>
           <button class="submit-button" id="submit_button" type="submit">
             <ion-icon
               name="chevron-forward-circle"
