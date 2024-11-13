@@ -18,6 +18,7 @@ import {
   id,
   int,
   literal,
+  nullable,
   object,
   optional,
   string,
@@ -262,6 +263,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
           method="POST"
         >
           <ion-list lines="full" inset="true">
+            {options.length == 0 ? '' : undefined}
             <ion-item
               lines="none"
               hidden={options.length == 0 ? '' : undefined}
@@ -275,7 +277,7 @@ function ServiceDetail(attrs: { service: Service }, context: DynamicContext) {
                 class="service-options ion-margin-horizontal flex-wrap"
                 style="gap: 0.25rem; margin-bottom: 8px"
               >
-                <input hidden name="option_id" />
+                {options.length == 0 ? null : <input hidden name="option_id" />}
                 {mapArray(options, (option, index) => (
                   <ion-button
                     size="small"
@@ -607,15 +609,13 @@ let ServiceDetailScripts = (
     }
     {Script(/* javascript */ `
 function submitBooking() {
-  try {
-    if (option_id) {
-      let has_options = bookingForm.option_id.closest('ion-item').getBoundingClientRect().height > 0
-        if (has_options && !bookingForm.option_id.value) return showToast('請選擇款式', 'error')
-    } else {
-        return showToast('請選擇款式', 'error')
-    }
-  } catch (e) {
-    console.log('no options found')
+  console.log(bookingForm.option_id)
+  if (!bookingForm.option_id){
+    bookingForm.option_id = null
+  }
+  else {
+    let has_options = bookingForm.option_id.closest('ion-item').getBoundingClientRect().height > 0
+    if (has_options && !bookingForm.option_id.value) return showToast('請選擇款式', 'error')
   }
   
   
@@ -2370,7 +2370,7 @@ let submitBookingParser = object({
 let submitBookingParser2 = object({
   appointment_time: date(),
   amount: int({ min: 1 }),
-  option_id: optional(int()),
+  option_id: nullable(int()),
   tel: string(),
   answers: array(
     object({
