@@ -607,18 +607,27 @@ let ServiceDetailScripts = (
     }
     {Script(/* javascript */ `
 function submitBooking() {
-  let has_options = bookingForm.option_id.closest('ion-item').getBoundingClientRect().height > 0
-  if (has_options && !bookingForm.option_id.value) return showToast('請選擇款式', 'error')
+  try {
+    if (option_id) {
+      let has_options = bookingForm.option_id.closest('ion-item').getBoundingClientRect().height > 0
+        if (has_options && !bookingForm.option_id.value) return showToast('請選擇款式', 'error')
+    } else {
+        return showToast('請選擇款式', 'error')
+    }
+  } catch (e) {
+    console.log('no options found')
+  }
+  
+  
   if (!bookingForm.amount.value) bookingForm.amount.value = 1
   if (!bookingForm.date.value) return showToast('請選擇日期', 'error')
   if (!bookingForm.time.value) return showToast('請選擇時間', 'error')
+
   try{
     let bookingForm_time_array = bookingForm.time.value.split(' ')
     bookingForm.time.value = bookingForm_time_array[0].trim()
   } catch (e) {return showToast(e, 'error')}
-    bookingForm.date.value.split('T')[0]
-    + ' ' +
-    bookingForm.time.value)
+  
   if (!bookingForm.tel.value) return showToast('請提供電話號碼', 'error')
   let questions = document.querySelectorAll('[data-question-id]')
   let answers = []
@@ -2358,6 +2367,19 @@ let submitBookingParser = object({
   ),
 })
 
+let submitBookingParser2 = object({
+  appointment_time: date(),
+  amount: int({ min: 1 }),
+  option_id: optional(int()),
+  tel: string(),
+  answers: array(
+    object({
+      question_id: id(),
+      answer: string(),
+    }),
+  ),
+})
+
 // TODO check shop owner on Update APIs
 
 let routes = {
@@ -2438,7 +2460,15 @@ let routes = {
       return resolveServiceRoute(context, ({ service, shop }) => {
         let body = getContextFormBody(context) as any
         body.answers = JSON.parse(body.answers)
-        let input = submitBookingParser.parse(body)
+        //TODO: this temporary fix needs code reviewing
+        //optional in optional(id()) does not work
+        let input: any
+        try {
+          input = submitBookingParser.parse(body)
+        } catch (err) {
+          input = submitBookingParser2.parse(body)
+        }
+
         if (
           !input.option_id &&
           count(proxy.service_option, { service_id: service.id! }) > 0
