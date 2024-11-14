@@ -92,6 +92,15 @@ let style = Style(/* css */ `
     line-height: 1.375;
     color: black;
   }
+  .description2{
+    font-family: 'Arial', sans-serif;
+    text-align: start;
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 400;
+    line-height: 1.375;
+    color: #8c8c8c;
+  }
   .input-body{
     width: 17rem;
     background-color: var(--ion-color-secondary);
@@ -356,7 +365,7 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
             )
           })}
           <div class="grid-outer-container">
-            <p class="description">Add or remove social links</p>
+            <p class="description2">Add or remove social links</p>
             <div class="grid-container">
               {mapArray(contacts, item => {
                 let slug = shop[item.field]
