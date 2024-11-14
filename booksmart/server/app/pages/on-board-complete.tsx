@@ -90,7 +90,7 @@ let style = Style(/* css */ `
     display: flex;
     justify-content: center;
     height: 60vh;
-    width: 40vh;
+    width: 33vh;
     box-shadow: 3px 3px 10px 3px #aaaaaa;
   }
 

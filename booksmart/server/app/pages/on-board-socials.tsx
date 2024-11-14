@@ -107,6 +107,8 @@ let style = Style(/* css */ `
     max-height: 2.25rem;
     margin: 0.5rem 1rem 0.5rem 0.5rem;
     display: flex !important;
+    height: 2.25rem;
+    width: 2.25rem;
   }
   .social-media-inputs
   .img-icon--text {
@@ -116,6 +118,7 @@ let style = Style(/* css */ `
     display: flex;
     --border-radius: unset !important;
     border-radius: 0.4rem;
+    transition: height 1s ease;
   }
   .social-media-inputs {
     flex-direction: column;
@@ -133,45 +136,45 @@ let style = Style(/* css */ `
     justify-content: start;
     display: flex;
   }
-
   ion-input {
     margin: 0.5rem 0;
   }
-
   .grid-outer-container {
     width: 100%;
-    padding: 1rem;
     box-sizing: border-box;
+    overflow: hidden;
+    padding: 2rem 0 0 !important;
 }
-
   .grid-container {
       display: grid;
-      grid-template-columns: repeat(6, 4rem);
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
-      /* Center the entire grid */
       justify-content: center;
-      
-      /* Remove default gap at edges */
-      margin: -1rem;
+      box-sizing: border-box;
       padding: 1rem;
+      margin: 0;
+      width: 100%;
   }
-
   .grid-item {
-      width: 4rem;
-      height: 4rem;
-      background: #f0f0f0;
+      width: 100%;
+      aspect-ratio: 1/1;
       display: flex;
       align-items: center;
       justify-content: center;
-      /* Optional: add some styling */
       border-radius: 0.5rem;
       font-family: Arial, sans-serif;
-      color: #333;
+      box-sizing: border-box;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+      background: var(--ion-color-secondary);
+  }
+  .grid-item-clicked{
+    opacity: 0.2;
   }
 
   @media (max-width: 1024px) {
       .grid-container {
-          grid-template-columns: repeat(4, 4rem);
+          
           justify-content: center;
       }
   }
@@ -181,13 +184,17 @@ let onBoardShopSocialsScripts = (
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
     {Script(/* javascript */ `
-      function socialsSubmit(saveButton, contacts) {
-        console.log('hello world')
-        console.log(contacts)
-        
-        
-
+      function addRemoveField(element, item, slug){
+        element.classList.toggle('grid-item-clicked')
+        let queryString = "[name=" + item.field + "]"
+        let test = element.parentElement.parentElement.parentElement
+        let mediaInput = element.parentElement.parentElement.parentElement.querySelector(queryString)
+        mediaInput.value = slug
+        mediaInput.hidden = mediaInput.hidden ? false : true;
+        console.log("mediaInput: ", mediaInput)
+        console.log(mediaInput.hidden)
       }
+
       function saveField(button) {
         let url = button.dataset.saveUrl
         let item = button.closest('ion-item')
@@ -237,81 +244,6 @@ let onBoardShopSocialsScripts = (
     `)}
   </>
 )
-
-export function OnBoardShopContacts(attrs: {
-  shop: Shop
-  items: ShopContact[]
-}) {
-  let shop_slug = attrs.shop.slug
-  let { shop } = attrs
-  return (
-    <form
-      class="social-media-inputs ion-margin"
-      method="POST"
-      onsubmit="uploadForm(event)"
-    >
-      {mapArray(attrs.items, item => {
-        let slug = shop[item.field]
-        return slug ? (
-          <ion-input
-            class="img-icon--text"
-            id={item.label}
-            value={slug}
-            href={item.prefix + slug}
-            target="_blank"
-            data-save-url={`/shop/${shop_slug}/admin/save/${item.field}`}
-          >
-            <img
-              class="img-icon"
-              slot="icon-only"
-              src={'/assets/contact-methods/' + item.icon}
-              alt={'credit to ' + item.credit}
-              aria-hidden="true"
-            />
-          </ion-input>
-        ) : (
-          <ion-input
-            class="img-icon--text"
-            name={item.label}
-            placeholder="Add handle here"
-            href={item.prefix}
-            target="_blank"
-          >
-            <img
-              class="img-icon"
-              slot="icon-only"
-              src={'/assets/contact-methods/' + item.icon}
-              alt={'credit to ' + item.credit}
-              aria-hidden="true"
-            />
-            <span class="img-icon--text" title={item.label}>
-              {slug}
-            </span>
-          </ion-input>
-        )
-      })}
-      <button
-        class="submit-button"
-        id="submit_button"
-        type="submit"
-        onclick="socialsSubmit(this)"
-        data-submit-url={toRouteUrl(
-          shopAdmin.routes,
-          '/shop/:shop_slug/admin/save/:field',
-          {
-            params: { shop_slug, field: 'name' },
-          },
-        )}
-      >
-        <ion-icon
-          name="chevron-forward-circle"
-          class="icon"
-          style="font-size: 3rem;"
-        ></ion-icon>
-      </button>
-    </form>
-  )
-}
 
 function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
   let user_id = getAuthUserId(context)
@@ -381,11 +313,15 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
         >
           {mapArray(contacts, item => {
             let slug = shop[item.field]
-            return slug ? (
+            return item.field == 'instagram' ||
+              item.field == 'facebook' ||
+              item.field == 'whatsapp' ||
+              item.field == 'address' ? (
               <ion-input
                 class="img-icon--text"
                 name={item.field}
-                value={slug}
+                placeholder="Add handle here"
+                value={slug ? slug : ''}
                 href={item.prefix + slug}
                 target="_blank"
                 data-save-url={`/shop/${shop_slug}/admin/save/${item.field}`}
@@ -403,8 +339,11 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
                 class="img-icon--text"
                 name={item.field}
                 placeholder="Add handle here"
-                href={item.prefix}
+                value={slug ? slug : ''}
+                href={item.prefix + slug}
                 target="_blank"
+                data-save-url={`/shop/${shop_slug}/admin/save/${item.field}`}
+                hidden
               >
                 <img
                   class="img-icon"
@@ -413,27 +352,38 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
                   alt={'credit to ' + item.credit}
                   aria-hidden="true"
                 />
-                <span class="img-icon--text" title={item.label}>
-                  {slug}
-                </span>
               </ion-input>
             )
           })}
           <div class="grid-outer-container">
+            <p class="description">Add or remove social links</p>
             <div class="grid-container">
-              <div class="grid-item">1</div>
-              <div class="grid-item">2</div>
-              <div class="grid-item">3</div>
-              <div class="grid-item">4</div>
-              <div class="grid-item">5</div>
-              <div class="grid-item">6</div>
-              <div class="grid-item">7</div>
-              <div class="grid-item">8</div>
-              <div class="grid-item">9</div>
-              <div class="grid-item">10</div>
-              <div class="grid-item">11</div>
-              <div class="grid-item">12</div>
-              <div class="grid-item">13</div>
+              {mapArray(contacts, item => {
+                let slug = shop[item.field]
+                return (
+                  <button
+                    class={
+                      item.field == 'instagram' ||
+                      item.field == 'facebook' ||
+                      item.field == 'whatsapp' ||
+                      item.field == 'address'
+                        ? 'grid-item'
+                        : 'grid-item grid-item-clicked'
+                    }
+                    type="button"
+                    onclick={`addRemoveField(this, ${JSON.stringify(item)}, ${JSON.stringify(slug)})`}
+                  >
+                    <img
+                      class="img-icon"
+                      slot="icon-only"
+                      src={'/assets/contact-methods/' + item.icon}
+                      alt={'credit to ' + item.credit}
+                      aria-hidden="true"
+                      style="margin: 0px;"
+                    />
+                  </button>
+                )
+              })}
             </div>
           </div>
           <button class="submit-button" id="submit_button" type="submit">
@@ -448,7 +398,6 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
           <ion-text id="submitMessage"></ion-text>
         </p>
         {onBoardShopSocialsScripts}
-        {/* <OnBoardShopContacts shop={shop} items={contacts} /> */}
       </ion-content>
     </>
   )
