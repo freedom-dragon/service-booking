@@ -516,6 +516,20 @@ function selectOption(button){
 
         {/* {wsStatus.safeArea} */}
       </ion-content>
+      {service.peer_amount && service.peer_price ? (
+        <ion-footer style="background-color: var(--ion-color-primary);">
+          <ion-item
+            class="ion-padding-horizontal"
+            style="--background: var(--ion-color-primary); color: #fff;"
+          >
+            <ion-icon name="alarm-outline" style="color: #fff"></ion-icon>{' '}
+            &nbsp;限時優惠： {service.peer_amount}
+            {service.price_unit || '人'}同行，每
+            {service.price_unit || '人'}
+            {formatPrice(service.peer_price)}
+          </ion-item>
+        </ion-footer>
+      ) : null}
       <ion-footer style="background-color: var(--ion-color-light);">
         <ion-list inset="true" style="margin-top: 0.5rem">
           <ion-item>
@@ -549,14 +563,14 @@ function selectOption(button){
                     ? '$' + service.unit_price + '/' + service.price_unit
                     : service.unit_price}
                 </span>
-                {service.peer_amount && service.peer_price ? (
+                {/* {service.peer_amount && service.peer_price ? (
                   <div>
                     {service.peer_amount}
                     {service.price_unit || '人'}同行，每
                     {service.price_unit || '人'}
                     {formatPrice(service.peer_price)}
                   </div>
-                ) : null}
+                ) : null} */}
               </ion-label>
             )}
             <ion-button

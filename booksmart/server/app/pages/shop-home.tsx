@@ -33,6 +33,7 @@ import { toRouteUrl } from '../../url.js'
 import { Script } from '../components/script.js'
 
 let style = Style(/* css */ `
+
 #ShopHome {
 
 }
@@ -135,6 +136,12 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
   }
 
   let loadUserStyle = Style(/* css */ `
+    ion-tab-bar {
+      background-color: ${theme.background_color}
+    }
+    ion-tab-button {
+      background-color: ${theme.background_color}
+    }
     h2 {
       color: #fff;
     }
@@ -189,10 +196,20 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
     
   `)
   let loadDefaultStyle = Style(/* css */ `
+    ion-tab-bar {
+      background-color: #fff
+    }
+    ion-tab-button {
+      background-color: #fff
+    }
     .field-button {
       --background: var(--ion-color-primary) !important;
     }
+    h2 {
+      color: var(--ion-color-primary);
+    }
     `)
+  console.log(theme.background_color)
   return (
     <>
       {style}
