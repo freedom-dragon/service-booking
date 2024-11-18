@@ -47,9 +47,9 @@ let katy = seedUser({
 let beeno = seedUser({
   username: null,
   nickname: 'Beeno',
-  is_admin: false,
+  is_admin: true,
   password_hash: null,
-  email: 'info@beenocodingstudio.com',
+  email: 'beeno@freedomdragon.ltd',
   tel: '+85298222913',
   avatar: null,
 })
