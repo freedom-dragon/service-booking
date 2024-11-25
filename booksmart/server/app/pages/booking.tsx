@@ -244,7 +244,7 @@ let topMenuButtons = (
   </ion-buttons>
 )
 let calendarFilterItem = (
-  <ion-item lines="none">
+  <ion-item lines="none" class="header--date-item">
     <ion-label>預約日期過濾器</ion-label>
     <ion-datetime-button datetime="calendarPicker" slot="end">
       <span slot="date-target">顯示全部</span>
@@ -569,7 +569,7 @@ function confirmReschedule${booking.id}() {
               '?tel=' +
               (booking.user!.tel?.replace('+852', '') || '')
             }
-            class="ion-margin-bottom"
+            class="ion-margin-bottom link-button"
             expand="block"
           >
             {attrs.can_reschedule ? `查看${locale.service}詳情` : `再次預約`}
@@ -597,8 +597,63 @@ export function ReceiptImageItem(
 function AdminPage(shop: Shop, context: DynamicContext) {
   let date = new URLSearchParams(context.routerMatch?.search).get('date')
   let page = AdminPageContent({ shop, date }, context)
+  let theme = {
+    // title: '#f005',
+    background_color: shop.background_color,
+    font_family: shop.font_family,
+    top_banner: shop.top_banner,
+  }
+  let loadUserStyle = Style(/* css */ `
+    #BookingTabContent {
+      --background: ${theme.background_color};
+    }
+    .swiper-slide {
+      --ion-background-color: ${theme.background_color};
+    }
+
+    .link-button {
+      --background: #fff;
+      --color: ${theme.background_color};
+    }
+
+    .header--date-item {
+      --ion-background-color: ${theme.background_color};
+    }
+    .segments {
+      --background: ${theme.background_color};
+    }
+
+    ion-tab-bar {
+      background-color: ${theme.background_color} !important;
+    }
+    ion-tab-button {
+      background-color: ${theme.background_color} !important;
+    }
+`)
+  theme.background_color === null ? null : null
+  let loadDefaultStyle = Style(/* css */ `
+      ion-tab-bar {
+        background-color: #fff;
+      }
+      ion-tab-button {
+        background-color: #fff;
+      }
+      .field-button {
+        --background: var(--ion-color-primary) !important;
+      }
+      h2 {
+        color: var(--ion-color-primary);
+      }
+      .link-button {
+        --background: var(--ion-color-primary);
+        --color: #fff;
+      }
+      `)
   return (
     <>
+      {loadUserStyle}
+      {/* {loadDefaultStyle} */}
+      {theme.background_color === null ? loadDefaultStyle : null}
       <ion-header id="BookingTabHeader">
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
@@ -609,7 +664,8 @@ function AdminPage(shop: Shop, context: DynamicContext) {
         {calendarFilterItem}
         <ion-segment
           value="submitted"
-          style="margin: 4px; width: calc(100% - 8px)"
+          style="padding: 4px; width: 100%"
+          class="segments"
         >
           {page.segmentButtons}
         </ion-segment>
@@ -670,24 +726,28 @@ function AdminPageContent(
       <ion-segment-button
         value="submitted"
         onclick="swiperSlide(bookingSwiper,'0')"
+        class="segments"
       >
         未確認 ({submitted.length})
       </ion-segment-button>
       <ion-segment-button
         value="confirmed"
         onclick="swiperSlide(bookingSwiper,'1')"
+        class="segments"
       >
         未開始 ({confirmed.length})
       </ion-segment-button>
       <ion-segment-button
         value="completed"
         onclick="swiperSlide(bookingSwiper,'2')"
+        class="segments"
       >
         已完成 ({completed.length})
       </ion-segment-button>
       <ion-segment-button
         value="cancelled"
         onclick="swiperSlide(bookingSwiper,'3')"
+        class="segments"
       >
         已取消 ({cancelled.length})
       </ion-segment-button>
@@ -832,8 +892,63 @@ function AdminPageContent(
 function UserPage(user: User | null, context: DynamicContext) {
   let date = new URLSearchParams(context.routerMatch?.search).get('date')
   let page = user ? UserPageContent({ user, date }, context) : null
+  let shop = getContextShop(context)
+  console.log(shop)
+  let theme = {
+    // title: '#f005',
+    background_color: shop.background_color,
+    font_family: shop.font_family,
+    top_banner: shop.top_banner,
+  }
+  let loadUserStyle = Style(/* css */ `
+    #BookingTabContent {
+      --background: ${theme.background_color};
+    }
+    .swiper-slide {
+      --ion-background-color: ${theme.background_color};
+    }
+
+    .link-button {
+      --background: #fff;
+      --color: ${theme.background_color};
+    }
+
+    .header--date-item {
+      --ion-background-color: ${theme.background_color};
+    }
+    .segments {
+      --background: ${theme.background_color};
+    }
+
+    ion-tab-bar {
+      background-color: ${theme.background_color} !important;
+    }
+    ion-tab-button {
+      background-color: ${theme.background_color} !important;
+    }
+`)
+  let loadDefaultStyle = Style(/* css */ `
+      ion-tab-bar {
+        background-color: #fff;
+      }
+      ion-tab-button {
+        background-color: #fff;
+      }
+      .field-button {
+        --background: var(--ion-color-primary) !important;
+      }
+      h2 {
+        color: var(--ion-color-primary);
+      }
+      .link-button {
+        --background: var(--ion-color-primary);
+        --color: #fff;
+      }
+      `)
   return (
     <>
+      {loadUserStyle}
+      {theme.background_color === null ? loadDefaultStyle : null}
       <ion-header id="BookingTabHeader">
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
@@ -843,10 +958,7 @@ function UserPage(user: User | null, context: DynamicContext) {
         </ion-toolbar>
         {calendarFilterItem}
         {page ? (
-          <ion-segment
-            value="submitted"
-            style="margin: 4px; width: calc(100% - 8px)"
-          >
+          <ion-segment value="submitted" style="padding: 4px; width: 100%">
             {page.segmentButtons}
           </ion-segment>
         ) : null}

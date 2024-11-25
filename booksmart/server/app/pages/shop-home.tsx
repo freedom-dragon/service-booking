@@ -208,6 +208,9 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
     h2 {
       color: var(--ion-color-primary);
     }
+    .link-button {
+      --background: var(--ion-color-primary);
+    }
     `)
   console.log(theme.background_color)
   return (
@@ -216,7 +219,7 @@ function ShopHome(attrs: { shop: Shop }, context: DynamicContext) {
       {loadUserStyle}
       {theme.background_color === null ? loadDefaultStyle : null}
 
-      <ion-header hidden>
+      <ion-header>
         <ion-toolbar color="primary">
           <ion-title role="heading" aria-level="1">
             {name}

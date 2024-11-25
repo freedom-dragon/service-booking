@@ -113,6 +113,156 @@ let style = Style(/* css */ `
     text-align: center;
     align-items: center;
   }
+  .side-panel {
+    height: 100vh;
+    width: 400px;
+    position: fixed;
+    left: -400px;
+    background-color: white;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    transition: left 0.3s ease;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+.side-panel.open {
+    left: 0;
+}
+.panel-toggle {
+    position: absolute;
+    left: 20px;
+    padding: 10px 20px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 1001;
+}
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+    z-index: 999;
+}
+
+.overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.edit-form {
+  padding: 20px;
+}
+
+.section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr, 10px;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.color-item {
+  aspect-ratio: 1;
+  background-color: #fff;
+  border-radius: 5rem;
+  border: 1px solid #ddd;
+  overflow: hidden;
+}
+
+.color-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.color-text {
+  text-align: center;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.form-group input, 
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: white;
+  box-sizing: border-box;
+}
+
+.design-options {
+  display: flex;
+  gap: 10px;
+}
+
+.design-option {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 3rem;
+  cursor: pointer;
+  background-color: white;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.design-option:hover {
+  background-color: #bbb;
+}
+.design-option.active {
+  background-color: #333;
+  color: white;
+  border-color: #333;
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.template-item {
+  aspect-ratio: 1/1;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.template-item:hover {
+  border-color: #333;
+}
+.panel-content {
+    color: #333;
+}
   @media (max-width: 600px) {
     .content{
       display: flex;
@@ -135,6 +285,26 @@ let onBoardCompleteScript = (
     {loadClientPlugin({ entryFile: 'dist/client/sweetalert.js' }).node}
     {loadClientPlugin({ entryFile: 'dist/client/image.js' }).node}
     {Script(/* javascript */ `
+    function ToggleMenu(element) {
+      let button = element
+      let sidePanel = element.parentElement.querySelector(".side-panel")
+      let overlay = element.parentElement.querySelector(".overlay")
+      sidePanel.classList.toggle("open")
+      overlay.classList.toggle("active")
+    }
+    function CloseMenu(element) {
+      let overlay = element
+      let sidePanel = element.parentElement.querySelector(".side-panel")
+      sidePanel.classList.remove("open")
+      overlay.classList.remove("active")
+    }
+    function ToggleButton(element) {
+      let buttons = element.parentElement.querySelectorAll("button")
+      buttons.forEach((button) => {
+        button.classList.remove("active")
+      })
+      element.classList.add("active")
+    }
     async function shareUrl(element) {
       
       try {
@@ -204,6 +374,83 @@ function OnBoardComplete(attrs: {}, context: DynamicContext) {
         </ion-toolbar>
       </ion-header>
       <ion-content id="OnBoardComplete">
+        <button class="panel-toggle" onclick="ToggleMenu(this)">
+          ☰ Menu
+        </button>
+        <div class="overlay" onclick="CloseMenu(this)"></div>
+        <div class="side-panel">
+          <div class="panel-content">
+            <h2>Side Panel</h2>
+            <div class="edit-form">
+              <div class="section">
+                <div class="section-title">背景顔色</div>
+                <div class="image-grid">
+                  <div class="color-item" style="background-color: ;"></div>
+                  <div
+                    class="color-item"
+                    style="background-color: #F7D4D2"
+                  ></div>
+                  <div
+                    class="color-item"
+                    style="background-color: #BDABAB;"
+                  ></div>
+                  <div
+                    class="color-item"
+                    style="background-color: #C2DFFF;"
+                  ></div>
+                  <div class="color-text">Default</div>
+                  <div class="color-text">Candy</div>
+                  <div class="color-text">Ocean</div>
+                  <div class="color-text">Land</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">ABOUT</div>
+                <div class="form-group">
+                  <label>NAME</label>
+                  <input type="text" placeholder="Enter name" />
+                </div>
+                <div class="form-group">
+                  <label>DESCRIPTION</label>
+                  <textarea rows="4" placeholder="Add Description"></textarea>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">SITE</div>
+                <div class="form-group">
+                  <label>URL</label>
+                  <input type="text" placeholder="Enter URL" />
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">文字設計</div>
+                <div class="design-options">
+                  <button
+                    class="design-option active"
+                    onclick="ToggleButton(this)"
+                  >
+                    Noto Serif
+                  </button>
+                  <button class="design-option" onclick="ToggleButton(this)">
+                    WenKai TC
+                  </button>
+                  <button class="design-option" onclick="ToggleButton(this)">
+                    Classical Sans
+                  </button>
+                </div>
+                <div class="template-grid">
+                  <div class="template-item"></div>
+                  <div class="template-item"></div>
+                  <div class="template-item"></div>
+                  <div class="template-item"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="content">
           <div class="box text">
             <p class="title">Your shop is now live!</p>

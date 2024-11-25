@@ -200,8 +200,6 @@ let onBoardShopSocialsScripts = (
         let mediaInput = element.parentElement.parentElement.parentElement.querySelector(queryString)
         mediaInput.value = slug
         mediaInput.hidden = mediaInput.hidden ? false : true;
-        console.log("mediaInput: ", mediaInput)
-        console.log(mediaInput.hidden)
       }
 
       function saveField(button) {
@@ -214,15 +212,11 @@ let onBoardShopSocialsScripts = (
       async function Next(saveButton) {
         
         let url = saveButton.dataset.uploadUrl
-        console.log("saveButton: ",saveButton)
-        console.log("url: ", url)
-        console.log("saveButton file: ", saveButton.file)
         // let item = saveButton.closest('.circle')
         // console.log("item: " + item)
         let label = '商舖圖片'//= item.querySelector('ion-label').textContent
         let formData = new FormData()
         formData.append('file', saveButton.file)
-        console.log(formData)
         let res = await upload(url, formData)
         let json = await res.json()
         
@@ -235,11 +229,9 @@ let onBoardShopSocialsScripts = (
         // }
 
         let input = saveButton.parentElement.querySelector('input')
-        console.log("test: ", input.value)
         value = input.value
         let submit_url = saveButton.dataset.submitUrl
         res = await emit(submit_url, value, label, 'onboarding')
-        console.log("res: " + res)
         json = await res.json()
         if (json.error) {
           showToast(json.error, 'error')
@@ -274,10 +266,6 @@ function OnBoardShopSocialsPage(attrs: {}, context: DynamicContext) {
   let floating_contact = contacts.find(
     contact => contact.field == shop.floating_contact_method,
   )
-  // console.log('')
-  // console.log('contact: ' + { contacts })
-  // console.log('shop: ' + shop)
-  // console.log('floating contact: ' + floating_contact)
   return (
     <>
       {style}
@@ -431,7 +419,6 @@ function SubmitSocials(attrs: {}, context: DynamicContext) {
     let contacts = getShopContacts(shop)
     let shop_slug = shop.slug
     input = SubmitSocialsParser.parse(body, { name: 'req.body' })
-    console.log(input)
     for (let item of contacts) {
       let field = item.field
       let value = input[field] || null
