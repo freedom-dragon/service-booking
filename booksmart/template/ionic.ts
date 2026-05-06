@@ -96,7 +96,7 @@ export function renderIonicTemplate(
         display: initial;
       }
       html:not(.hydrated) .app {
-        display: none;
+        /* display: none; */
       }
       .md .ios-only {
         display: none;
